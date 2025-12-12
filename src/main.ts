@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import * as morgan from 'morgan';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
+import { DomainExceptionFilter } from './common/filters/domain-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -20,6 +21,9 @@ async function bootstrap() {
 
   // validation + transformation
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  // Domain -> HTTP mapping
+  app.useGlobalFilters(new DomainExceptionFilter());
 
   app.setGlobalPrefix('api');
 

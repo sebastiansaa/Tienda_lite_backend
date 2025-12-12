@@ -129,47 +129,48 @@ src/
 
     Estructura de un Modulo
 
-src/
-└── modules/
-└── usuarios/ # Dominio "Usuarios"
-├── domain/ # 1. Núcleo del dominio (puro)
-│ ├── entity/
-│ │ └── user.entity.ts
-│ ├── v-o/ # Value Objects
-│ │ └── email.vo.ts
-│ ├── interfaces/
-│ │ └── user.repository.ts # Puerto (contrato)
-│ ├── errors/
-│ │ └── user.errors.ts
-│ └── helpers/
-│ │ └── user.helpers.ts
-│ └── rules/
-│  
- ├── application/ # 2. Lógica de aplicación (orquestación pura)
-│ ├── usecases/
-│ │ ├── create-user.usecase.ts
-│ │ └── find-user-by-id.usecase.ts
-│ ├── commands/
-│ │ └── create-user.command.ts
-│ └── ports/
-│ └── user.service.port.ts
-│  
- │
-├── api/ # 3. Adaptador de presentación (entrada HTTP)
-│ ├── controller/
-│ │ └── user.controller.ts
-│ ├── dtos/
-│ │ └── create-user.dto.ts
-│ ├── mappers/
-│ │ └── dto-to-command.mapper.ts
-│ └── user.module.ts # Módulo NestJS (composition root)
-│
-└── Infrastructure/ # 4. Adaptador técnico (salida)
-├── mappers/
-│ └── prisma-to-entity.mapper.ts
-├── repository/
-│ └── user-prisma.repository.ts
-├── filter/
-│ └── user.filter.ts
-└── config/
-└── user.config.ts
+src/                                      # Raíz del proyecto
+└── modules/                             
+    └── usuarios/                        
+        ├── domain/                       # 1. Núcleo del dominio (puro)
+        │   ├── entity/                   # Entidades del negocio
+        │   │   └── user.entity.ts      
+        │   ├── v-o/                      # Value Objects
+        │   │   └── email.vo.ts         
+        │   ├── interfaces/               # Contratos del dominio
+        │   │   └── user.repository.ts    # Puerto (contrato de persistencia)
+        │   ├── errors/                   # Errores semánticos del negocio
+        │   │   └── user.errors.ts        
+        │   ├── helpers/                  # Funciones de apoyo del dominio
+        │   │   └── user.helpers.ts     
+        │   └── rules/                    # Reglas de negocio puras
+        │
+        ├── application/                  # 2. Lógica de aplicación (orquestación pura)
+        │   ├── usecases/                 # Casos de uso
+        │   │   ├── create-user.usecase.ts    
+        │   │   └── find-user-by-id.usecase.ts 
+        │   ├── commands/                 # Intenciones de escritura
+        │   │   └── create-user.command.ts    
+        │   ├── queries/                  # Intenciones de lectura
+        │   │   └── search-user.query.ts      
+        │   └── ports/                    # Contratos de salida (infra)
+        │       └── user.service.port.ts      
+        │
+        ├── api/                          # 3. Adaptador de presentación (entrada HTTP)
+        │   ├── controller/               # Controladores NestJS
+        │   │   └── user.controller.ts    
+        │   ├── dtos/                     # Data Transfer Objects (entrada/salida HTTP)
+        │   │   └── create-user.dto.ts    
+        │   ├── mappers/                  # Conversión entre DTO y Commands/Queries
+        │   │   └── dto-to-command.mapper.ts 
+        │   └── user.module.ts            # Módulo NestJS (composition root)
+        │
+        └── infrastructure/               # 4. Adaptador técnico (salida)
+            ├── mappers/                  # Conversión entre infra y dominio (Mapper Prisma → Entity)
+            │   └── prisma-to-entity.mapper.ts 
+            ├── repository/               # Implementaciones de repositorios
+            │   └── user-prisma.repository.ts  
+            ├── filter/                   # Filtros técnicos (ej. queries DB)
+            │   └── user.filter.ts        
+            └── config/                   # Configuración técnica
+                └── user.config.ts       

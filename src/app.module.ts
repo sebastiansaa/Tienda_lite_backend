@@ -4,12 +4,12 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProductsModule } from './modules/products/api/products.module';
-import { UsersModule } from './modules/users/users.module';
-import { CategoriesModule } from './modules/categories/categories.module';
-import { OrdersModule } from './modules/orders/orders.module';
-import { CartModule } from './modules/cart/cart.module';
-import { AuthModule } from './modules/auth/auth.module';
+import { ProductsModule } from './contexts/products/api/products.module';
+import { UsersModule } from './contexts/users/users.module';
+import { CategoriesModule } from './contexts/categories/api/categories.module';
+import { OrdersModule } from './contexts/orders/orders.module';
+import { CartModule } from './contexts/cart/cart.module';
+import { AuthModule } from './contexts/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -24,7 +24,7 @@ import { PrismaModule } from './prisma/prisma.module';
       ttl: 60, // seconds
       max: 100,
     }),
-    ThrottlerModule.forRoot({ ttl: 60, limit: 10 }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     // Prisma provider (created in src/prisma)
     // note: PrismaModule provides a ready-to-use PrismaService
     PrismaModule,
