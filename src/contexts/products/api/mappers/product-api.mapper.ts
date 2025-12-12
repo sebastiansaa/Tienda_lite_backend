@@ -1,5 +1,5 @@
 import { SaveProductRequestDto, ListProductsRequestDto, SearchProductsRequestDto } from '../dtos/request';
-import { ProductResponseDto } from '../dtos/response';
+import { ResponseProductDto } from '../dtos/response';
 import { SaveProductCommand, DeleteProductCommand, RestoreProductCommand, UpdateStockCommand } from '../../application/commands';
 import { ListProductsQuery, SearchProductsQuery } from '../../application/queries';
 import { FindProductByIdQuery, FindLowStockQuery } from '../../application/queries';
@@ -48,7 +48,10 @@ export class ProductApiMapper {
     }
 
     static toSearchProductsQuery(dto: SearchProductsRequestDto): SearchProductsQuery {
-        return new SearchProductsQuery(dto.query);
+        return new SearchProductsQuery(dto.query, {
+            page: dto.page,
+            limit: dto.limit,
+        });
     }
 
     static toFindProductByIdQuery(id: number): FindProductByIdQuery {
@@ -60,7 +63,7 @@ export class ProductApiMapper {
     }
 
     // Entity → Response DTO
-    static toResponseDto(entity: ProductEntity): ProductResponseDto {
+    static toResponseDto(entity: ProductEntity): ResponseProductDto {
         // Aseguramos en la frontera (mapper) que la entidad está persistida
         // antes de devolver el DTO que exige `id: number`.
         assertPersisted(entity);
@@ -80,7 +83,7 @@ export class ProductApiMapper {
         };
     }
 
-    static toResponseDtoList(entities: ProductEntity[]): ProductResponseDto[] {
+    static toResponseDtoList(entities: ProductEntity[]): ResponseProductDto[] {
         return entities.map(entity => this.toResponseDto(entity));
     }
 }

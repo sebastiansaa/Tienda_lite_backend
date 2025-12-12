@@ -6,6 +6,7 @@ export interface ProductProps {
     description: string;
     stock: number;
     active: boolean;
+    deletedAt?: Date | null;
     images: string[];
     categoryId: number;
     createdAt: Date;

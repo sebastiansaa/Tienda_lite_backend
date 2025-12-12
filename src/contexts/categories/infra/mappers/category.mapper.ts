@@ -1,4 +1,4 @@
-import { Category as PrismaCategory } from "@prisma/client";
+import { Prisma, Category as PrismaCategory } from "@prisma/client";
 import { CategoryEntity } from "../../domain/entity/category.entity";
 
 export class CategoryMapper {
@@ -17,16 +17,17 @@ export class CategoryMapper {
         });
     }
 
-    static toPersistence(entity: CategoryEntity): any {
+    static toPersistence(entity: CategoryEntity): Prisma.CategoryUncheckedCreateInput {
         return {
             title: entity.title,
             slug: entity.slug,
             image: entity.image,
-            description: entity.description,
+            description: entity.description ?? null,
             active: entity.active,
             sortOrder: entity.sortOrder,
-            deletedAt: entity.deletedAt,
-
+            deletedAt: entity.deletedAt ?? null,
+            createdAt: entity.createdAt,
+            updatedAt: entity.updatedAt,
         };
     }
 }

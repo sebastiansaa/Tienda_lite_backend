@@ -14,7 +14,7 @@ export interface IProductRepository {
 
   // --- Lectura ---
   findById(id: number): Promise<ProductEntity | null>;
-  findAll(params?: { page?: number; limit?: number }): Promise<ProductEntity[]>; // Listar con paginación
+  findAll(params?: { page?: number; limit?: number }): Promise<{ products: ProductEntity[]; total: number }>; // Listar con paginación
   findLowStock(threshold: number): Promise<ProductEntity[]>;
-  searchByName(name: string): Promise<ProductEntity[]>;
+  searchByName(name: string, params?: { page?: number; limit?: number }): Promise<{ products: ProductEntity[]; total: number }>;
 }

@@ -14,15 +14,13 @@ export class PrismaCategoryRepository implements ICategoryRepository {
         if (category.id) {
             const updated = await this.prisma.category.update({
                 where: { id: category.id },
-                data: data
+                data: { ...data, updatedAt: new Date() },
             });
             return CategoryMapper.toDomain(updated);
-        } else {
-            const created = await this.prisma.category.create({
-                data: data
-            });
-            return CategoryMapper.toDomain(created);
         }
+
+        const created = await this.prisma.category.create({ data });
+        return CategoryMapper.toDomain(created);
     }
 
     async findById(id: number): Promise<CategoryEntity | null> {
@@ -50,7 +48,7 @@ export class PrismaCategoryRepository implements ICategoryRepository {
     async delete(id: number): Promise<void> {
         await this.prisma.category.update({
             where: { id },
-            data: { deletedAt: new Date(), active: false }
+            data: { deletedAt: new Date(), active: false, updatedAt: new Date() }
         });
     }
 }

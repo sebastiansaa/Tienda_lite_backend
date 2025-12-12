@@ -5,7 +5,7 @@ import { ProductEntity } from '../../domain/entity/product.entity';
 export class SearchProductsUsecase {
     constructor(private readonly repo: IProductRepository) { }
 
-    async execute(q: SearchProductsQuery): Promise<ProductEntity[]> {
-        return this.repo.searchByName(q.term);
+    async execute(q: SearchProductsQuery): Promise<{ products: ProductEntity[]; total: number }> {
+        return this.repo.searchByName(q.term, q.params);
     }
 }

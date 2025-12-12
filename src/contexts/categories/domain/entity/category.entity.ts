@@ -1,5 +1,5 @@
 import { CategoryProps } from "../interfaces/category.props";
-import { TitleVO, Slug, ImageUrlVO } from "../../../shared/v-o";
+import { TitleVO, Slug, ImageUrlVO, SoftDeleteVO } from "../../../shared/v-o";
 
 export class CategoryEntity {
     id?: number;
@@ -7,11 +7,10 @@ export class CategoryEntity {
     slug: string;
     image: string;
     description?: string;
-    active: boolean;
     sortOrder: number;
-    deletedAt?: Date | null;
-    createdAt?: Date;
-    updatedAt?: Date;
+    private deletedAtVO: SoftDeleteVO;
+    createdAt: Date;
+    updatedAt: Date;
 
     constructor(props: CategoryProps) {
         this.id = props.id;
@@ -19,11 +18,11 @@ export class CategoryEntity {
         this.slug = new Slug(props.slug).value;
         this.image = new ImageUrlVO(props.image).value;
         this.description = props.description;
-        this.active = props.active ?? true;
         this.sortOrder = props.sortOrder ?? 0;
-        this.deletedAt = props.deletedAt;
-        this.createdAt = props.createdAt;
-        this.updatedAt = props.updatedAt;
+        this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
+        const now = new Date();
+        this.createdAt = props.createdAt ?? now;
+        this.updatedAt = props.updatedAt ?? now;
     }
 
     static create(props: CategoryProps): CategoryEntity {
@@ -35,17 +34,29 @@ export class CategoryEntity {
         if (props.slug) this.slug = new Slug(props.slug).value;
         if (props.image) this.image = new ImageUrlVO(props.image).value;
         if (props.description !== undefined) this.description = props.description;
-        if (props.active !== undefined) this.active = props.active;
+        if (props.active !== undefined) {
+            if (props.active && this.deletedAtVO.isDeleted()) this.restore();
+            if (!props.active && !this.deletedAtVO.isDeleted()) this.delete();
+        }
         if (props.sortOrder !== undefined) this.sortOrder = props.sortOrder;
+        this.updatedAt = new Date();
     }
 
     delete(): void {
-        this.active = false;
-        this.deletedAt = new Date();
+        this.deletedAtVO = this.deletedAtVO.delete();
+        this.updatedAt = new Date();
     }
 
     restore(): void {
-        this.active = true;
-        this.deletedAt = null;
+        this.deletedAtVO = this.deletedAtVO.restore();
+        this.updatedAt = new Date();
+    }
+
+    get active(): boolean {
+        return !this.deletedAtVO.isDeleted();
+    }
+
+    get deletedAt(): Date | undefined {
+        return this.deletedAtVO.value;
     }
 }

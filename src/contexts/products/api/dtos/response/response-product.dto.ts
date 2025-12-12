@@ -1,4 +1,4 @@
-export class ProductResponseDto {
+export class ResponseProductDto {
     readonly id: number;
     readonly title: string;
     readonly slug: string;

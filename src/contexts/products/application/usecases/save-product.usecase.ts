@@ -23,6 +23,9 @@ export class SaveProductUsecase {
             if (payload.images !== undefined) existing.replaceImages(payload.images);
             if (payload.stock !== undefined) existing.stock.set(payload.stock);
 
+            // actualizar timestamp de modificación
+            existing.updatedAt = new Date();
+
             if (payload.active !== undefined) {
                 if (payload.active && !existing.active) existing.restore();
                 if (!payload.active && existing.active) existing.remove();

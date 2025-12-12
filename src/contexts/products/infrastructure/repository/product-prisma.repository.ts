@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { IProductRepository } from '../../application/ports/product.repository';
-import { ProductReadOnlyPort } from 'src/contexts/shared/ports/product.readonly.repository';
 import { ProductEntity } from '../../domain/entity';
-import { ProductReadDto } from 'src/contexts/shared/dtos/product.read.dto';
 import ProductPrismaMapper from '../mappers/ProductPrismaMapper';
 import { buildFindManyArgs } from '../filter/product.filter';
 import { StockInsufficientError } from '../../domain/errors/stock.errors';
 
 @Injectable()
-//Este repo esta implementando 2 contratos : el contrato completo de escritura/lectura del dominio (IProductRepository) y el contrato ligero para consumo cross-context (ProductReadOnlyPort). Eso evita duplicar lógica de acceso a BD mientras mantiene separados los contratos (puertos).
+// Repositorio Prisma para escritura/operaciones completas sobre `Product`.
+// Nota: el contrato ligero de solo-lectura está implementado en `ProductPrismaReadRepository`.
 
 export class ProductPrismaWriteRepository implements IProductRepository {
     constructor(private readonly prisma: PrismaService) { }
@@ -38,12 +37,12 @@ export class ProductPrismaWriteRepository implements IProductRepository {
             await this.prisma.product.delete({ where: { id } });
             return;
         }
-        // soft delete — set active false
-        await this.prisma.product.update({ where: { id }, data: { active: false } });
+        // soft delete — set active false and mark deletedAt
+        await this.prisma.product.update({ where: { id }, data: { active: false, deletedAt: new Date(), updatedAt: new Date() } });
     }
 
     async restoreById(id: number): Promise<ProductEntity> {
-        const updated = await this.prisma.product.update({ where: { id }, data: { active: true } });
+        const updated = await this.prisma.product.update({ where: { id }, data: { active: true, deletedAt: null, updatedAt: new Date() } });
         const entity = ProductPrismaMapper.toDomain(updated);
         if (!entity) throw new Error('Failed to map restored product');
         return entity;
@@ -83,10 +82,14 @@ export class ProductPrismaWriteRepository implements IProductRepository {
         return ProductPrismaMapper.toDomain(found);
     }
 
-    async findAll(params?: { page?: number; limit?: number }): Promise<ProductEntity[]> {
+    async findAll(params?: { page?: number; limit?: number }): Promise<{ products: ProductEntity[]; total: number }> {
         const args = buildFindManyArgs(params);
-        const rows = await this.prisma.product.findMany(args);
-        return rows.map(ProductPrismaMapper.toDomain).filter((p): p is ProductEntity => p !== null);
+        const [rows, total] = await Promise.all([
+            this.prisma.product.findMany(args),
+            this.prisma.product.count({ where: args.where })
+        ]);
+        const products = rows.map(ProductPrismaMapper.toDomain).filter((p): p is ProductEntity => p !== null);
+        return { products, total };
     }
 
     async findLowStock(threshold: number): Promise<ProductEntity[]> {
@@ -94,9 +97,17 @@ export class ProductPrismaWriteRepository implements IProductRepository {
         return rows.map(ProductPrismaMapper.toDomain).filter((p): p is ProductEntity => p !== null);
     }
 
-    async searchByName(name: string): Promise<ProductEntity[]> {
-        const rows = await this.prisma.product.findMany({ where: { title: { contains: name, mode: 'insensitive' } }, take: 50 });
-        return rows.map(ProductPrismaMapper.toDomain).filter((p): p is ProductEntity => p !== null);
+    async searchByName(term: string, params?: { page?: number; limit?: number }): Promise<{ products: ProductEntity[]; total: number }> {
+        // Búsqueda amplia: title OR description OR slug
+        const args = buildFindManyArgs({ ...params, search: term });
+
+        const [rows, total] = await Promise.all([
+            this.prisma.product.findMany(args),
+            this.prisma.product.count({ where: args.where }),
+        ]);
+
+        const products = rows.map(ProductPrismaMapper.toDomain).filter((p): p is ProductEntity => p !== null);
+        return { products, total };
     }
 
 

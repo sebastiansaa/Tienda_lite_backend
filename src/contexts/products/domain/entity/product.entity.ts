@@ -6,8 +6,8 @@ import {
 } from "../errors";
 
 import { ProductProps } from "../interfaces/productProp";
-import { Slug } from "../../../shared/v-o";
-import { Price, Title } from "../v-o";
+import { Slug, SoftDeleteVO } from "../../../shared/v-o";
+import { Price, Title, ImagesVO } from "../v-o";
 import { StockEntity } from "./stock.entity";
 
 export class ProductEntity {
@@ -17,8 +17,9 @@ export class ProductEntity {
     price: number;
     description: string;
     stock: StockEntity; // delega a StockEntity
-    active: boolean;
-    images: string[];
+    private deletedAt: SoftDeleteVO;
+    private imagesVO: ImagesVO;
+    private deletedAtVO: SoftDeleteVO;
     categoryId: number;
     createdAt: Date;
     updatedAt: Date;
@@ -36,8 +37,8 @@ export class ProductEntity {
         this.id = props.id;
         this.description = props.description;
         this.stock = new StockEntity(props.stock); // delega a StockEntity
-        this.active = props.active;
-        this.images = props.images;
+        this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
+        this.imagesVO = new ImagesVO(props.images);
         this.categoryId = props.categoryId;
         this.createdAt = props.createdAt;
         this.updatedAt = props.updatedAt;
@@ -49,12 +50,12 @@ export class ProductEntity {
     remove(): void {
         if (!this.active) throw new DesactiveProductError();
         if (!this.stock.isEmpty()) throw new Error("No puedes eliminar un producto con stock");
-        this.active = false;
+        this.deletedAtVO = this.deletedAtVO.delete();
     }
 
     restore(): void {
         if (this.active) throw new ActiveProductError();
-        this.active = true;
+        this.deletedAtVO = this.deletedAtVO.restore();
     }
 
     canBePurchased(): boolean {
@@ -83,31 +84,37 @@ export class ProductEntity {
 
     // --- Manejo de imágenes ---
     addImage(url: string): void {
-        if (!url || typeof url !== "string") throw new InvalidImageUrlError();
-        let isValid = false;
-        try {
-            const parsed = new URL(url);
-            isValid = /^https?:$/.test(parsed.protocol);
-        } catch {
-            isValid = false;
-        }
-        if (!isValid) throw new InvalidImageUrlError();
-        this.images.push(url);
+        const next = this.imagesVO.add(url);
+        this.imagesVO = next;
     }
 
     removeImage(url: string): void {
-        const idx = this.images.indexOf(url);
-        if (idx === -1) throw new ImageNotFoundError();
-        this.images.splice(idx, 1);
+        try {
+            this.imagesVO = this.imagesVO.remove(url);
+        } catch {
+            throw new ImageNotFoundError();
+        }
     }
 
     replaceImages(urls: string[]): void {
-        this.images = [];
-        urls.forEach((url) => this.addImage(url));
+        this.imagesVO = this.imagesVO.replace(urls);
     }
 
     // --- Helpers privados ---
     private markAsInactive(): void {
-        this.active = false;
+        this.deletedAtVO = this.deletedAtVO.delete();
+    }
+
+    // --- Getters expuestos ---
+    get active(): boolean {
+        return !this.deletedAtVO.isDeleted();
+    }
+
+    get deletedAt(): Date | undefined {
+        return this.deletedAtVO.value;
+    }
+
+    get images(): string[] {
+        return this.imagesVO.values;
     }
 }

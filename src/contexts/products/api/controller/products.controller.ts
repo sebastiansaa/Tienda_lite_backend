@@ -1,12 +1,8 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-// DTOs
-import { SaveProductRequestDto } from '../dtos/request/save-product.request.dto';
-import { UpdateStockRequestDto } from '../dtos/request/update-stock.request.dto';
-import { ListProductsRequestDto } from '../dtos/request/list-products.request.dto';
-import { SearchProductsRequestDto } from '../dtos/request/search-products.request.dto';
-import { ProductResponseDto } from '../dtos/response/product.response.dto';
+import { SaveProductRequestDto, UpdateStockRequestDto, SearchProductsRequestDto, ListProductsRequestDto } from '../dtos/request';
+import { ListResponseProductDto, ResponseProductDto } from '../dtos/response';
 
 // Mapper
 import { ProductApiMapper } from '../mappers/product-api.mapper';
@@ -39,8 +35,8 @@ export class ProductsController {
 
   @Post()
   @ApiOperation({ summary: 'Create or update a product' })
-  @ApiResponse({ status: 201, description: 'Product saved successfully', type: ProductResponseDto })
-  async save(@Body() dto: SaveProductRequestDto): Promise<ProductResponseDto> {
+  @ApiResponse({ status: 201, description: 'Product saved successfully', type: ResponseProductDto })
+  async save(@Body() dto: SaveProductRequestDto): Promise<ResponseProductDto> {
     const command = ProductApiMapper.toSaveProductCommand(dto);
     const entity = await this.saveProductUsecase.execute(command);
     return ProductApiMapper.toResponseDto(entity);
@@ -48,26 +44,32 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({ summary: 'List products with pagination' })
-  @ApiResponse({ status: 200, description: 'Products retrieved successfully', type: [ProductResponseDto] })
-  async list(@Query() dto: ListProductsRequestDto): Promise<ProductResponseDto[]> {
+  @ApiResponse({ status: 200, description: 'Products retrieved successfully', type: ListResponseProductDto })
+  async list(@Query() dto: ListProductsRequestDto): Promise<ListResponseProductDto> {
     const query = ProductApiMapper.toListProductsQuery(dto);
-    const entities = await this.listProductsUsecase.execute(query);
-    return ProductApiMapper.toResponseDtoList(entities);
+    const { products, total } = await this.listProductsUsecase.execute(query);
+    return {
+      products: ProductApiMapper.toResponseDtoList(products),
+      total,
+    };
   }
 
   @Get('search')
   @ApiOperation({ summary: 'Search products by name' })
-  @ApiResponse({ status: 200, description: 'Search results', type: [ProductResponseDto] })
-  async search(@Query() dto: SearchProductsRequestDto): Promise<ProductResponseDto[]> {
+  @ApiResponse({ status: 200, description: 'Search results', type: ListResponseProductDto })
+  async search(@Query() dto: SearchProductsRequestDto): Promise<ListResponseProductDto> {
     const query = ProductApiMapper.toSearchProductsQuery(dto);
-    const entities = await this.searchProductsUsecase.execute(query);
-    return ProductApiMapper.toResponseDtoList(entities);
+    const { products, total } = await this.searchProductsUsecase.execute(query);
+    return {
+      products: ProductApiMapper.toResponseDtoList(products),
+      total,
+    };
   }
 
   @Get('low-stock')
   @ApiOperation({ summary: 'Find products with low stock' })
-  @ApiResponse({ status: 200, description: 'Low stock products', type: [ProductResponseDto] })
-  async lowStock(@Query('threshold', ParseIntPipe) threshold: number = 5): Promise<ProductResponseDto[]> {
+  @ApiResponse({ status: 200, description: 'Low stock products', type: [ResponseProductDto] })
+  async lowStock(@Query('threshold', ParseIntPipe) threshold: number = 5): Promise<ResponseProductDto[]> {
     const query = ProductApiMapper.toFindLowStockQuery(threshold);
     const entities = await this.findLowStockUsecase.execute(query);
     return ProductApiMapper.toResponseDtoList(entities);
@@ -75,9 +77,9 @@ export class ProductsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Find product by ID' })
-  @ApiResponse({ status: 200, description: 'Product found', type: ProductResponseDto })
+  @ApiResponse({ status: 200, description: 'Product found', type: ResponseProductDto })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async findById(@Param('id', ParseIntPipe) id: number): Promise<ProductResponseDto | null> {
+  async findById(@Param('id', ParseIntPipe) id: number): Promise<ResponseProductDto | null> {
     const query = ProductApiMapper.toFindProductByIdQuery(id);
     const entity = await this.findProductByIdUsecase.execute(query);
     return entity ? ProductApiMapper.toResponseDto(entity) : null;
@@ -85,11 +87,11 @@ export class ProductsController {
 
   @Put(':id/stock')
   @ApiOperation({ summary: 'Update product stock' })
-  @ApiResponse({ status: 200, description: 'Stock updated successfully', type: ProductResponseDto })
+  @ApiResponse({ status: 200, description: 'Stock updated successfully', type: ResponseProductDto })
   async updateStock(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateStockRequestDto,
-  ): Promise<ProductResponseDto> {
+  ): Promise<ResponseProductDto> {
     const command = ProductApiMapper.toUpdateStockCommand(id, dto.quantity);
     const entity = await this.updateStockUsecase.execute(command);
     return ProductApiMapper.toResponseDto(entity);
@@ -110,8 +112,8 @@ export class ProductsController {
 
   @Post(':id/restore')
   @ApiOperation({ summary: 'Restore a deleted product' })
-  @ApiResponse({ status: 200, description: 'Product restored successfully', type: ProductResponseDto })
-  async restore(@Param('id', ParseIntPipe) id: number): Promise<ProductResponseDto> {
+  @ApiResponse({ status: 200, description: 'Product restored successfully', type: ResponseProductDto })
+  async restore(@Param('id', ParseIntPipe) id: number): Promise<ResponseProductDto> {
     const command = ProductApiMapper.toRestoreProductCommand(id);
     const entity = await this.restoreProductUsecase.execute(command);
     return ProductApiMapper.toResponseDto(entity);

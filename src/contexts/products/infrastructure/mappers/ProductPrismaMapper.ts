@@ -22,6 +22,7 @@ export class ProductPrismaMapper {
             categoryId: row.categoryId,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
+            deletedAt: (row as any).deletedAt ?? undefined,
         });
     }
 

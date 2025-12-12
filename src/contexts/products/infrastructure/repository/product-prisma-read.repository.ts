@@ -16,15 +16,24 @@ export class ProductPrismaReadRepository implements ProductReadOnlyPort {
         return ProductPrismaMapper.toReadDto(row);
     }
 
-    async findAllDto(params?: { page?: number; limit?: number }): Promise<ProductReadDto[]> {
+    async findAllDto(params?: { page?: number; limit?: number }): Promise<{ products: ProductReadDto[]; total: number }> {
         const args = buildFindManyArgs(params);
-        const rows = await this.prisma.product.findMany(args);
-        return rows.map(r => ProductPrismaMapper.toReadDto(r)).filter((d): d is ProductReadDto => d !== null);
+        const [rows, total] = await Promise.all([
+            this.prisma.product.findMany(args),
+            this.prisma.product.count({ where: args.where }),
+        ]);
+        const products = rows.map(r => ProductPrismaMapper.toReadDto(r)).filter((d): d is ProductReadDto => d !== null);
+        return { products, total };
     }
 
-    async searchByNameDto(name: string): Promise<ProductReadDto[]> {
-        const rows = await this.prisma.product.findMany({ where: { title: { contains: name, mode: 'insensitive' } }, take: 50 });
-        return rows.map(r => ProductPrismaMapper.toReadDto(r)).filter((d): d is ProductReadDto => d !== null);
+    async searchByNameDto(name: string, params?: { page?: number; limit?: number }): Promise<{ products: ProductReadDto[]; total: number }> {
+        const args = buildFindManyArgs({ ...params, search: name });
+        const [rows, total] = await Promise.all([
+            this.prisma.product.findMany(args),
+            this.prisma.product.count({ where: args.where }),
+        ]);
+        const products = rows.map(r => ProductPrismaMapper.toReadDto(r)).filter((d): d is ProductReadDto => d !== null);
+        return { products, total };
     }
 }
 

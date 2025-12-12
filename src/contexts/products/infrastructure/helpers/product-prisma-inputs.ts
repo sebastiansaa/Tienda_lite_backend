@@ -19,6 +19,7 @@ export function buildProductCreateInput(entity: ProductEntity): Prisma.ProductUn
         categoryId: entity.categoryId,
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
+        deletedAt: entity.deletedAt ?? null,
     };
 }
 
@@ -36,6 +37,8 @@ export function buildProductUpdateInput(entity: ProductEntity): Prisma.ProductUn
         active: entity.active,
         images: entity.images,
         categoryId: entity.categoryId,
+        deletedAt: entity.deletedAt ?? null,
+        updatedAt: entity.updatedAt,
     };
 }
 
