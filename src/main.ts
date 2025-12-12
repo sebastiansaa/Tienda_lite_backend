@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import * as morgan from 'morgan';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
-import { DomainExceptionFilter } from './common/filters/domain-exception.filter';
+import { DomainExceptionFilter } from './contexts/shared/filters/domain-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {

@@ -14,10 +14,29 @@ datasource db {
 }
 
 model User {
-  id    String @id
-  email String @unique
-  name  String?
-  // relation fields can be added later
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  roles        String[]       @default(["user"])
+  name         String?
+  phone        String?
+  status       String         @default("ACTIVE")
+  preferences  Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  addresses    Address[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Product {
@@ -31,6 +50,8 @@ model Product {
   images      String[]
   categoryId  Int
   category    Category  @relation(fields: [categoryId], references: [id]) 
+  inventory   InventoryItem?
+  movements   StockMovement[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -51,14 +72,77 @@ model Category {
 }
 
 model Order {
-  id     String @id
-  userId String
-  items  Json
-  total  Float
+  id          String   @id
+  userId      String
+  status      String   @default("PENDING")
+  items       Json
+  totalAmount Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  payments    Payment[]
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId           String
+  amount           Decimal  @db.Decimal(10, 2)
+  status           String
+  externalPaymentId String?
+  clientSecret     String?
+  provider         String   @default("FAKE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([userId])
 }
 
 model Cart {
   id     String @id
   userId String @unique
   items  Json
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street    String
+  city      String
+  country   String
+  zipCode   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model InventoryItem {
+  id        String          @id @default(uuid())
+  productId Int             @unique
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  onHand    Int             @default(0)
+  reserved  Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  movements StockMovement[]
+}
+
+model StockMovement {
+  id             String        @id @default(uuid())
+  inventoryItemId String
+  productId       Int
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type            String
+  reason          String
+  quantity        Int
+  onHandAfter     Int
+  reservedAfter   Int
+  createdAt       DateTime     @default(now())
+
+  @@index([productId])
+  @@index([inventoryItemId])
 }

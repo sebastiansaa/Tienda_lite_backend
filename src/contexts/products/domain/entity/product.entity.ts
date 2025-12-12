@@ -17,7 +17,6 @@ export class ProductEntity {
     price: number;
     description: string;
     stock: StockEntity; // delega a StockEntity
-    private deletedAt: SoftDeleteVO;
     private imagesVO: ImagesVO;
     private deletedAtVO: SoftDeleteVO;
     categoryId: number;

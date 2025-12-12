@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { ICartRepository } from '../../domain/interfaces/cart.repository';
+import { CartRepositoryPort } from '../../application/ports/cart.repository';
 import { CartEntity } from '../../domain/entity/cart.entity';
-import { prismaToCartEntity } from '../mappers/prisma-to-entity.mapper';
+import { cartToPrisma, prismaToCartEntity } from '../mappers/prisma-to-entity.mapper';
 
 @Injectable()
-export class CartPrismaRepository implements ICartRepository {
+export class CartPrismaRepository implements CartRepositoryPort {
     constructor(private readonly prisma: PrismaService) { }
 
     async findByUserId(userId: string): Promise<CartEntity | null> {
@@ -14,7 +14,16 @@ export class CartPrismaRepository implements ICartRepository {
     }
 
     async save(cart: CartEntity): Promise<CartEntity> {
-        const upserted = await this.prisma.cart.upsert({ where: { userId: cart.userId }, create: { id: cart.id, userId: cart.userId, items: cart.items as any }, update: { items: cart.items as any } });
-        return prismaToCartEntity(upserted);
+        const data = cartToPrisma(cart);
+        const upserted = await this.prisma.cart.upsert({
+            where: { userId: data.userId },
+            create: data,
+            update: { items: data.items },
+        });
+        return prismaToCartEntity(upserted)!;
+    }
+
+    async clear(userId: string): Promise<void> {
+        await this.prisma.cart.deleteMany({ where: { userId } });
     }
 }

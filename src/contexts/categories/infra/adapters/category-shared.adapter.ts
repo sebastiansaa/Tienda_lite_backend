@@ -2,7 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { CategoryRepositoryPort } from "../../../shared/ports/category.repository";
 import { CategoryReadDto } from "../../../shared/dtos/category.dto";
 import type { ICategoryRepository } from "../../application/ports/category.repository";
-import { CATEGORY_REPOSITORY } from "../../application/constants";
+import { CATEGORY_REPOSITORY } from "../../constants";
 
 @Injectable()
 export class CategorySharedAdapter implements CategoryRepositoryPort {

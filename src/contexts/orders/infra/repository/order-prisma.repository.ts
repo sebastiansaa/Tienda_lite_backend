@@ -1,20 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { IOrderRepository } from '../../domain/interfaces/order.repository';
+import OrderRepositoryPort from '../../application/ports/order.repository';
 import { OrderEntity } from '../../domain/entity/order.entity';
-import { prismaToOrderEntity } from '../mappers/prisma-to-entity.mapper';
+import { orderDomainToPrisma, orderPrismaToDomain } from '../mappers/order-prisma.mapper';
 
 @Injectable()
-export class OrderPrismaRepository implements IOrderRepository {
+export class PrismaOrderRepository implements OrderRepositoryPort {
     constructor(private readonly prisma: PrismaService) { }
 
-    async create(order: OrderEntity): Promise<OrderEntity> {
-        const created = await this.prisma.order.create({ data: { id: order.id, userId: order.userId, items: order.items as any, total: order.total } });
-        return prismaToOrderEntity(created);
+    async findById(id: string): Promise<OrderEntity | null> {
+        const record = await this.prisma.order.findUnique({ where: { id } });
+        return orderPrismaToDomain(record);
     }
 
-    async findById(id: string): Promise<OrderEntity | null> {
-        const found = await this.prisma.order.findUnique({ where: { id } });
-        return prismaToOrderEntity(found);
+    async listByUser(userId: string): Promise<OrderEntity[]> {
+        const records = await this.prisma.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } as any });
+        return records.map((r) => orderPrismaToDomain(r)!).filter(Boolean);
+    }
+
+    async save(order: OrderEntity): Promise<OrderEntity> {
+        const data = orderDomainToPrisma(order);
+        const upserted = await this.prisma.order.upsert({
+            where: { id: order.id },
+            create: data,
+            update: data,
+        });
+        return orderPrismaToDomain(upserted)!;
     }
 }
+
+export default PrismaOrderRepository;

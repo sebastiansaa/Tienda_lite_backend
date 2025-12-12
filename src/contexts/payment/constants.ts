@@ -1,0 +1,10 @@
+// Tokens de inyección para Payment
+export const PAYMENT_REPOSITORY = 'PAYMENT_REPOSITORY';
+export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';
+export const PAYMENT_ORDER_READONLY = 'PAYMENT_ORDER_READONLY';
+
+export default {
+    PAYMENT_REPOSITORY,
+    PAYMENT_PROVIDER,
+    PAYMENT_ORDER_READONLY,
+};

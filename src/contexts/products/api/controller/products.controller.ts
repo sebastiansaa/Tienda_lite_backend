@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { SaveProductRequestDto, UpdateStockRequestDto, SearchProductsRequestDto, ListProductsRequestDto } from '../dtos/request';
@@ -6,6 +6,9 @@ import { ListResponseProductDto, ResponseProductDto } from '../dtos/response';
 
 // Mapper
 import { ProductApiMapper } from '../mappers/product-api.mapper';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
+import { Roles } from '../../../auth/api/decorators/roles.decorator';
 
 // Usecases
 import {
@@ -34,6 +37,8 @@ export class ProductsController {
   ) { }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Create or update a product' })
   @ApiResponse({ status: 201, description: 'Product saved successfully', type: ResponseProductDto })
   async save(@Body() dto: SaveProductRequestDto): Promise<ResponseProductDto> {
@@ -67,6 +72,8 @@ export class ProductsController {
   }
 
   @Get('low-stock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Find products with low stock' })
   @ApiResponse({ status: 200, description: 'Low stock products', type: [ResponseProductDto] })
   async lowStock(@Query('threshold', ParseIntPipe) threshold: number = 5): Promise<ResponseProductDto[]> {
@@ -86,6 +93,8 @@ export class ProductsController {
   }
 
   @Put(':id/stock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Update product stock' })
   @ApiResponse({ status: 200, description: 'Stock updated successfully', type: ResponseProductDto })
   async updateStock(
@@ -98,6 +107,8 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete product (soft delete by default)' })
   @ApiResponse({ status: 204, description: 'Product deleted successfully' })
@@ -111,6 +122,8 @@ export class ProductsController {
   }
 
   @Post(':id/restore')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Restore a deleted product' })
   @ApiResponse({ status: 200, description: 'Product restored successfully', type: ResponseProductDto })
   async restore(@Param('id', ParseIntPipe) id: number): Promise<ResponseProductDto> {
