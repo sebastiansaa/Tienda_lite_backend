@@ -14,7 +14,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
     }
 
     async listByUser(userId: string): Promise<OrderEntity[]> {
-        const records = await this.prisma.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } as any });
+        const records = await this.prisma.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
         return records.map((r) => orderPrismaToDomain(r)!).filter(Boolean);
     }
 

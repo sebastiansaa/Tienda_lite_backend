@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
+import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
 import { Roles } from '../../../auth/api/decorators/roles.decorator';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
 import { AddressDto, UpdateUserProfileDto, UserResponseDto } from '../dtos';

@@ -1,6 +1,14 @@
 import { Prisma, User as UserPrisma, Address as AddressPrisma } from '@prisma/client';
 import { UserEntity } from '../../domain/entity/user.entity';
 import { AddressEntity } from '../../domain/entity/address.entity';
+import { UserStatus } from '../../domain/v-o/user-status.vo';
+
+const allowedStatuses: UserStatus[] = ['ACTIVE', 'SUSPENDED', 'DELETED'];
+
+const normalizeStatus = (status?: string | null): UserStatus => {
+    if (status && allowedStatuses.includes(status as UserStatus)) return status as UserStatus;
+    return 'ACTIVE';
+};
 
 export const prismaToUser = (user: UserPrisma, addresses: AddressPrisma[] = []): UserEntity => {
     return new UserEntity({
@@ -8,7 +16,7 @@ export const prismaToUser = (user: UserPrisma, addresses: AddressPrisma[] = []):
         email: user.email,
         name: user.name ?? 'User',
         phone: user.phone ?? null,
-        status: (user.status as any) ?? 'ACTIVE',
+        status: normalizeStatus(user.status),
         preferences: user.preferences as Record<string, unknown> | null,
         addresses: addresses.map((a) => ({
             id: a.id,

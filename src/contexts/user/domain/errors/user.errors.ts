@@ -18,3 +18,10 @@ export class InvalidAddressError extends Error {
         this.name = 'InvalidAddressError';
     }
 }
+
+export class AddressNotFoundError extends Error {
+    constructor(message = 'Address not found') {
+        super(message);
+        this.name = 'AddressNotFoundError';
+    }
+}

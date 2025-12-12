@@ -1,6 +1,7 @@
 import type { InventoryItem, StockMovement, Prisma } from '@prisma/client';
 import { InventoryItemEntity } from '../../domain/entity/inventory-item.entity';
 import { StockMovementEntity } from '../../domain/entity/stock-movement.entity';
+import { MovementType } from '../../domain/v-o/movement-type.vo';
 
 export const prismaToInventoryItem = (record: InventoryItem | null): InventoryItemEntity | null => {
     if (!record) return null;
@@ -27,7 +28,7 @@ export const prismaToMovement = (record: StockMovement): StockMovementEntity => 
     id: record.id,
     inventoryItemId: record.inventoryItemId,
     productId: record.productId,
-    type: record.type as any,
+    type: record.type as MovementType,
     reason: record.reason,
     quantity: record.quantity,
     onHandAfter: record.onHandAfter,

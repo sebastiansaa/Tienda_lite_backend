@@ -3,7 +3,7 @@ import { CategoryEntity } from "../../domain/entity/category.entity";
 
 export class CategoryMapper {
     static toDomain(raw: PrismaCategory): CategoryEntity {
-        return new CategoryEntity({
+        return CategoryEntity.rehydrate({
             id: raw.id,
             title: raw.title,
             slug: raw.slug,

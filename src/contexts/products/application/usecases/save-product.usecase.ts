@@ -21,10 +21,7 @@ export class SaveProductUsecase {
             if (payload.slug !== undefined) existing.changeSlug(payload.slug);
             if (payload.description !== undefined) existing.changeDescription(payload.description);
             if (payload.images !== undefined) existing.replaceImages(payload.images);
-            if (payload.stock !== undefined) existing.stock.set(payload.stock);
-
-            // actualizar timestamp de modificación
-            existing.updatedAt = new Date();
+            if (payload.stock !== undefined) existing.setStock(payload.stock);
 
             if (payload.active !== undefined) {
                 if (payload.active && !existing.active) existing.restore();
@@ -46,9 +43,8 @@ export class SaveProductUsecase {
             await this.categoryService.ensureCategoryExists(payload.categoryId);
         }
 
-        const now = new Date();
-        const props: ProductProps = {
-            id: payload.id, // allow undefined, DB will generate on create
+        const entity = ProductEntity.create({
+            id: payload.id,
             title: payload.title as string,
             slug: payload.slug as string,
             price: payload.price as number,
@@ -57,11 +53,9 @@ export class SaveProductUsecase {
             active: payload.active ?? true,
             images: payload.images as string[],
             categoryId: payload.categoryId as number,
-            createdAt: now,
-            updatedAt: now,
-        };
+            deletedAt: payload.deletedAt ?? undefined,
+        });
 
-        const entity = new ProductEntity(props);
         return this.repo.save(entity);
     }
 }

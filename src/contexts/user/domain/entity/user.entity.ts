@@ -6,7 +6,7 @@ import UserStatusVO, { UserStatus } from '../v-o/user-status.vo';
 import CreatedAtVO from '../v-o/created-at.vo';
 import UpdatedAtVO from '../v-o/updated-at.vo';
 import AddressEntity, { AddressProps } from './address.entity';
-import { InvalidUserStatusError } from '../errors/user.errors';
+import { AddressNotFoundError, InvalidUserStatusError } from '../errors/user.errors';
 
 export interface UserProps {
     id: string;
@@ -69,7 +69,7 @@ export class UserEntity {
 
     updateAddress(addressId: string, data: Partial<AddressProps>): AddressEntity {
         const addr = this.addressesInternal.find((a) => a.id === addressId);
-        if (!addr) throw new InvalidUserStatusError('Address not found');
+        if (!addr) throw new AddressNotFoundError('Address not found');
         addr.update(data);
         this.touch();
         return addr;
@@ -77,7 +77,7 @@ export class UserEntity {
 
     deleteAddress(addressId: string): void {
         const exists = this.addressesInternal.some((a) => a.id === addressId);
-        if (!exists) throw new InvalidUserStatusError('Address not found');
+        if (!exists) throw new AddressNotFoundError('Address not found');
         this.addressesInternal = this.addressesInternal.filter((a) => a.id !== addressId);
         this.touch();
     }

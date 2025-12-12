@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import ProductAdminReadOnlyPort, { AdminProductSummary } from '../../application/ports/product-admin.port';
-import { decimalToNumber } from '../../../products/infrastructure/helpers/decimal.helper';
+import { decimalToNumber } from '../../../products/infra/helpers/decimal.helper';
 
 @Injectable()
 export class AdminProductPrismaAdapter implements ProductAdminReadOnlyPort {

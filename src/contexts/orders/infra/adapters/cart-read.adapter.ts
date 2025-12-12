@@ -11,11 +11,17 @@ export class CartReadOnlyAdapter implements CartReadOnlyPort {
         if (!cart) return [];
         if (!Array.isArray(cart.items)) return [];
 
-        return (cart.items as any[]).map((raw) => ({
-            productId: Number(raw.productId),
-            quantity: Number(raw.quantity),
-            price: raw.price === undefined || raw.price === null ? undefined : Number(raw.price),
-        }));
+        return cart.items.map((raw) => {
+            if (!raw || typeof raw !== 'object') {
+                return { productId: 0, quantity: 0, price: undefined };
+            }
+            const obj = raw as Record<string, unknown>;
+            return {
+                productId: Number(obj.productId),
+                quantity: Number(obj.quantity),
+                price: obj.price === undefined || obj.price === null ? undefined : Number(obj.price),
+            };
+        });
     }
 }
 

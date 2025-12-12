@@ -2,12 +2,14 @@ import type { Prisma, Cart } from '@prisma/client';
 import { CartEntity } from '../../domain/entity/cart.entity';
 import type { CartItemProps } from '../../domain/entity/cart-item.entity';
 
-const mapItemsFromJson = (items: unknown): CartItemProps[] => {
+const mapItemsFromJson = (items: Prisma.JsonValue): CartItemProps[] => {
     if (!Array.isArray(items)) return [];
     return items.map((raw) => {
-        const productId = Number((raw as any)?.productId);
-        const quantity = Number((raw as any)?.quantity);
-        const priceValue = (raw as any)?.price;
+        if (!raw || typeof raw !== 'object') return { productId: 0, quantity: 0, price: undefined };
+        const obj = raw as Record<string, unknown>;
+        const productId = Number(obj.productId);
+        const quantity = Number(obj.quantity);
+        const priceValue = obj.price;
         const price = priceValue === undefined || priceValue === null ? undefined : Number(priceValue);
         return { productId, quantity, price };
     });
@@ -29,5 +31,5 @@ export const cartToPrisma = (cart: CartEntity): { id: string; userId: string; it
         productId: item.productId,
         quantity: item.quantity,
         price: item.price,
-    })),
+    })) as Prisma.InputJsonValue,
 });

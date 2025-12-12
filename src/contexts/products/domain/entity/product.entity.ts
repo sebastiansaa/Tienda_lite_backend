@@ -1,95 +1,107 @@
 import {
-    EmptyTitleError, ImagesArrayNullError,
-    ActiveProductError, DesactiveProductError,
-    InvalidCategoryError, InvalidProductTitleError,
-    InvalidImageUrlError, ImageNotFoundError
-} from "../errors";
-
-import { ProductProps } from "../interfaces/productProp";
-import { Slug, SoftDeleteVO } from "../../../shared/v-o";
-import { Price, Title, ImagesVO } from "../v-o";
-import { StockEntity } from "./stock.entity";
+    ImagesArrayNullError,
+    ActiveProductError,
+    DesactiveProductError,
+    InvalidCategoryError,
+    ImageNotFoundError,
+} from '../errors';
+import { ProductProps } from '../interfaces/productProp';
+import { Slug, SoftDeleteVO } from '../../../shared/v-o';
+import { Price, Title, ImagesVO } from '../v-o';
+import { StockEntity } from './stock.entity';
 
 export class ProductEntity {
-    id?: number;
-    title: string;
-    slug: string;
-    price: number;
-    description: string;
-    stock: StockEntity; // delega a StockEntity
+    private readonly idValue?: number;
+    private titleVO: Title;
+    private slugVO: Slug;
+    private priceVO: Price;
+    private descriptionValue: string;
+    private stockEntity: StockEntity;
     private imagesVO: ImagesVO;
     private deletedAtVO: SoftDeleteVO;
-    categoryId: number;
-    createdAt: Date;
-    updatedAt: Date;
+    private categoryIdValue: number;
+    private createdAtValue: Date;
+    private updatedAtValue: Date;
 
-    constructor(props: ProductProps) {
-        const titleVO = new Title(props.title);
-        this.title = titleVO.value;
-
-        this.slug = new Slug(props.slug).value;
-        this.price = new Price(props.price).value;
-
+    private constructor(props: ProductProps) {
         if (!props.images || props.images.length === 0) throw new ImagesArrayNullError();
         if (!props.categoryId || props.categoryId <= 0) throw new InvalidCategoryError();
 
-        this.id = props.id;
-        this.description = props.description;
-        this.stock = new StockEntity(props.stock); // delega a StockEntity
+        this.idValue = props.id;
+        this.titleVO = new Title(props.title);
+        this.slugVO = new Slug(props.slug);
+        this.priceVO = new Price(props.price);
+        this.descriptionValue = props.description;
+        this.stockEntity = new StockEntity(props.stock);
         this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
         this.imagesVO = new ImagesVO(props.images);
-        this.categoryId = props.categoryId;
-        this.createdAt = props.createdAt;
-        this.updatedAt = props.updatedAt;
+        this.categoryIdValue = props.categoryId;
+        const now = new Date();
+        this.createdAtValue = props.createdAt ?? now;
+        this.updatedAtValue = props.updatedAt ?? now;
 
-        if (this.stock.isEmpty()) this.markAsInactive();
+        if (this.stockEntity.isEmpty()) this.markAsInactive();
     }
 
-    // --- Métodos de negocio principales ---
+    static create(props: Omit<ProductProps, 'createdAt' | 'updatedAt' | 'deletedAt'> & { deletedAt?: Date | null }): ProductEntity {
+        const now = new Date();
+        return new ProductEntity({
+            ...props,
+            createdAt: now,
+            updatedAt: now,
+        });
+    }
+
+    static rehydrate(props: ProductProps): ProductEntity {
+        return new ProductEntity(props);
+    }
+
     remove(): void {
         if (!this.active) throw new DesactiveProductError();
-        if (!this.stock.isEmpty()) throw new Error("No puedes eliminar un producto con stock");
+        if (!this.stockEntity.isEmpty()) throw new Error('No puedes eliminar un producto con stock');
         this.deletedAtVO = this.deletedAtVO.delete();
+        this.touch();
     }
 
     restore(): void {
         if (this.active) throw new ActiveProductError();
         this.deletedAtVO = this.deletedAtVO.restore();
+        this.touch();
     }
 
     canBePurchased(): boolean {
-        return this.active && !this.stock.isEmpty();
+        return this.active && !this.stockEntity.isEmpty();
     }
 
-    // --- Métodos semánticos con VO ---
     changePrice(newPrice: number | string): void {
-        const priceVO = new Price(newPrice);
-        this.price = priceVO.value;
+        this.priceVO = new Price(newPrice);
+        this.touch();
     }
 
     changeSlug(newSlug: string): void {
-        const slugVO = new Slug(newSlug);
-        this.slug = slugVO.value;
+        this.slugVO = new Slug(newSlug);
+        this.touch();
     }
 
     rename(newTitle: string): void {
-        const titleVO = new Title(newTitle);
-        this.title = titleVO.value;
+        this.titleVO = new Title(newTitle);
+        this.touch();
     }
 
     changeDescription(newDescription: string): void {
-        this.description = newDescription ?? "";
+        this.descriptionValue = newDescription ?? '';
+        this.touch();
     }
 
-    // --- Manejo de imágenes ---
     addImage(url: string): void {
-        const next = this.imagesVO.add(url);
-        this.imagesVO = next;
+        this.imagesVO = this.imagesVO.add(url);
+        this.touch();
     }
 
     removeImage(url: string): void {
         try {
             this.imagesVO = this.imagesVO.remove(url);
+            this.touch();
         } catch {
             throw new ImageNotFoundError();
         }
@@ -97,23 +109,32 @@ export class ProductEntity {
 
     replaceImages(urls: string[]): void {
         this.imagesVO = this.imagesVO.replace(urls);
+        this.touch();
     }
 
-    // --- Helpers privados ---
+    setStock(quantity: number): void {
+        this.stockEntity.set(quantity);
+        this.touch();
+    }
+
     private markAsInactive(): void {
         this.deletedAtVO = this.deletedAtVO.delete();
     }
 
-    // --- Getters expuestos ---
-    get active(): boolean {
-        return !this.deletedAtVO.isDeleted();
+    private touch(): void {
+        this.updatedAtValue = new Date();
     }
 
-    get deletedAt(): Date | undefined {
-        return this.deletedAtVO.value;
-    }
-
-    get images(): string[] {
-        return this.imagesVO.values;
-    }
+    get id(): number | undefined { return this.idValue; }
+    get title(): string { return this.titleVO.value; }
+    get slug(): string { return this.slugVO.value; }
+    get price(): number { return this.priceVO.value; }
+    get description(): string { return this.descriptionValue; }
+    get stock(): StockEntity { return this.stockEntity; }
+    get categoryId(): number { return this.categoryIdValue; }
+    get createdAt(): Date { return this.createdAtValue; }
+    get updatedAt(): Date { return this.updatedAtValue; }
+    get active(): boolean { return !this.deletedAtVO.isDeleted(); }
+    get deletedAt(): Date | undefined { return this.deletedAtVO.value; }
+    get images(): string[] { return this.imagesVO.values; }
 }

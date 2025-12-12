@@ -1,7 +1,7 @@
 import { BadRequestException, Body, ConflictException, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseIntPipe, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import { AddItemDto, UpdateItemDto, CartResponseDto } from '../dtos';
 import CartApiMapper from '../mappers/cart-api.mapper';
 import {

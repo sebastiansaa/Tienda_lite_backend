@@ -9,8 +9,8 @@ import { IProductRepository } from './application/ports/product.repository';
 import { PRODUCT_WRITE, PRODUCT_READONLY } from './constants';
 
 // Infrastructure (implementación del port)
-import { ProductPrismaWriteRepository } from './infrastructure/repository/product-prisma.repository';
-import { ProductPrismaReadRepository } from './infrastructure/repository/product-prisma-read.repository';
+import { ProductPrismaWriteRepository } from './infra/repository/product-prisma.repository';
+import { ProductPrismaReadRepository } from './infra/repository/product-prisma-read.repository';
 import { ProductCategoryService } from './domain/service/product-category.service';
 import { CategoryRepositoryPort } from 'src/contexts/shared/ports/category.repository';
 

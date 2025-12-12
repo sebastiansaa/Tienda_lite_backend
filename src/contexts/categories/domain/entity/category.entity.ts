@@ -2,61 +2,77 @@ import { CategoryProps } from "../interfaces/category.props";
 import { TitleVO, Slug, ImageUrlVO, SoftDeleteVO } from "../../../shared/v-o";
 
 export class CategoryEntity {
-    id?: number;
-    title: string;
-    slug: string;
-    image: string;
-    description?: string;
-    sortOrder: number;
+    private readonly idValue?: number;
+    private titleVO: TitleVO;
+    private slugVO: Slug;
+    private imageVO: ImageUrlVO;
+    private descriptionValue?: string;
+    private sortOrderValue: number;
     private deletedAtVO: SoftDeleteVO;
-    createdAt: Date;
-    updatedAt: Date;
+    private createdAtValue: Date;
+    private updatedAtValue: Date;
 
-    constructor(props: CategoryProps) {
-        this.id = props.id;
-        this.title = new TitleVO(props.title).value;
-        this.slug = new Slug(props.slug).value;
-        this.image = new ImageUrlVO(props.image).value;
-        this.description = props.description;
-        this.sortOrder = props.sortOrder ?? 0;
+    private constructor(props: CategoryProps) {
+        this.idValue = props.id;
+        this.titleVO = new TitleVO(props.title);
+        this.slugVO = new Slug(props.slug);
+        this.imageVO = new ImageUrlVO(props.image);
+        this.descriptionValue = props.description;
+        this.sortOrderValue = props.sortOrder ?? 0;
         this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
         const now = new Date();
-        this.createdAt = props.createdAt ?? now;
-        this.updatedAt = props.updatedAt ?? now;
+        this.createdAtValue = props.createdAt ?? now;
+        this.updatedAtValue = props.updatedAt ?? now;
     }
 
-    static create(props: CategoryProps): CategoryEntity {
+    static create(props: Omit<CategoryProps, 'createdAt' | 'updatedAt' | 'deletedAt'> & { deletedAt?: Date | null }): CategoryEntity {
+        const now = new Date();
+        return new CategoryEntity({
+            ...props,
+            createdAt: now,
+            updatedAt: now,
+        });
+    }
+
+    static rehydrate(props: CategoryProps): CategoryEntity {
         return new CategoryEntity(props);
     }
 
     update(props: Partial<CategoryProps>): void {
-        if (props.title) this.title = new TitleVO(props.title).value;
-        if (props.slug) this.slug = new Slug(props.slug).value;
-        if (props.image) this.image = new ImageUrlVO(props.image).value;
-        if (props.description !== undefined) this.description = props.description;
+        if (props.title !== undefined) this.titleVO = new TitleVO(props.title);
+        if (props.slug !== undefined) this.slugVO = new Slug(props.slug);
+        if (props.image !== undefined) this.imageVO = new ImageUrlVO(props.image);
+        if (props.description !== undefined) this.descriptionValue = props.description;
         if (props.active !== undefined) {
             if (props.active && this.deletedAtVO.isDeleted()) this.restore();
             if (!props.active && !this.deletedAtVO.isDeleted()) this.delete();
         }
-        if (props.sortOrder !== undefined) this.sortOrder = props.sortOrder;
-        this.updatedAt = new Date();
+        if (props.sortOrder !== undefined) this.sortOrderValue = props.sortOrder;
+        this.touch();
     }
 
     delete(): void {
         this.deletedAtVO = this.deletedAtVO.delete();
-        this.updatedAt = new Date();
+        this.touch();
     }
 
     restore(): void {
         this.deletedAtVO = this.deletedAtVO.restore();
-        this.updatedAt = new Date();
+        this.touch();
     }
 
-    get active(): boolean {
-        return !this.deletedAtVO.isDeleted();
-    }
+    get id(): number | undefined { return this.idValue; }
+    get title(): string { return this.titleVO.value; }
+    get slug(): string { return this.slugVO.value; }
+    get image(): string { return this.imageVO.value; }
+    get description(): string | undefined { return this.descriptionValue; }
+    get sortOrder(): number { return this.sortOrderValue; }
+    get active(): boolean { return !this.deletedAtVO.isDeleted(); }
+    get deletedAt(): Date | undefined { return this.deletedAtVO.value; }
+    get createdAt(): Date { return this.createdAtValue; }
+    get updatedAt(): Date { return this.updatedAtValue; }
 
-    get deletedAt(): Date | undefined {
-        return this.deletedAtVO.value;
+    private touch(): void {
+        this.updatedAtValue = new Date();
     }
 }

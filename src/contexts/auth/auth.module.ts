@@ -10,14 +10,14 @@ import { RefreshTokenRepositoryPort } from './application/ports/refresh-token.re
 import { TokenServicePort } from './application/ports/token.service.port';
 import { PasswordHasherPort } from './application/ports/password-hasher.port';
 import { AUTH_PASSWORD_HASHER, AUTH_REFRESH_TOKEN_REPOSITORY, AUTH_TOKEN_SERVICE, AUTH_USER_REPOSITORY } from './constants';
-import { AuthUserPrismaRepository } from './infrastructure/repository/user-prisma.repository';
-import { RefreshTokenPrismaRepository } from './infrastructure/repository/refresh-token-prisma.repository';
-import { JwtTokenService } from './infrastructure/services/jwt-token.service';
-import { BcryptPasswordService } from './infrastructure/services/bcrypt-password.service';
-import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
-import { RefreshJwtStrategy } from './infrastructure/strategies/refresh-jwt.strategy';
-import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
-import { RolesGuard } from './infrastructure/guards/roles.guard';
+import { AuthUserPrismaRepository } from './infra/repository/user-prisma.repository';
+import { RefreshTokenPrismaRepository } from './infra/repository/refresh-token-prisma.repository';
+import { JwtTokenService } from './infra/services/jwt-token.service';
+import { BcryptPasswordService } from './infra/services/bcrypt-password.service';
+import { JwtStrategy } from './infra/strategies/jwt.strategy';
+import { RefreshJwtStrategy } from './infra/strategies/refresh-jwt.strategy';
+import { JwtAuthGuard } from './infra/guards/jwt-auth.guard';
+import { RolesGuard } from './infra/guards/roles.guard';
 
 @Module({
     imports: [

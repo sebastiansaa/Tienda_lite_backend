@@ -2,19 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { createHash } from 'crypto';
+import type * as ms from 'ms';
 import { TokenPayload, TokenServicePort } from '../../application/ports/token.service.port';
 
 @Injectable()
 export class JwtTokenService implements TokenServicePort {
     private readonly secret: string;
-    private readonly accessTtl: string;
-    private readonly refreshTtl: string;
+    private readonly accessTtl: ms.StringValue;
+    private readonly refreshTtl: ms.StringValue;
     private readonly refreshTtlMs: number;
 
     constructor(private readonly jwtService: JwtService, configService: ConfigService) {
         this.secret = configService.get<string>('AUTH_JWT_SECRET') ?? 'changeme';
-        this.accessTtl = configService.get<string>('AUTH_ACCESS_TOKEN_TTL') ?? '15m';
-        this.refreshTtl = configService.get<string>('AUTH_REFRESH_TOKEN_TTL') ?? '7d';
+        this.accessTtl = (configService.get<string>('AUTH_ACCESS_TOKEN_TTL') ?? '15m') as ms.StringValue;
+        this.refreshTtl = (configService.get<string>('AUTH_REFRESH_TOKEN_TTL') ?? '7d') as ms.StringValue;
         this.refreshTtlMs = this.parseDurationMs(this.refreshTtl, 7 * 24 * 60 * 60 * 1000);
     }
 
@@ -22,7 +23,7 @@ export class JwtTokenService implements TokenServicePort {
         const options: JwtSignOptions = {
             secret: this.secret,
             algorithm: 'HS256',
-            expiresIn: this.accessTtl as any,
+            expiresIn: this.accessTtl,
         };
         return this.jwtService.signAsync(payload, options);
     }
@@ -31,7 +32,7 @@ export class JwtTokenService implements TokenServicePort {
         const options: JwtSignOptions = {
             secret: this.secret,
             algorithm: 'HS256',
-            expiresIn: this.refreshTtl as any,
+            expiresIn: this.refreshTtl,
         };
         return this.jwtService.signAsync(payload, options);
     }
@@ -63,7 +64,7 @@ export class JwtTokenService implements TokenServicePort {
         return new Date(Date.now() + this.refreshTtlMs);
     }
 
-    private parseDurationMs(value: string, fallback: number): number {
+    private parseDurationMs(value: ms.StringValue, fallback: number): number {
         const match = /^\s*(\d+)\s*([smhd])?\s*$/i.exec(value);
         if (!match) return fallback;
         const amount = parseInt(match[1], 10);

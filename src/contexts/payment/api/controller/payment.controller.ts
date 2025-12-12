@@ -1,6 +1,6 @@
 import { BadRequestException, Body, ConflictException, Controller, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
 import { InitiatePaymentDto, PaymentResponseDto } from '../dtos';
 import PaymentApiMapper from '../mappers/payment-api.mapper';

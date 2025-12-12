@@ -10,7 +10,7 @@ export class ProductPrismaMapper {
 
         const price = decimalToNumber(row.price);
 
-        return new ProductEntity({
+        return ProductEntity.rehydrate({
             id: row.id,
             title: row.title,
             slug: row.slug,
@@ -22,7 +22,7 @@ export class ProductPrismaMapper {
             categoryId: row.categoryId,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
-            deletedAt: (row as any).deletedAt ?? undefined,
+            deletedAt: row.deletedAt ?? undefined,
         });
     }
 
