@@ -1,6 +1,3 @@
-// Tokens para inyección de dependencias personalizados
-export const CATEGORY_REPOSITORY = 'CATEGORY_REPOSITORY';
-
-export default {
-    CATEGORY_REPOSITORY,
-};
+export const CATEGORY_REPOSITORY = 'CATEGORY_REPOSITORY'; // Legacy or combined
+export const CATEGORY_WRITE_REPOSITORY = 'CATEGORY_WRITE_REPOSITORY';
+export const CATEGORY_READ_REPOSITORY = 'CATEGORY_READ_REPOSITORY';

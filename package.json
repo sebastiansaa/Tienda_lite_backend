@@ -93,6 +93,9 @@
     ],
     "coverageDirectory": "coverage",
     "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "<rootDir>/src/.*/test/"
+    ],
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/src/$1"
     },

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ConflictException, Controller, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Get, NotFoundException, Param, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
@@ -10,7 +10,7 @@ import {
     FailPaymentUsecase,
     GetPaymentByIdUsecase,
     ListPaymentsForUserUsecase,
-} from '../../application/usecases';
+} from '../../app/usecases';
 import { InvalidPaymentStateError, PaymentAlreadyProcessedError } from '../../domain/errors/payment.errors';
 
 interface AuthUser {
@@ -20,6 +20,7 @@ interface AuthUser {
 @ApiTags('payments')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('payments')
 export class PaymentController {
     constructor(

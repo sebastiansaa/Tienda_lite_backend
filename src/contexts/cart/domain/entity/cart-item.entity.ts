@@ -6,18 +6,18 @@ import { InvalidQuantityError } from '../errors/cart.errors';
 export interface CartItemProps {
     productId: number;
     quantity: number;
-    price?: number;
+    price: number;
 }
 
 export class CartItemEntity {
     private productIdVO: ProductIdVO;
     private quantityVO: QuantityVO;
-    private priceVO?: PriceVO;
+    private priceVO: PriceVO;
 
     constructor(props: CartItemProps) {
         this.productIdVO = new ProductIdVO(props.productId);
         this.quantityVO = new QuantityVO(props.quantity);
-        this.priceVO = props.price !== undefined ? new PriceVO(props.price) : undefined;
+        this.priceVO = new PriceVO(props.price);
     }
 
     get productId(): number {
@@ -28,13 +28,12 @@ export class CartItemEntity {
         return this.quantityVO.value;
     }
 
-    get price(): number | undefined {
-        return this.priceVO?.value;
+    get price(): number {
+        return this.priceVO.value;
     }
 
     get lineTotal(): number {
-        const price = this.priceVO?.value ?? 0;
-        return price * this.quantityVO.value;
+        return this.priceVO.value * this.quantityVO.value;
     }
 
     updateQuantity(quantity: number): void {
@@ -42,9 +41,8 @@ export class CartItemEntity {
         this.quantityVO = new QuantityVO(quantity);
     }
 
-    withPrice(price?: number): CartItemEntity {
-        const copy = new CartItemEntity({ productId: this.productId, quantity: this.quantity, price });
-        return copy;
+    withPrice(price: number): CartItemEntity {
+        return new CartItemEntity({ productId: this.productId, quantity: this.quantity, price });
     }
 }
 

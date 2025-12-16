@@ -4,14 +4,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthController } from './api/controller/auth.controller';
-import { RegisterUserUsecase, LoginUserUsecase, RefreshTokenUsecase, RevokeRefreshTokenUsecase, GetAuthenticatedUserUsecase } from './application/usecases';
-import { UserRepositoryPort } from './application/ports/user.repository';
-import { RefreshTokenRepositoryPort } from './application/ports/refresh-token.repository';
-import { TokenServicePort } from './application/ports/token.service.port';
-import { PasswordHasherPort } from './application/ports/password-hasher.port';
+import { RegisterUserUseCase, LoginUserUseCase, RefreshTokenUseCase, RevokeRefreshTokenUseCase, GetAuthenticatedUserUseCase } from './app/usecases';
+import { UserRepositoryPort } from './app/ports/auth-user.repository.port';
+import { RefreshTokenRepositoryPort } from './app/ports/refresh-token.repository.port';
+import { TokenServicePort } from './app/ports/token.service.port';
+import { PasswordHasherPort } from './app/ports/password-hasher.port';
 import { AUTH_PASSWORD_HASHER, AUTH_REFRESH_TOKEN_REPOSITORY, AUTH_TOKEN_SERVICE, AUTH_USER_REPOSITORY } from './constants';
-import { AuthUserPrismaRepository } from './infra/repository/user-prisma.repository';
-import { RefreshTokenPrismaRepository } from './infra/repository/refresh-token-prisma.repository';
+import { AuthUserPrismaAdapter } from './infra/persistence/auth-user.prisma.adapter';
+import { RefreshTokenPrismaAdapter } from './infra/persistence/refresh-token.prisma.adapter';
 import { JwtTokenService } from './infra/services/jwt-token.service';
 import { BcryptPasswordService } from './infra/services/bcrypt-password.service';
 import { JwtStrategy } from './infra/strategies/jwt.strategy';
@@ -35,8 +35,8 @@ import { RolesGuard } from './infra/guards/roles.guard';
     controllers: [AuthController],
     providers: [
         PrismaService,
-        { provide: AUTH_USER_REPOSITORY, useClass: AuthUserPrismaRepository },
-        { provide: AUTH_REFRESH_TOKEN_REPOSITORY, useClass: RefreshTokenPrismaRepository },
+        { provide: AUTH_USER_REPOSITORY, useClass: AuthUserPrismaAdapter },
+        { provide: AUTH_REFRESH_TOKEN_REPOSITORY, useClass: RefreshTokenPrismaAdapter },
         { provide: AUTH_TOKEN_SERVICE, useClass: JwtTokenService },
         { provide: AUTH_PASSWORD_HASHER, useClass: BcryptPasswordService },
         JwtStrategy,
@@ -44,42 +44,42 @@ import { RolesGuard } from './infra/guards/roles.guard';
         JwtAuthGuard,
         RolesGuard,
         {
-            provide: RegisterUserUsecase,
+            provide: RegisterUserUseCase,
             useFactory: (
                 userRepo: UserRepositoryPort,
                 refreshRepo: RefreshTokenRepositoryPort,
                 tokenService: TokenServicePort,
                 passwordHasher: PasswordHasherPort,
-            ) => new RegisterUserUsecase(userRepo, refreshRepo, tokenService, passwordHasher),
+            ) => new RegisterUserUseCase(userRepo, refreshRepo, tokenService, passwordHasher),
             inject: [AUTH_USER_REPOSITORY, AUTH_REFRESH_TOKEN_REPOSITORY, AUTH_TOKEN_SERVICE, AUTH_PASSWORD_HASHER],
         },
         {
-            provide: LoginUserUsecase,
+            provide: LoginUserUseCase,
             useFactory: (
                 userRepo: UserRepositoryPort,
                 refreshRepo: RefreshTokenRepositoryPort,
                 tokenService: TokenServicePort,
                 passwordHasher: PasswordHasherPort,
-            ) => new LoginUserUsecase(userRepo, refreshRepo, tokenService, passwordHasher),
+            ) => new LoginUserUseCase(userRepo, refreshRepo, tokenService, passwordHasher),
             inject: [AUTH_USER_REPOSITORY, AUTH_REFRESH_TOKEN_REPOSITORY, AUTH_TOKEN_SERVICE, AUTH_PASSWORD_HASHER],
         },
         {
-            provide: RefreshTokenUsecase,
+            provide: RefreshTokenUseCase,
             useFactory: (
                 userRepo: UserRepositoryPort,
                 refreshRepo: RefreshTokenRepositoryPort,
                 tokenService: TokenServicePort,
-            ) => new RefreshTokenUsecase(userRepo, refreshRepo, tokenService),
+            ) => new RefreshTokenUseCase(userRepo, refreshRepo, tokenService),
             inject: [AUTH_USER_REPOSITORY, AUTH_REFRESH_TOKEN_REPOSITORY, AUTH_TOKEN_SERVICE],
         },
         {
-            provide: RevokeRefreshTokenUsecase,
-            useFactory: (refreshRepo: RefreshTokenRepositoryPort) => new RevokeRefreshTokenUsecase(refreshRepo),
+            provide: RevokeRefreshTokenUseCase,
+            useFactory: (refreshRepo: RefreshTokenRepositoryPort) => new RevokeRefreshTokenUseCase(refreshRepo),
             inject: [AUTH_REFRESH_TOKEN_REPOSITORY],
         },
         {
-            provide: GetAuthenticatedUserUsecase,
-            useFactory: (userRepo: UserRepositoryPort) => new GetAuthenticatedUserUsecase(userRepo),
+            provide: GetAuthenticatedUserUseCase,
+            useFactory: (userRepo: UserRepositoryPort) => new GetAuthenticatedUserUseCase(userRepo),
             inject: [AUTH_USER_REPOSITORY],
         },
     ],

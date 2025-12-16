@@ -1,30 +1,33 @@
-import { BadRequestException, Body, ConflictException, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseIntPipe, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseIntPipe, Post, Put, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
-import { AddItemDto, UpdateItemDto, CartResponseDto } from '../dtos';
+import { CartResponseDto } from '../dtos/response';
 import CartApiMapper from '../mappers/cart-api.mapper';
 import {
-    AddItemToCartUsecase,
-    UpdateItemQuantityUsecase,
-    RemoveItemUsecase,
-    GetCartUsecase,
-    ClearCartUsecase,
-} from '../../application/usecases';
+    AddItemToCartUseCase,
+    UpdateItemQuantityUseCase,
+    RemoveItemUseCase,
+    GetCartUseCase,
+    ClearCartUseCase,
+} from '../../app/usecases';
 import { CartEntity } from '../../domain/entity/cart.entity';
 import { CartItemNotFoundError, CartNotFoundError, DuplicateCartItemError, InvalidProductError, InvalidQuantityError } from '../../domain/errors/cart.errors';
+import type { AddItemDto } from '../dtos/request/add-item.dto';
+import { UpdateItemDto } from '../dtos/request/update-item.dto';
 
 @ApiTags('cart')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('cart')
 export class CartController {
     constructor(
-        private readonly addItem: AddItemToCartUsecase,
-        private readonly updateItemQuantity: UpdateItemQuantityUsecase,
-        private readonly removeItem: RemoveItemUsecase,
-        private readonly getCartUsecase: GetCartUsecase,
-        private readonly clearCartUsecase: ClearCartUsecase,
+        private readonly addItem: AddItemToCartUseCase,
+        private readonly updateItemQuantity: UpdateItemQuantityUseCase,
+        private readonly removeItem: RemoveItemUseCase,
+        private readonly getCartUseCase: GetCartUseCase,
+        private readonly clearCartUseCase: ClearCartUseCase,
     ) { }
 
     @Get()
@@ -33,7 +36,7 @@ export class CartController {
     async getCart(@Req() req: Request & { user?: { sub?: string } }): Promise<CartResponseDto> {
         const userId = this.getUserId(req);
         const query = CartApiMapper.toGetQuery(userId);
-        const cart = await this.getCartUsecase.execute(query);
+        const cart = await this.getCartUseCase.execute(query);
         const entity = cart ?? new CartEntity({ userId, items: [] });
         return CartApiMapper.toResponse(entity);
     }
@@ -98,7 +101,7 @@ export class CartController {
         try {
             const userId = this.getUserId(req);
             const command = CartApiMapper.toClearCommand(userId);
-            await this.clearCartUsecase.execute(command);
+            await this.clearCartUseCase.execute(command);
         } catch (error) {
             this.mapError(error);
         }

@@ -1,6 +1,6 @@
 import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto } from '../dtos';
-import { CreateCategoryCommand } from '../../application/commands/create-category.command';
-import { UpdateCategoryCommand } from '../../application/commands/update-category.command';
+import { CreateCategoryCommand } from '../../app/commands/create-category.command';
+import { UpdateCategoryCommand } from '../../app/commands/update-category.command';
 import { CategoryEntity } from '../../domain/entity/category.entity';
 
 export class CategoryApiMapper {

@@ -5,9 +5,9 @@ import {
     InvalidCategoryError,
     ImageNotFoundError,
 } from '../errors';
-import { ProductProps } from '../interfaces/productProp';
+import { ProductProps } from './productPropInterface';
 import { Slug, SoftDeleteVO } from '../../../shared/v-o';
-import { Price, Title, ImagesVO } from '../v-o';
+import { Price, Title, ImagesVO, Description, CategoryId } from '../v-o';
 import { StockEntity } from './stock.entity';
 
 export class ProductEntity {
@@ -15,11 +15,11 @@ export class ProductEntity {
     private titleVO: Title;
     private slugVO: Slug;
     private priceVO: Price;
-    private descriptionValue: string;
+    private descriptionVO: Description;
     private stockEntity: StockEntity;
     private imagesVO: ImagesVO;
     private deletedAtVO: SoftDeleteVO;
-    private categoryIdValue: number;
+    private categoryIdVO: CategoryId;
     private createdAtValue: Date;
     private updatedAtValue: Date;
 
@@ -31,11 +31,11 @@ export class ProductEntity {
         this.titleVO = new Title(props.title);
         this.slugVO = new Slug(props.slug);
         this.priceVO = new Price(props.price);
-        this.descriptionValue = props.description;
+        this.descriptionVO = new Description(props.description ?? '');
         this.stockEntity = new StockEntity(props.stock);
         this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
         this.imagesVO = new ImagesVO(props.images);
-        this.categoryIdValue = props.categoryId;
+        this.categoryIdVO = new CategoryId(props.categoryId);
         const now = new Date();
         this.createdAtValue = props.createdAt ?? now;
         this.updatedAtValue = props.updatedAt ?? now;
@@ -89,7 +89,7 @@ export class ProductEntity {
     }
 
     changeDescription(newDescription: string): void {
-        this.descriptionValue = newDescription ?? '';
+        this.descriptionVO = new Description(newDescription ?? '');
         this.touch();
     }
 
@@ -129,9 +129,9 @@ export class ProductEntity {
     get title(): string { return this.titleVO.value; }
     get slug(): string { return this.slugVO.value; }
     get price(): number { return this.priceVO.value; }
-    get description(): string { return this.descriptionValue; }
-    get stock(): StockEntity { return this.stockEntity; }
-    get categoryId(): number { return this.categoryIdValue; }
+    get description(): string { return this.descriptionVO.value; }
+    get stock(): number { return this.stockEntity.value; }
+    get categoryId(): number { return this.categoryIdVO.value; }
     get createdAt(): Date { return this.createdAtValue; }
     get updatedAt(): Date { return this.updatedAtValue; }
     get active(): boolean { return !this.deletedAtVO.isDeleted(); }

@@ -5,15 +5,15 @@ Orders
 
 Capas
 - Domain: `OrderEntity`, `OrderItemEntity`; VOs `OrderId`, `UserId`, `ProductId`, `Quantity`, `Price`, `TotalAmount`, `OrderStatus`, timestamps; errores `EmptyOrder`, `ProductUnavailable`, `InvalidOrderState`, `OrderOwnership`.
-- Application: usecases CreateOrderFromCart, CreateOrderFromItems, GetOrderById, ListOrdersForUser, CancelOrder, MarkOrderAsPaid, MarkOrderAsCompleted; puertos `OrderRepositoryPort`, `CartReadOnlyPort`, `ProductReadOnlyPort`, `PricingServicePort`, `StockServicePort`.
-- Infrastructure: `PrismaOrderRepository` (persistencia), adaptadores `CartReadOnlyAdapter`, `ProductReadOnlyAdapter`, `PricingServiceAdapter`, `StockServiceAdapter` que consumen otros contextos via puertos.
-- API: `OrdersController`, DTOs, `OrderApiMapper`; protegido con JwtAuthGuard.
+- Application: usecases CreateOrderFromCart, CreateOrderFromItems, GetOrderById, ListOrdersForUser, CancelOrder, MarkOrderAsPaid, MarkOrderAsCompleted; puertos `IOrderReadRepository`, `IOrderWriteRepository`, `CartReadOnlyPort`, `ProductReadOnlyPort`, `PricingServicePort`, `StockServicePort`.
+- Infra: repos separados `OrderPrismaReadRepository` y `OrderPrismaWriteRepository`; adaptadores `CartReadOnlyAdapter`, `ProductReadOnlyAdapter`, `PricingServiceAdapter`, `StockServiceAdapter` que consumen otros contextos via puertos.
+- API: `OrdersController`, DTOs, `OrderApiMapper`; protegido con JwtAuthGuard y `ValidationPipe` con whitelist/transform.
 
 Invariantes
 - Orden debe tener al menos un item; cantidades positivas; estados siguen flujo Pending -> Paid -> Completed o Cancelled; ownership valida userId.
 
 Puertos expuestos
-- Tokens `ORDER_REPOSITORY`, `ORDER_CART_READONLY`, `ORDER_PRODUCT_READONLY`, `ORDER_PRICING_SERVICE`, `ORDER_STOCK_SERVICE` (para inyeccion interna y potencial reuse).
+- Tokens `ORDER_READ_REPOSITORY`, `ORDER_WRITE_REPOSITORY`, `ORDER_CART_READONLY`, `ORDER_PRODUCT_READONLY`, `ORDER_PRICING_SERVICE`, `ORDER_STOCK_SERVICE` (para inyeccion interna y potencial reuse).
 
 Adaptadores implementados
 - Prisma repo; cart/product read adapters; pricing and stock adapters delegan a pricing/cart/inventory services.

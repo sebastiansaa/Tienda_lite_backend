@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import PaymentProviderPort, { PaymentProviderResult, PaymentProviderConfirmInput, PaymentProviderFailInput, PaymentProviderInitInput } from '../../application/ports/payment-provider.port';
+import PaymentProviderPort, { PaymentProviderResult, PaymentProviderConfirmInput, PaymentProviderFailInput, PaymentProviderInitInput } from '../../app/ports/payment-provider.port';
 
 @Injectable()
 export class PaymentProviderStripeAdapter implements PaymentProviderPort {

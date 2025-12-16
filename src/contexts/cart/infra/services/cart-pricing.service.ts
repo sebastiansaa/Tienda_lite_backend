@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PRODUCT_READONLY } from '../../../products/constants';
-import PricingServicePort from '../../application/ports/pricing.service.port';
+import PricingServicePort from '../../app/ports/pricing-service.port';
 import type { ProductReadOnlyPort } from '../../../shared/ports/product.readonly.repository';
 
 @Injectable()

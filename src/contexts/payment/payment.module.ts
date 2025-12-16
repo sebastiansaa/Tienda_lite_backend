@@ -2,8 +2,9 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { PaymentController } from './api/controller/payment.controller';
-import { PAYMENT_ORDER_READONLY, PAYMENT_PROVIDER, PAYMENT_REPOSITORY } from './constants';
-import { PaymentPrismaRepository } from './infra/repository/payment-prisma.repository';
+import { PAYMENT_ORDER_READONLY, PAYMENT_PROVIDER, PAYMENT_READ_REPOSITORY, PAYMENT_WRITE_REPOSITORY } from './constants';
+import { PaymentPrismaReadRepository } from './infra/persistence/payment-prisma-read.repository';
+import { PaymentPrismaWriteRepository } from './infra/persistence/payment-prisma-write.repository';
 import { PaymentProviderFakeAdapter } from './infra/adapters/payment-provider-fake.adapter';
 import { PaymentOrderReadAdapter } from './infra/adapters/order-read.adapter';
 import {
@@ -12,18 +13,23 @@ import {
     FailPaymentUsecase,
     GetPaymentByIdUsecase,
     ListPaymentsForUserUsecase,
-} from './application/usecases';
-import PaymentRepositoryPort from './application/ports/payment.repository.port';
-import PaymentProviderPort from './application/ports/payment-provider.port';
-import OrderReadOnlyPort from './application/ports/order-read.port';
+} from './app/usecases';
+import { IPaymentReadRepository } from './app/ports/payment-read.repository';
+import { IPaymentWriteRepository } from './app/ports/payment-write.repository';
+import PaymentProviderPort from './app/ports/payment-provider.port';
+import OrderReadOnlyPort from './app/ports/order-read.port';
 
 @Module({
     imports: [AuthModule, PrismaModule],
     controllers: [PaymentController],
     providers: [
         {
-            provide: PAYMENT_REPOSITORY,
-            useClass: PaymentPrismaRepository,
+            provide: PAYMENT_WRITE_REPOSITORY,
+            useClass: PaymentPrismaWriteRepository,
+        },
+        {
+            provide: PAYMENT_READ_REPOSITORY,
+            useClass: PaymentPrismaReadRepository,
         },
         {
             provide: PAYMENT_PROVIDER,
@@ -35,31 +41,31 @@ import OrderReadOnlyPort from './application/ports/order-read.port';
         },
         {
             provide: InitiatePaymentUsecase,
-            useFactory: (repo: PaymentRepositoryPort, provider: PaymentProviderPort, orderRead: OrderReadOnlyPort) =>
-                new InitiatePaymentUsecase(repo, provider, orderRead),
-            inject: [PAYMENT_REPOSITORY, PAYMENT_PROVIDER, PAYMENT_ORDER_READONLY],
+            useFactory: (writeRepo: IPaymentWriteRepository, provider: PaymentProviderPort, orderRead: OrderReadOnlyPort) =>
+                new InitiatePaymentUsecase(writeRepo, provider, orderRead),
+            inject: [PAYMENT_WRITE_REPOSITORY, PAYMENT_PROVIDER, PAYMENT_ORDER_READONLY],
         },
         {
             provide: ConfirmPaymentUsecase,
-            useFactory: (repo: PaymentRepositoryPort, provider: PaymentProviderPort) =>
-                new ConfirmPaymentUsecase(repo, provider),
-            inject: [PAYMENT_REPOSITORY, PAYMENT_PROVIDER],
+            useFactory: (readRepo: IPaymentReadRepository, writeRepo: IPaymentWriteRepository, provider: PaymentProviderPort) =>
+                new ConfirmPaymentUsecase(readRepo, writeRepo, provider),
+            inject: [PAYMENT_READ_REPOSITORY, PAYMENT_WRITE_REPOSITORY, PAYMENT_PROVIDER],
         },
         {
             provide: FailPaymentUsecase,
-            useFactory: (repo: PaymentRepositoryPort, provider: PaymentProviderPort) =>
-                new FailPaymentUsecase(repo, provider),
-            inject: [PAYMENT_REPOSITORY, PAYMENT_PROVIDER],
+            useFactory: (readRepo: IPaymentReadRepository, writeRepo: IPaymentWriteRepository, provider: PaymentProviderPort) =>
+                new FailPaymentUsecase(readRepo, writeRepo, provider),
+            inject: [PAYMENT_READ_REPOSITORY, PAYMENT_WRITE_REPOSITORY, PAYMENT_PROVIDER],
         },
         {
             provide: GetPaymentByIdUsecase,
-            useFactory: (repo: PaymentRepositoryPort) => new GetPaymentByIdUsecase(repo),
-            inject: [PAYMENT_REPOSITORY],
+            useFactory: (readRepo: IPaymentReadRepository) => new GetPaymentByIdUsecase(readRepo),
+            inject: [PAYMENT_READ_REPOSITORY],
         },
         {
             provide: ListPaymentsForUserUsecase,
-            useFactory: (repo: PaymentRepositoryPort) => new ListPaymentsForUserUsecase(repo),
-            inject: [PAYMENT_REPOSITORY],
+            useFactory: (readRepo: IPaymentReadRepository) => new ListPaymentsForUserUsecase(readRepo),
+            inject: [PAYMENT_READ_REPOSITORY],
         },
     ],
 })

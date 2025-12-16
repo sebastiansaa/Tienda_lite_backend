@@ -1,9 +1,10 @@
-import { AddItemDto, UpdateItemDto, CartResponseDto, CartItemResponseDto } from '../dtos';
-import { AddItemCommand } from '../../application/commands/add-item.command';
-import { UpdateItemQuantityCommand } from '../../application/commands/update-item.command';
-import { RemoveItemCommand } from '../../application/commands/remove-item.command';
-import { ClearCartCommand } from '../../application/commands/clear-cart.command';
-import { GetCartQuery } from '../../application/queries/get-cart.query';
+import { AddItemDto, UpdateItemDto } from '../dtos/request';
+import { CartResponseDto, CartItemResponseDto } from '../dtos/response';
+import { AddItemCommand } from '../../app/commands/add-item.command';
+import { UpdateItemQuantityCommand } from '../../app/commands/update-item.command';
+import { RemoveItemCommand } from '../../app/commands/remove-item.command';
+import { ClearCartCommand } from '../../app/commands/clear-cart.command';
+import { GetCartQuery } from '../../app/queries/get-cart.query';
 import { CartEntity } from '../../domain/entity/cart.entity';
 
 export class CartApiMapper {

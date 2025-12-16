@@ -8,11 +8,11 @@ import { AdminProductPrismaAdapter } from './infra/adapters/admin-product.prisma
 import { AdminOrderPrismaAdapter } from './infra/adapters/admin-order.prisma.adapter';
 import { AdminPaymentPrismaAdapter } from './infra/adapters/admin-payment.prisma.adapter';
 import { AdminInventoryPrismaAdapter } from './infra/adapters/admin-inventory.prisma.adapter';
-import UserAdminReadOnlyPort from './application/ports/user-admin.port';
-import ProductAdminReadOnlyPort from './application/ports/product-admin.port';
-import OrderAdminReadOnlyPort from './application/ports/order-admin.port';
-import PaymentAdminReadOnlyPort from './application/ports/payment-admin.port';
-import InventoryAdminReadOnlyPort from './application/ports/inventory-admin.port';
+import UserAdminReadOnlyPort from './app/ports/user-admin.readonly.port';
+import ProductAdminReadOnlyPort from './app/ports/product-admin.readonly.port';
+import OrderAdminReadOnlyPort from './app/ports/order-admin.readonly.port';
+import PaymentAdminReadOnlyPort from './app/ports/payment-admin.readonly.port';
+import InventoryAdminReadOnlyPort from './app/ports/inventory-admin.readonly.port';
 import {
     ListAdminUsersUsecase,
     GetAdminUserDetailsUsecase,
@@ -30,7 +30,7 @@ import {
     ListAdminInventoryUsecase,
     GetAdminInventoryDetailsUsecase,
     AdjustAdminStockUsecase,
-} from './application/usecases';
+} from './app/usecases';
 
 @Module({
     imports: [AuthModule, PrismaModule],

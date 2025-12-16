@@ -4,27 +4,27 @@ import type { Request } from 'express';
 import { RegisterAuthDto, LoginAuthDto, RefreshTokenDto } from '../dtos/request';
 import { AuthResponseDto, AuthUserDto } from '../dtos/response';
 import { AuthApiMapper } from '../mappers/auth-api.mapper';
-import { RegisterUserUsecase, LoginUserUsecase, RefreshTokenUsecase, RevokeRefreshTokenUsecase, GetAuthenticatedUserUsecase } from '../../application/usecases';
-import { RevokeRefreshTokenCommand } from '../../application/commands';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
+import { RegisterUserUseCase, LoginUserUseCase, RefreshTokenUseCase, RevokeRefreshTokenUseCase, GetAuthenticatedUserUseCase } from '../../app/usecases';
+import { RevokeRefreshTokenInput } from '../../app/inputs';
+import { JwtAuthGuard } from '../../infra/guards/jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
     constructor(
-        private readonly registerUserUsecase: RegisterUserUsecase,
-        private readonly loginUserUsecase: LoginUserUsecase,
-        private readonly refreshTokenUsecase: RefreshTokenUsecase,
-        private readonly revokeRefreshTokenUsecase: RevokeRefreshTokenUsecase,
-        private readonly getAuthenticatedUserUsecase: GetAuthenticatedUserUsecase,
+        private readonly registerUserUseCase: RegisterUserUseCase,
+        private readonly loginUserUseCase: LoginUserUseCase,
+        private readonly refreshTokenUseCase: RefreshTokenUseCase,
+        private readonly revokeRefreshTokenUseCase: RevokeRefreshTokenUseCase,
+        private readonly getAuthenticatedUserUseCase: GetAuthenticatedUserUseCase,
     ) { }
 
     @Post('register')
     @ApiOperation({ summary: 'Register a new user with email and password' })
     @ApiResponse({ status: 201, description: 'User registered', type: AuthResponseDto })
     async register(@Body() dto: RegisterAuthDto): Promise<AuthResponseDto> {
-        const command = AuthApiMapper.toRegisterCommand(dto);
-        const result = await this.registerUserUsecase.execute(command);
+        const input = AuthApiMapper.toRegisterInput(dto);
+        const result = await this.registerUserUseCase.execute(input);
         return AuthApiMapper.toResponse(result.user, result.tokens);
     }
 
@@ -33,8 +33,8 @@ export class AuthController {
     @ApiOperation({ summary: 'Login with email and password' })
     @ApiResponse({ status: 200, description: 'Login successful', type: AuthResponseDto })
     async login(@Body() dto: LoginAuthDto): Promise<AuthResponseDto> {
-        const command = AuthApiMapper.toLoginCommand(dto);
-        const result = await this.loginUserUsecase.execute(command);
+        const input = AuthApiMapper.toLoginInput(dto);
+        const result = await this.loginUserUseCase.execute(input);
         return AuthApiMapper.toResponse(result.user, result.tokens);
     }
 
@@ -43,8 +43,8 @@ export class AuthController {
     @ApiOperation({ summary: 'Rotate refresh token and issue a new token pair' })
     @ApiResponse({ status: 200, description: 'New tokens issued', type: AuthResponseDto })
     async refresh(@Body() dto: RefreshTokenDto): Promise<AuthResponseDto> {
-        const command = AuthApiMapper.toRefreshCommand(dto);
-        const result = await this.refreshTokenUsecase.execute(command);
+        const input = AuthApiMapper.toRefreshInput(dto);
+        const result = await this.refreshTokenUseCase.execute(input);
         return AuthApiMapper.toResponse(result.user, result.tokens);
     }
 
@@ -56,8 +56,8 @@ export class AuthController {
     @ApiResponse({ status: 204, description: 'Tokens revoked' })
     async logout(@Req() req: Request & { user?: { sub: string } }): Promise<void> {
         const user = req.user as { sub: string };
-        const command = new RevokeRefreshTokenCommand(user.sub);
-        await this.revokeRefreshTokenUsecase.execute(command);
+        const input = new RevokeRefreshTokenInput(user.sub);
+        await this.revokeRefreshTokenUseCase.execute(input);
     }
 
     @Get('me')
@@ -67,8 +67,8 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'User profile', type: AuthUserDto })
     async me(@Req() req: Request & { user?: { sub: string } }): Promise<AuthUserDto> {
         const user = req.user as { sub: string };
-        const query = AuthApiMapper.toGetAuthenticatedUserQuery(user.sub);
-        const entity = await this.getAuthenticatedUserUsecase.execute(query);
+        const input = AuthApiMapper.toGetAuthenticatedUserInput(user.sub);
+        const entity = await this.getAuthenticatedUserUseCase.execute(input);
         return AuthApiMapper.toUserDto(entity);
     }
 }

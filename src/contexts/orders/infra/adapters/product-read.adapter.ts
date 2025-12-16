@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PRODUCT_READONLY } from '../../../products/constants';
 import type { ProductReadOnlyPort as SharedProductReadOnlyPort } from '../../../shared/ports/product.readonly.repository';
-import ProductReadOnlyPort, { ProductSnapshot } from '../../application/ports/product-read.port';
+import ProductReadOnlyPort, { ProductSnapshot } from '../../app/ports/product-read.port';
 
 @Injectable()
 export class ProductReadOnlyAdapter implements ProductReadOnlyPort {

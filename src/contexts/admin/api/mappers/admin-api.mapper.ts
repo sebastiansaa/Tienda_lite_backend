@@ -1,8 +1,8 @@
-import { AdminUserProfile } from '../../application/ports/user-admin.port';
-import { AdminProductSummary } from '../../application/ports/product-admin.port';
-import { AdminOrderSummary } from '../../application/ports/order-admin.port';
-import { AdminPaymentSummary } from '../../application/ports/payment-admin.port';
-import { AdminInventorySummary } from '../../application/ports/inventory-admin.port';
+import { AdminUserProfile } from '../../app/ports/user-admin.readonly.port';
+import { AdminProductSummary } from '../../app/ports/product-admin.readonly.port';
+import { AdminOrderSummary } from '../../app/ports/order-admin.readonly.port';
+import { AdminPaymentSummary } from '../../app/ports/payment-admin.readonly.port';
+import { AdminInventorySummary } from '../../app/ports/inventory-admin.readonly.port';
 import {
     AdminUserResponseDto,
     AdminProductResponseDto,

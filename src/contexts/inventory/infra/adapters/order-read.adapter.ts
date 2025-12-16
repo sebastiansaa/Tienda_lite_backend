@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import OrderReadOnlyPort from '../../application/ports/order-read.port';
+import OrderReadOnlyPort from '../../app/ports/order-read.port';
 
 @Injectable()
 export class OrderReadOnlyAdapter implements OrderReadOnlyPort {

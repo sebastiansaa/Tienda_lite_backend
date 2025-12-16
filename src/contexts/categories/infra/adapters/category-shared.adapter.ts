@@ -1,13 +1,13 @@
 import { Injectable, Inject } from "@nestjs/common";
-import { CategoryRepositoryPort } from "../../../shared/ports/category.repository";
+import { CategoryReadOnlyPort } from "../../../shared/ports/category-readonly.port";
 import { CategoryReadDto } from "../../../shared/dtos/category.dto";
-import type { ICategoryRepository } from "../../application/ports/category.repository";
-import { CATEGORY_REPOSITORY } from "../../constants";
+import type { ICategoryReadRepository } from "../../app/ports/category-read.repository";
+import { CATEGORY_READ_REPOSITORY } from "../../constants";
 
 @Injectable()
-export class CategorySharedAdapter implements CategoryRepositoryPort {
+export class CategorySharedAdapter implements CategoryReadOnlyPort {
     constructor(
-        @Inject(CATEGORY_REPOSITORY) private readonly repo: ICategoryRepository
+        @Inject(CATEGORY_READ_REPOSITORY) private readonly repo: ICategoryReadRepository
     ) { }
 
     async findById(id: number | string): Promise<CategoryReadDto | null> {

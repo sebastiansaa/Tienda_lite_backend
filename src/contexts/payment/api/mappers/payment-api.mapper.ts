@@ -1,9 +1,9 @@
 import { InitiatePaymentDto, PaymentResponseDto } from '../dtos';
-import InitiatePaymentCommand from '../../application/commands/initiate-payment.command';
-import ConfirmPaymentCommand from '../../application/commands/confirm-payment.command';
-import FailPaymentCommand from '../../application/commands/fail-payment.command';
-import GetPaymentByIdQuery from '../../application/queries/get-payment-by-id.query';
-import ListPaymentsForUserQuery from '../../application/queries/list-payments-for-user.query';
+import InitiatePaymentCommand from '../../app/commands/initiate-payment.command';
+import ConfirmPaymentCommand from '../../app/commands/confirm-payment.command';
+import FailPaymentCommand from '../../app/commands/fail-payment.command';
+import GetPaymentByIdQuery from '../../app/queries/get-payment-by-id.query';
+import ListPaymentsForUserQuery from '../../app/queries/list-payments-for-user.query';
 import { PaymentEntity } from '../../domain/entity/payment.entity';
 
 export class PaymentApiMapper {

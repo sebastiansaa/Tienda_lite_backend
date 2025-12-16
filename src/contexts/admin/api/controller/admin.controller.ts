@@ -29,7 +29,7 @@ import {
     ListAdminInventoryUsecase,
     GetAdminInventoryDetailsUsecase,
     AdjustAdminStockUsecase,
-} from '../../application/usecases';
+} from '../../app/usecases';
 
 @ApiTags('admin')
 @ApiBearerAuth()

@@ -21,3 +21,11 @@ export class UserNotFoundError extends Error {
 export class AccessDeniedError extends Error {
     constructor(message = 'Access denied') { super(message); this.name = 'AccessDeniedError'; }
 }
+
+export class InvalidEmailError extends Error {
+    constructor(message = 'Invalid email') { super(message); this.name = 'InvalidEmailError'; }
+}
+
+export class InvalidPasswordHashError extends Error {
+    constructor(message = 'Invalid password hash') { super(message); this.name = 'InvalidPasswordHashError'; }
+}

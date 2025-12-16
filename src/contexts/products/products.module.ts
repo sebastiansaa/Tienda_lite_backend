@@ -4,15 +4,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CategoriesModule } from '../categories/categories.module';
 import { AuthModule } from '../auth/auth.module';
 
-// Ports
-import { IProductRepository } from './application/ports/product.repository';
+import { IProductWriteRepository, IProductReadRepository } from './app/ports';
 import { PRODUCT_WRITE, PRODUCT_READONLY } from './constants';
 
-// Infrastructure (implementación del port)
-import { ProductPrismaWriteRepository } from './infra/repository/product-prisma.repository';
-import { ProductPrismaReadRepository } from './infra/repository/product-prisma-read.repository';
-import { ProductCategoryService } from './domain/service/product-category.service';
-import { CategoryRepositoryPort } from 'src/contexts/shared/ports/category.repository';
+import { ProductPrismaWriteRepository, ProductPrismaReadRepository } from './infra/persistence';
+
+import { ProductCategoryPolicy } from './app/policies/product-category.policy';
+import { CategoryReadOnlyPort } from 'src/contexts/shared/ports/category-readonly.port';
 
 // Usecases
 import {
@@ -24,8 +22,8 @@ import {
   ListProductsUsecase,
   FindLowStockUsecase,
   SearchProductsUsecase,
-} from './application/usecases';
-import { DecreaseStockUsecase } from './application/usecases/decrease-stock.usecase';
+} from './app/usecases';
+import { DecreaseStockUsecase } from './app/usecases/decrease-stock.usecase';
 
 @Module({
   imports: [CategoriesModule, AuthModule],
@@ -41,56 +39,58 @@ import { DecreaseStockUsecase } from './application/usecases/decrease-stock.usec
       provide: PRODUCT_READONLY,
       useClass: ProductPrismaReadRepository,
     },
-    // Product domain service: use PrismaService to check categories without importing category infra
+    // Policy: valida existencia de categoría usando puerto compartido
     {
-      provide: ProductCategoryService,
-      useFactory: (catRepo: CategoryRepositoryPort) => new ProductCategoryService(catRepo),
-      inject: ['CategoryRepositoryPort'],
+      provide: ProductCategoryPolicy,
+      useFactory: (catRepo: CategoryReadOnlyPort) => new ProductCategoryPolicy(catRepo),
+      inject: ['CategoryReadOnlyPort'],
     },
     // Usecases (con inyección del port)
     {
       provide: SaveProductUsecase,
-      useFactory: (repo: IProductRepository, categoryService: ProductCategoryService) => new SaveProductUsecase(repo, categoryService),
-      inject: [PRODUCT_WRITE, ProductCategoryService],
+      useFactory: (readRepo: IProductReadRepository, writeRepo: IProductWriteRepository, categoryService: ProductCategoryPolicy) =>
+        new SaveProductUsecase(readRepo, writeRepo, categoryService),
+      inject: [PRODUCT_READONLY, PRODUCT_WRITE, ProductCategoryPolicy],
     },
     {
       provide: DeleteProductUsecase,
-      useFactory: (repo: IProductRepository) => new DeleteProductUsecase(repo),
+      useFactory: (repo: IProductWriteRepository) => new DeleteProductUsecase(repo),
       inject: [PRODUCT_WRITE],
     },
     {
       provide: RestoreProductUsecase,
-      useFactory: (repo: IProductRepository, categoryService: ProductCategoryService) => new RestoreProductUsecase(repo, categoryService),
-      inject: [PRODUCT_WRITE, ProductCategoryService],
+      useFactory: (readRepo: IProductReadRepository, writeRepo: IProductWriteRepository, categoryService: ProductCategoryPolicy) =>
+        new RestoreProductUsecase(readRepo, writeRepo, categoryService),
+      inject: [PRODUCT_READONLY, PRODUCT_WRITE, ProductCategoryPolicy],
     },
     {
       provide: UpdateStockUsecase,
-      useFactory: (repo: IProductRepository) => new UpdateStockUsecase(repo),
+      useFactory: (repo: IProductWriteRepository) => new UpdateStockUsecase(repo),
       inject: [PRODUCT_WRITE],
     },
     {
       provide: FindProductByIdUsecase,
-      useFactory: (repo: IProductRepository) => new FindProductByIdUsecase(repo),
-      inject: [PRODUCT_WRITE],
+      useFactory: (repo: IProductReadRepository) => new FindProductByIdUsecase(repo),
+      inject: [PRODUCT_READONLY],
     },
     {
       provide: ListProductsUsecase,
-      useFactory: (repo: IProductRepository) => new ListProductsUsecase(repo),
-      inject: [PRODUCT_WRITE],
+      useFactory: (repo: IProductReadRepository) => new ListProductsUsecase(repo),
+      inject: [PRODUCT_READONLY],
     },
     {
       provide: FindLowStockUsecase,
-      useFactory: (repo: IProductRepository) => new FindLowStockUsecase(repo),
-      inject: [PRODUCT_WRITE],
+      useFactory: (repo: IProductReadRepository) => new FindLowStockUsecase(repo),
+      inject: [PRODUCT_READONLY],
     },
     {
       provide: SearchProductsUsecase,
-      useFactory: (repo: IProductRepository) => new SearchProductsUsecase(repo),
-      inject: [PRODUCT_WRITE],
+      useFactory: (repo: IProductReadRepository) => new SearchProductsUsecase(repo),
+      inject: [PRODUCT_READONLY],
     },
     {
       provide: DecreaseStockUsecase,
-      useFactory: (repo: IProductRepository) => new DecreaseStockUsecase(repo),
+      useFactory: (repo: IProductWriteRepository) => new DecreaseStockUsecase(repo),
       inject: [PRODUCT_WRITE],
     },
   ],

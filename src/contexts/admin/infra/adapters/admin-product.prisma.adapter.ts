@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import ProductAdminReadOnlyPort, { AdminProductSummary } from '../../application/ports/product-admin.port';
+import ProductAdminReadOnlyPort, { AdminProductSummary } from '../../app/ports/product-admin.readonly.port';
 import { decimalToNumber } from '../../../products/infra/helpers/decimal.helper';
 
 @Injectable()

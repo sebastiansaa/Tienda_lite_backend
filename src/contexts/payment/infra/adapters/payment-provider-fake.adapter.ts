@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import PaymentProviderPort, { PaymentProviderResult, PaymentProviderConfirmInput, PaymentProviderFailInput, PaymentProviderInitInput } from '../../application/ports/payment-provider.port';
+import PaymentProviderPort, { PaymentProviderResult, PaymentProviderConfirmInput, PaymentProviderFailInput, PaymentProviderInitInput } from '../../app/ports/payment-provider.port';
 import { PaymentStatus } from '../../domain/v-o/payment-status.vo';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

@@ -1,8 +1,8 @@
 import { SaveProductRequestDto, ListProductsRequestDto, SearchProductsRequestDto } from '../dtos/request';
 import { ResponseProductDto } from '../dtos/response';
-import { SaveProductCommand, DeleteProductCommand, RestoreProductCommand, UpdateStockCommand } from '../../application/commands';
-import { ListProductsQuery, SearchProductsQuery } from '../../application/queries';
-import { FindProductByIdQuery, FindLowStockQuery } from '../../application/queries';
+import { SaveProductCommand, DeleteProductCommand, RestoreProductCommand, UpdateStockCommand } from '../../app/commands';
+import { ListProductsQuery, SearchProductsQuery } from '../../app/queries';
+import { FindProductByIdQuery, FindLowStockQuery } from '../../app/queries';
 import { ProductEntity } from '../../domain/entity/product.entity';
 
 function assertPersisted(entity: ProductEntity): asserts entity is ProductEntity & { id: number } {
@@ -74,7 +74,7 @@ export class ProductApiMapper {
             slug: entity.slug,
             price: entity.price,
             description: entity.description,
-            stock: entity.stock.value,
+            stock: entity.stock,
             active: entity.active,
             images: entity.images,
             categoryId: entity.categoryId,

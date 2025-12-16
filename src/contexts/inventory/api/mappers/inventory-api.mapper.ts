@@ -1,10 +1,10 @@
 import { AdjustStockDto, StockResponseDto, StockMovementResponseDto } from '../dtos';
-import IncreaseStockCommand from '../../application/commands/increase-stock.command';
-import DecreaseStockCommand from '../../application/commands/decrease-stock.command';
-import ReserveStockCommand from '../../application/commands/reserve-stock.command';
-import ReleaseStockCommand from '../../application/commands/release-stock.command';
-import GetStockQuery from '../../application/queries/get-stock.query';
-import ListMovementsQuery from '../../application/queries/list-movements.query';
+import IncreaseStockCommand from '../../app/commands/increase-stock.command';
+import DecreaseStockCommand from '../../app/commands/decrease-stock.command';
+import ReserveStockCommand from '../../app/commands/reserve-stock.command';
+import ReleaseStockCommand from '../../app/commands/release-stock.command';
+import GetStockQuery from '../../app/queries/get-stock.query';
+import ListMovementsQuery from '../../app/queries/list-movements.query';
 import { InventoryItemEntity } from '../../domain/entity/inventory-item.entity';
 import { StockMovementEntity } from '../../domain/entity/stock-movement.entity';
 

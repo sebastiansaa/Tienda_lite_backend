@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import PaymentAdminReadOnlyPort, { AdminPaymentSummary } from '../../application/ports/payment-admin.port';
+import PaymentAdminReadOnlyPort, { AdminPaymentSummary } from '../../app/ports/payment-admin.readonly.port';
 
 @Injectable()
 export class AdminPaymentPrismaAdapter implements PaymentAdminReadOnlyPort {

@@ -3,6 +3,7 @@ import { IsString, IsNumber, IsBoolean, IsArray, IsOptional, IsInt, Min } from '
 export class SaveProductRequestDto {
     @IsOptional()
     @IsInt()
+    @Min(1)
     readonly id?: number;
 
     @IsString()

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ORDER_PRODUCT_READONLY } from '../../constants';
-import StockServicePort from '../../application/ports/stock.service.port';
-import type ProductReadOnlyPort from '../../application/ports/product-read.port';
+import StockServicePort from '../../app/ports/stock.service.port';
+import type ProductReadOnlyPort from '../../app/ports/product-read.port';
 
 @Injectable()
 export class StockServiceAdapter implements StockServicePort {

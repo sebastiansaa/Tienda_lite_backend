@@ -1,8 +1,8 @@
 import { CreateOrderFromItemsDto } from '../dtos/request/create-order-from-items.dto';
 import { OrderResponseDto } from '../dtos/response/order.response.dto';
 import { OrderItemResponseDto } from '../dtos/response/order-item.response.dto';
-import CreateOrderFromCartCommand from '../../application/commands/create-order-from-cart.command';
-import CreateOrderFromItemsCommand from '../../application/commands/create-order-from-items.command';
+import CreateOrderFromCartCommand from '../../app/commands/create-order-from-cart.command';
+import CreateOrderFromItemsCommand from '../../app/commands/create-order-from-items.command';
 import { OrderEntity } from '../../domain/entity/order.entity';
 
 export class OrderApiMapper {

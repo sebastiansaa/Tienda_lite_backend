@@ -70,6 +70,14 @@ export class CartEntity {
         this.touch();
     }
 
+    repriceItem(productId: number, price: number): void {
+        const idx = this.itemsInternal.findIndex((i) => i.productId === productId);
+        if (idx === -1) throw new CartItemNotFoundError();
+        const current = this.itemsInternal[idx];
+        this.itemsInternal[idx] = current.withPrice(price);
+        this.touch();
+    }
+
     clear(): void {
         this.itemsInternal = [];
         this.touch();

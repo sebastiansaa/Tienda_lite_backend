@@ -5,15 +5,15 @@ Inventory
 
 Capas
 - Domain: `InventoryItemEntity`, `StockMovementEntity`; VOs para cantidades y fechas; errores `InsufficientStock`, `InvalidMovement`, `NegativeStock`.
-- Application: usecases IncreaseStock, DecreaseStock, ReserveStock, ReleaseStock, GetStock, ListMovements; puertos `InventoryRepositoryPort`, `ProductReadOnlyPort`.
-- Infrastructure: `InventoryPrismaRepository` (persiste items/movements), `ProductReadOnlyAdapter` para leer productos via `PRODUCT_READONLY`.
-- API: `InventoryController`, DTOs, `InventoryApiMapper`; admin guard en mutaciones.
+- Application: usecases IncreaseStock, DecreaseStock, ReserveStock, ReleaseStock, GetStock, ListMovements; puertos `IInventoryWriteRepository`, `IInventoryReadRepository`, `ProductReadOnlyPort`.
+- Infrastructure: `InventoryPrismaWriteRepository` (write items/movements) y `InventoryPrismaReadRepository` (read items/movements), `ProductReadOnlyAdapter` para leer productos via `PRODUCT_READONLY`.
+- API: `InventoryController` con `ValidationPipe` (whitelist/forbid/transform), DTOs, `InventoryApiMapper`; admin guard en mutaciones.
 
 Invariantes
 - onHand y reserved no negativos; movimientos registran before/after; no se reserva mas de lo disponible.
 
 Puertos expuestos
-- `INVENTORY_REPOSITORY`, `INVENTORY_PRODUCT_READONLY` (interno), `INVENTORY_ORDER_READONLY` reservado para futuras integraciones.
+- `INVENTORY_WRITE_REPOSITORY`, `INVENTORY_READ_REPOSITORY`; se mantiene `INVENTORY_REPOSITORY` como alias legado. `INVENTORY_PRODUCT_READONLY` y `INVENTORY_ORDER_READONLY` reservados para integraciones.
 
 Adaptadores implementados
 - Prisma repo; product read adapter consume puerto de Products.

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { SaveProductRequestDto, UpdateStockRequestDto, SearchProductsRequestDto, ListProductsRequestDto } from '../dtos/request';
@@ -20,9 +20,10 @@ import {
   ListProductsUsecase,
   FindLowStockUsecase,
   SearchProductsUsecase,
-} from '../../application/usecases';
+} from '../../app/usecases';
 
 @ApiTags('products')
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('products')
 export class ProductsController {
   constructor(

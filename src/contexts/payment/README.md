@@ -5,15 +5,15 @@ Payment
 
 Capas
 - Domain: `PaymentEntity`; VOs `PaymentId`, `OrderId`, `UserId`, `Amount`, `PaymentStatus`, `ClientSecret`, `ExternalPaymentId`, timestamps; errores `PaymentAlreadyProcessed`, `InvalidPaymentState`.
-- Application: usecases InitiatePayment, ConfirmPayment, FailPayment, GetPaymentById, ListPaymentsForUser; puertos `PaymentRepositoryPort`, `PaymentProviderPort`, `OrderReadOnlyPort`.
-- Infrastructure: `PaymentPrismaRepository` (persistencia), `PaymentProviderFakeAdapter` (simula PSP), `PaymentOrderReadAdapter` (lee ordenes via puerto en Orders).
-- API: `PaymentController`, DTOs, `PaymentApiMapper`; protegido con JwtAuthGuard.
+- Application: usecases InitiatePayment, ConfirmPayment, FailPayment, GetPaymentById, ListPaymentsForUser; puertos `IPaymentReadRepository`, `IPaymentWriteRepository`, `PaymentProviderPort`, `OrderReadOnlyPort`.
+- Infrastructure: repos separados `PaymentPrismaReadRepository` y `PaymentPrismaWriteRepository`; `PaymentProviderFakeAdapter` (simula PSP), `PaymentOrderReadAdapter` (lee ordenes via puerto en Orders).
+- API: `PaymentController`, DTOs, `PaymentApiMapper`; protegido con JwtAuthGuard y `ValidationPipe` con whitelist/transform.
 
 Invariantes
 - Estados transicionan Pending -> Succeeded/Failed; no se puede confirmar dos veces; monto se guarda como Decimal.
 
 Puertos expuestos
-- `PAYMENT_REPOSITORY`, `PAYMENT_PROVIDER`, `PAYMENT_ORDER_READONLY`.
+- `PAYMENT_READ_REPOSITORY`, `PAYMENT_WRITE_REPOSITORY`, `PAYMENT_PROVIDER`, `PAYMENT_ORDER_READONLY`.
 
 Adaptadores implementados
 - Prisma repo; provider fake; order-read adapter consulta ordenes via puerto expuesto por Orders.

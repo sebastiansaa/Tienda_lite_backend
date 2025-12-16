@@ -1,25 +1,25 @@
 import { RegisterAuthDto, LoginAuthDto, RefreshTokenDto } from '../dtos/request';
 import { AuthResponseDto, AuthTokensDto, AuthUserDto } from '../dtos/response';
-import { RegisterUserCommand, LoginUserCommand, RefreshTokenCommand } from '../../application/commands';
-import { GetAuthenticatedUserQuery } from '../../application/queries';
+import { RegisterUserInput, LoginUserInput, RefreshTokenInput } from '../../app/inputs';
+import { GetAuthenticatedUserInput } from '../../app/inputs';
 import { UserEntity } from '../../domain/entity/user.entity';
-import { TokenPair } from '../../application/ports/token.service.port';
+import { TokenPair } from '../../app/ports/token.service.port';
 
 export class AuthApiMapper {
-    static toRegisterCommand(dto: RegisterAuthDto): RegisterUserCommand {
-        return new RegisterUserCommand(dto.email, dto.password);
+    static toRegisterInput(dto: RegisterAuthDto): RegisterUserInput {
+        return new RegisterUserInput(dto.email, dto.password);
     }
 
-    static toLoginCommand(dto: LoginAuthDto): LoginUserCommand {
-        return new LoginUserCommand(dto.email, dto.password);
+    static toLoginInput(dto: LoginAuthDto): LoginUserInput {
+        return new LoginUserInput(dto.email, dto.password);
     }
 
-    static toRefreshCommand(dto: RefreshTokenDto): RefreshTokenCommand {
-        return new RefreshTokenCommand(dto.refreshToken);
+    static toRefreshInput(dto: RefreshTokenDto): RefreshTokenInput {
+        return new RefreshTokenInput(dto.refreshToken);
     }
 
-    static toGetAuthenticatedUserQuery(userId: string): GetAuthenticatedUserQuery {
-        return new GetAuthenticatedUserQuery(userId);
+    static toGetAuthenticatedUserInput(userId: string): GetAuthenticatedUserInput {
+        return new GetAuthenticatedUserInput(userId);
     }
 
     static toResponse(user: UserEntity, tokens: TokenPair): AuthResponseDto {

@@ -1,5 +1,5 @@
 import {
-    Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, HttpCode, HttpStatus
+    Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, HttpCode, HttpStatus, UsePipes, ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto } from '../dtos/index';
@@ -9,13 +9,14 @@ import {
     GetCategoryUseCase,
     ListCategoriesUseCase,
     DeleteCategoryUseCase
-} from '../../application/usecases';
+} from '../../app/usecases';
 import { CategoryApiMapper } from '../mappers/category-api.mapper';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
 import { Roles } from '../../../auth/api/decorators/roles.decorator';
 
 @ApiTags('categories')
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('categories')
 export class CategoriesController {
     constructor(

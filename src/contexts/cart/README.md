@@ -1,43 +1,128 @@
 Cart
 
-- Proposito: gestionar el carrito del usuario autenticado (agregar, actualizar cantidades, eliminar y vaciar) garantizando precios recalculados.
-- Responsabilidades: mantener items y cantidades, recalcular totales con servicio de pricing, validar cantidades y existencia de productos.
+- Propósito: gestionar el carrito del usuario autenticado (agregar, actualizar cantidades, eliminar y vaciar), garantizando precios recalculados y consistencia de stock básico.
+- Responsabilidades: mantener items y cantidades, validar productos y cantidades, recalcular totales vía servicio de pricing, exponer lectura del carrito actual.
 
 Capas
-- Domain: `CartEntity`, `CartItemEntity`; VOs `CartId`, `UserId`, `ProductId`, `Quantity`, `Price`; errores `CartNotFound`, `DuplicateCartItem`, `InvalidQuantity`, `InvalidProduct`.
-- Application: casos de uso `AddItemToCart`, `UpdateItemQuantity`, `RemoveItem`, `GetCart`, `ClearCart`; puertos `CartRepositoryPort`, `PricingServicePort`.
-- Infrastructure: `CartPrismaRepository` (implementa repo), `CartPricingService` (servicio de precios), mapper Prisma↔Entidad incluido en repo.
-- API: `CartController`, DTOs de entrada/salida, `CartApiMapper`; protegido con `JwtAuthGuard`.
+Domain
 
-Invariantes y reglas
-- Cantidad siempre positiva; productos duplicados en el carrito se rechazan.
-- Totales se recalculan en cada mutacion via `PricingServicePort`.
+- Entidades:
+- CartEntity
+- CartItemEntity
+- Value Objects:
+- CartId, UserId, ProductId, Quantity, Price
+- Reglas:
+- cantidad positiva
+- no permitir items duplicados
+- totales calculados solo vía puerto de pricing
+- Errores:
+- CartNotFound
+- DuplicateCartItem
+- InvalidQuantity
+- InvalidProduct
+
+App
+Casos de uso (CQRS):
+Commands (write)
+
+- AddItemToCart
+- UpdateItemQuantity
+- RemoveItem
+- ClearCart
+  Queries (read)
+- GetCart
+  Puertos
+- `ICartReadRepository` (lectura del carrito)
+- `ICartWriteRepository` (escritura del carrito)
+- `PricingServicePort` (cálculo de totales y validación de producto/precio)
+
+Infra
+
+- Persistencia:
+- `CartPrismaReadRepository` (implementa `ICartReadRepository`)
+- `CartPrismaWriteRepository` (implementa `ICartWriteRepository`)
+- Servicios:
+- `CartPricingService` (implementa `PricingServicePort`)
+- Mappers:
+- `CartPrismaMapper` (Prisma ↔ Entidad)
+
+API
+
+- `CartController`
+- DTOs request/response
+- `CartApiMapper`
+- Protegido con `JwtAuthGuard`
+
+CQRS
+
+- Separación total lectura/escritura.
+- Write:
+- `AddItemToCart`, `UpdateItemQuantity`, `RemoveItem`, `ClearCart`
+- usan `ICartReadRepository` + `ICartWriteRepository` + `PricingServicePort`
+- Read:
+- `GetCart`
+- usa `ICartReadRepository`
+- Handlers separados por carpeta (simetría con Products).
+- CommandBus para mutaciones, QueryBus para lecturas.
+
+Invariantes
+
+- Cantidad siempre positiva (Quantity > 0).
+- No se permiten productos duplicados en el carrito.
+- Totales siempre recalculados en cada comando.
+- El carrito se crea on-demand si no existe.
+- El dominio no conoce precios concretos, solo VOs y puertos.
+- El dominio no conoce productos, solo ProductId.
 
 Puertos expuestos
-- `CartRepositoryPort` (persistencia del carrito).
-- `PricingServicePort` (calculo de totales y descuentos simples).
+
+- `ICartReadRepository`
+- `ICartWriteRepository`
+- `PricingServicePort`
+  Exportables para otros contextos si fuera necesario (por ejemplo, Orders).
 
 Adaptadores implementados
-- Prisma: `CartPrismaRepository` (infra/repository/cart-prisma.repository.ts).
-- Pricing in-memory: `CartPricingService` (infra/services/cart-pricing.service.ts).
 
-Endpoints
-- `GET /cart` obtener carrito actual.
-- `POST /cart/items` agregar item.
-- `PUT /cart/items/:productId` actualizar cantidad.
-- `DELETE /cart/items/:productId` eliminar item.
-- `DELETE /cart` vaciar carrito.
+- **Prisma**:
+  - `CartPrismaReadRepository` (infra/persistence/cart-prisma-read.repository.ts)
+  - `CartPrismaWriteRepository` (infra/persistence/cart-prisma-write.repository.ts)
+- Pricing in-memory:
+  `CartPricingService` (infra/services/cart-pricing.service.ts)
+
+## Endpoints
+
+- `GET /cart` → obtener carrito actual (Query)
+- `POST /cart/items` → agregar item (Command)
+- `PUT /cart/items/:productId` → actualizar cantidad (Command)
+- `DELETE /cart/items/:productId` → eliminar item (Command)
+- `DELETE /cart` → vaciar carrito (Command)
 
 Integraciones
-- Consume productos via `ProductsModule` para validaciones (solo a traves de puerto de pricing/adaptador).
-- Usa Auth para identificar al usuario.
+
+- Consume productos vía ProductsModule solo a través del PricingServicePort (validación de existencia y precio).
+- Usa Auth para identificar al usuario (JwtAuthGuard).
+- No depende directamente de ProductEntity ni ProductRepository.
 
 Diagrama textual
-- HTTP -> Controller -> DTO -> ApiMapper -> UseCase -> (Repository|Pricing service ports) -> Adaptadores (Prisma / Pricing) -> DB/respuesta -> Mapper -> DTO -> HTTP.
+-HTTP (API) -> CartController -> DTO -> ApiMapper-> (Command|Query) -> CommandBus/QueryBus -> UseCase Handler
+-> (CartRepositoryPort | PricingServicePort) -> Adaptadores (Prisma / Pricing) -> DB / Servicio externo -> Mapper -> DTO -> HTTP
 
 Notas de diseño
-- Carrito se crea on-demand si no existe (entidad vacia).
-- Errores de dominio se mapean a HTTP en controller.
+• El carrito no almacena precios finales, solo los recibe del servicio de pricing.
+• El carrito se crea automáticamente si no existe para el usuario.
+• Los errores de dominio se mapean a HTTP en el controller.
+• El dominio es completamente puro: sin Prisma, sin DTOs, sin NestJS.
 
-Razon de aislamiento
-- El dominio del carrito no conoce detalles de producto ni precios concretos; solo usa puertos y VOs, permitiendo cambiar motor de precios o persistencia sin afectar el negocio.
+Razón de aislamiento
+
+- El dominio del carrito no conoce productos, precios ni stock real.
+  Solo conoce:
+- ProductId
+- Quantity
+- Price como VO
+- PricingServicePort para obtener totales
+  Esto permite:
+- cambiar motor de precios
+- cambiar proveedor de productos
+- cambiar persistencia
+- sin tocar el dominio ni los casos de uso

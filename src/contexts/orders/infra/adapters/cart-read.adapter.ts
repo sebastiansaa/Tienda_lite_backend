@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import CartReadOnlyPort, { CartItemSnapshot } from '../../application/ports/cart-read.port';
+import CartReadOnlyPort, { CartItemSnapshot } from '../../app/ports/cart-read.port';
 
 @Injectable()
 export class CartReadOnlyAdapter implements CartReadOnlyPort {

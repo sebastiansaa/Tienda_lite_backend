@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsPositive } from 'class-validator';
+import { IsInt, Min } from 'class-validator';
 
 export class AddItemDto {
     @ApiProperty({ example: 1 })
     @IsInt()
-    @IsPositive()
-    productId: number;
+    @Min(1)
+    productId!: number;
 
     @ApiProperty({ example: 2 })
     @IsInt()
-    @IsPositive()
-    quantity: number;
+    @Min(1)
+    quantity!: number;
 }

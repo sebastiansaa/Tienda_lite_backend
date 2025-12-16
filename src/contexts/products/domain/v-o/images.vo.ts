@@ -1,4 +1,5 @@
 import { ImageUrlVO } from '../../../shared/v-o/image-url.vo';
+import { ImagesArrayNullError, ImagesArrayEmptyError, ImageNotFoundError } from '../errors/product.errors';
 
 /**
  * Value Object para una colección de URLs de imagen.
@@ -9,10 +10,10 @@ export class ImagesVO {
 
     constructor(values: unknown) {
         if (!Array.isArray(values)) {
-            throw new Error('Invariant: images debe ser un array');
+            throw new ImagesArrayNullError();
         }
         if (values.length === 0) {
-            throw new Error('Invariant: images no puede estar vacío');
+            throw new ImagesArrayEmptyError();
         }
         this._values = values.map((v) => new ImageUrlVO(v as string).value);
     }
@@ -28,7 +29,7 @@ export class ImagesVO {
     remove(url: string): ImagesVO {
         const next = this._values.filter((v) => v !== url);
         if (next.length === this._values.length) {
-            throw new Error('ImageNotFound');
+            throw new ImageNotFoundError();
         }
         return new ImagesVO(next);
     }

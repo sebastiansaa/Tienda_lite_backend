@@ -1,11 +1,11 @@
 import { UpdateUserProfileDto, AddressDto, UserResponseDto, AddressResponseDto } from '../dtos';
-import UpdateUserProfileCommand from '../../application/commands/update-user-profile.command';
-import AddAddressCommand from '../../application/commands/add-address.command';
-import UpdateAddressCommand from '../../application/commands/update-address.command';
-import DeleteAddressCommand from '../../application/commands/delete-address.command';
-import ChangeUserStatusCommand from '../../application/commands/change-user-status.command';
-import GetUserProfileQuery from '../../application/queries/get-user-profile.query';
-import ListUsersQuery from '../../application/queries/list-users.query';
+import UpdateUserProfileCommand from '../../app/commands/update-user-profile.command';
+import AddAddressCommand from '../../app/commands/add-address.command';
+import UpdateAddressCommand from '../../app/commands/update-address.command';
+import DeleteAddressCommand from '../../app/commands/delete-address.command';
+import ChangeUserStatusCommand from '../../app/commands/change-user-status.command';
+import GetUserProfileQuery from '../../app/queries/get-user-profile.query';
+import ListUsersQuery from '../../app/queries/list-users.query';
 import { UserEntity } from '../../domain/entity/user.entity';
 import { AddressEntity } from '../../domain/entity/address.entity';
 import { UserStatus } from '../../domain/v-o/user-status.vo';

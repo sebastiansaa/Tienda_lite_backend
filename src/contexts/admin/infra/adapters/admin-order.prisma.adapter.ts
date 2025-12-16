@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import OrderAdminReadOnlyPort, { AdminOrderSummary } from '../../application/ports/order-admin.port';
+import OrderAdminReadOnlyPort, { AdminOrderSummary } from '../../app/ports/order-admin.readonly.port';
 
 @Injectable()
 export class AdminOrderPrismaAdapter implements OrderAdminReadOnlyPort {

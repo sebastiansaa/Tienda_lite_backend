@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
@@ -12,10 +12,11 @@ import {
     ReleaseStockUsecase,
     GetStockUsecase,
     ListMovementsUsecase,
-} from '../../application/usecases';
+} from '../../app/usecases';
 import { InsufficientStockError, InvalidMovementError, NegativeStockError } from '../../domain/errors/inventory.errors';
 
 @ApiTags('inventory')
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('inventory')
 export class InventoryController {
     constructor(

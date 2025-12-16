@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ConflictException, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 
@@ -12,9 +12,9 @@ import {
     CancelOrderUsecase,
     MarkOrderAsPaidUsecase,
     MarkOrderAsCompletedUsecase,
-} from '../../application/usecases';
+} from '../../app/usecases';
 import { EmptyOrderError, InvalidOrderStateError, ProductUnavailableError, OrderOwnershipError } from '../../domain/errors/order.errors';
-import CurrentUser from 'src/contexts/auth/api/decorators/current-user.decorator';
+import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
 
 interface AuthenticatedUser {
     sub: string;
@@ -23,6 +23,7 @@ interface AuthenticatedUser {
 @ApiTags('orders')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('orders')
 export class OrdersController {
     constructor(
