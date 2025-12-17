@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: tienda_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Seba123
+      POSTGRES_DB: eccomerce
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: tienda_adminer
+    restart: always
+    ports:
+      - '8080:8080'
+
+volumes:
+  postgres_data:

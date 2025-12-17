@@ -101,6 +101,19 @@ Esto garantiza reproducibilidad y evita contaminación entre contextos.
 - npm run test:cov — cobertura
 - npm run type — verificación estricta de tipos
 
+**Postgres Local vs Contenedor**
+
+- **Puerto del contenedor:** en este proyecto el servicio Postgres del contenedor está mapeado al host en `5433:5432`. Por tanto `DATABASE_URL` en `.env` usa `localhost:5433`.
+- **Motivo:** si tienes PostgreSQL instalado localmente en Windows escuchando en `5432`, mapear `5432:5432` colisiona y Prisma (ejecutado en el host) puede conectarse al Postgres local en vez del contenedor. Para evitarlo se usa `5433` en el host.
+- **Comprobar estado:**
+  - Ver contenedores y puertos: `docker ps`
+  - Ver tablas dentro del contenedor: `docker compose exec postgres psql -U postgres -d eccomerce -c "\\dt"`
+- **Cambiar el comportamiento:**
+  - Si prefieres que `localhost:5432` apunte al contenedor, detén el Postgres local y remapea el puerto en `docker-compose.yml` a `5432:5432`.
+  - Alternativa segura: dejar `5433:5432` y mantener `DATABASE_URL` apuntando a `localhost:5433`.
+
+Incluye esta nota para evitar confusiones al ejecutar migraciones o seeds con Prisma.
+
 
 Scripts basicos
 

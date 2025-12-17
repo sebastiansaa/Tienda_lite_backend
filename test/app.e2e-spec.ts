@@ -4,7 +4,8 @@ import * as dotenv from 'dotenv';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { cleanDatabase } from './utils/prisma-test-helpers';
+import { cleanDatabase } from '../src/test-utils/prisma-test-helpers';
+import type { PrismaService as PrismaServiceType } from '../src/prisma/prisma.service';
 
 const envPath = path.resolve('.env.test');
 if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
@@ -20,7 +21,7 @@ let AppModule: typeof import('../src/app.module').AppModule;
 
 describe('App e2e happy path', () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let prisma: PrismaServiceType;
 
   beforeAll(async () => {
     // use require to avoid ESM dynamic import flags in Jest

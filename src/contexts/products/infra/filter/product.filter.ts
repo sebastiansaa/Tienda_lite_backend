@@ -11,7 +11,7 @@ export interface ListParams {
     readonly inStock?: boolean;
     readonly priceMin?: number;
     readonly priceMax?: number;
-    readonly sort?: string; // e.g. 'price:asc'
+    readonly sort?: string;
 }
 
 // Tipo local devuelto por el filter — no exponemos tipos de Prisma fuera de infra

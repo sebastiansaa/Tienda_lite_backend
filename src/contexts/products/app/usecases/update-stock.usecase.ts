@@ -5,7 +5,7 @@ export class UpdateStockUsecase {
     constructor(private readonly repo: IProductWriteRepository) { }
 
     async execute(cmd: UpdateStockCommand): Promise<import('../../domain/entity/product.entity').ProductEntity> {
-        // repository will return the updated entity
+        // repository devuelve la entidad actualizada
         return this.repo.updateStock(cmd.id, cmd.quantity);
     }
 }

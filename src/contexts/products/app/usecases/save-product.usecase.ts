@@ -15,12 +15,10 @@ export class SaveProductUsecase {
     async execute(cmd: SaveProductCommand): Promise<ProductEntity> {
         const payload: Readonly<Partial<ProductProps>> = cmd.payload;
 
-        // Update flow
         if (typeof payload.id === 'number') {
             const existing = await this.readRepo.findById(payload.id);
             if (!existing) throw new Error(`Product ${payload.id} not found`);
 
-            // Partial safe updates
             if (payload.title !== undefined) existing.rename(payload.title);
             if (payload.price !== undefined) existing.changePrice(payload.price);
             if (payload.slug !== undefined) existing.changeSlug(payload.slug);
@@ -36,7 +34,6 @@ export class SaveProductUsecase {
             return this.writeRepo.save(existing);
         }
 
-        // Create flow
         if (payload.title === undefined) throw new Error('Missing required field: title');
         if (payload.slug === undefined) throw new Error('Missing required field: slug');
         if (payload.price === undefined) throw new Error('Missing required field: price');

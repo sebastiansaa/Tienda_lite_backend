@@ -1,6 +1,3 @@
-// En domain hay 2 entidades: ProductEntity y CategoryEntity
-
-
 import { ProductEntity } from "../../domain/entity/product.entity";
 
 export interface IProductWriteRepository {

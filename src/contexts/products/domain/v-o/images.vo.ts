@@ -1,10 +1,8 @@
 import { ImageUrlVO } from '../../../shared/v-o/image-url.vo';
 import { ImagesArrayNullError, ImagesArrayEmptyError, ImageNotFoundError } from '../errors/product.errors';
 
-/**
- * Value Object para una colección de URLs de imagen.
- * Garantiza: no nulo, no vacío y todas las URLs válidas.
- */
+/**Para una colección de URLs de imagen.
+ * Garantiza: no nulo, no vacío y todas las URLs válidas. */
 export class ImagesVO {
     private readonly _values: string[];
 

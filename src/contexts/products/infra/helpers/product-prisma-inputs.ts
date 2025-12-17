@@ -2,8 +2,7 @@ import { Prisma } from '@prisma/client';
 import { ProductEntity } from '../../domain/entity';
 import { decimalToString } from './decimal.helper';
 
-/**
- * Construye un objeto compatibe con Prisma unchecked create input.
+/* Construye un objeto compatibe con Prisma unchecked create input.
  * Usamos UncheckedCreate para poder asignar `categoryId` directamente.
  */
 export function buildProductCreateInput(entity: ProductEntity): Prisma.ProductUncheckedCreateInput {
@@ -23,10 +22,8 @@ export function buildProductCreateInput(entity: ProductEntity): Prisma.ProductUn
     };
 }
 
-/**
- * Construye un objeto compatible con Prisma unchecked update input.
- * Usamos campos directos o wrappers según lo permita el tipo unchecked.
- */
+/* Construye un objeto compatible con Prisma unchecked update input.
+ * Usamos campos directos o wrappers según lo permita el tipo unchecked. */
 export function buildProductUpdateInput(entity: ProductEntity): Prisma.ProductUncheckedUpdateInput {
     return {
         title: entity.title,
