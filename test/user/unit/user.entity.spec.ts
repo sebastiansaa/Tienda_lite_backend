@@ -1,5 +1,5 @@
-import { UserEntity } from 'src/contexts/users/domain/entity/user.entity';
-import { AddressEntity } from 'src/contexts/users/domain/entity/address.entity';
+import { UserEntity } from 'src/contexts/user/domain/entity/user.entity';
+import { AddressEntity } from 'src/contexts/user/domain/entity/address.entity';
 
 describe('UserEntity', () => {
     const validProps = {

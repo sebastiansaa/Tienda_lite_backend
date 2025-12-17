@@ -1,8 +1,8 @@
-import { AddAddressUseCase } from 'src/contexts/users/app/usecases/add-address.usecase';
-import { AddAddressCommand } from 'src/contexts/users/app/commands/add-address.command';
-import { UserEntity } from 'src/contexts/users/domain/entity/user.entity';
-import { AddressEntity } from 'src/contexts/users/domain/entity/address.entity';
-import { UserNotFoundError } from 'src/contexts/users/domain/errors/user.errors';
+import { AddAddressUseCase } from 'src/contexts/user/app/usecases/add-address.usecase';
+import { AddAddressCommand } from 'src/contexts/user/app/commands/add-address.command';
+import { UserEntity } from 'src/contexts/user/domain/entity/user.entity';
+import { AddressEntity } from 'src/contexts/user/domain/entity/address.entity';
+import { UserNotFoundError } from 'src/contexts/user/domain/errors/user.errors';
 
 describe('AddAddressUseCase Integration', () => {
     let usecase: AddAddressUseCase;

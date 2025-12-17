@@ -3,12 +3,14 @@ import { InvalidSortOrderError } from 'src/contexts/categories/domain/errors/cat
 
 describe('CategoryEntity', () => {
     it('should create entity with valid sortOrder', () => {
-        const entity = CategoryEntity.create('name', 'slug', 'img', 1);
+        const entity = CategoryEntity.create({ title: 'name', slug: 'slug', image: 'http://img.com', sortOrder: 1 });
         expect(entity).toBeInstanceOf(CategoryEntity);
         expect(entity.sortOrder).toBe(1);
     });
 
-    it('should reject non-positive sortOrder', () => {
-        expect(() => CategoryEntity.create('name', 'slug', 'img', 0)).toThrow(InvalidSortOrderError);
+    it('should reject negative sortOrder', () => {
+        expect(() => CategoryEntity.create({ title: 'name', slug: 'slug', image: 'http://img.com', sortOrder: -1 })).toThrow(
+            InvalidSortOrderError,
+        );
     });
 });

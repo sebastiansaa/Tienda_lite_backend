@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SaveProductUsecase } from 'src/contexts/products/application/usecases/save-product.usecase';
-import { IProductWriteRepository } from 'src/contexts/products/application/ports/product-write.repository';
-import { IProductReadRepository } from 'src/contexts/products/application/ports/product-read.repository';
-import { ProductCategoryPolicy } from 'src/contexts/products/application/policies/product-category.policy';
-import { SaveProductCommand } from 'src/contexts/products/application/commands/save-product.command';
+import { SaveProductUsecase } from 'src/contexts/products/app/usecases/save-product.usecase';
+import { IProductWriteRepository } from 'src/contexts/products/app/ports/product-write.repository';
+import { IProductReadRepository } from 'src/contexts/products/app/ports/product-read.repository';
+import { ProductCategoryPolicy } from 'src/contexts/products/app/policies/product-category.policy';
+import { SaveProductCommand } from 'src/contexts/products/app/commands/save-product.command';
 import { ProductEntity } from 'src/contexts/products/domain/entity/product.entity';
 
 describe('SaveProductUsecase Integration', () => {

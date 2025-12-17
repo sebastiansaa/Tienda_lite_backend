@@ -1,20 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CartController } from 'src/contexts/cart/api/controller/cart.controller';
-import { CartService } from 'src/contexts/cart/app/cart.service';
+import {
+    AddItemToCartUseCase,
+    UpdateItemQuantityUseCase,
+    RemoveItemUseCase,
+    GetCartUseCase,
+    ClearCartUseCase,
+} from 'src/contexts/cart/app/usecases';
 
 describe('Cart sanity', () => {
     let cartController: CartController;
-    const mockCartService = {
-        addItem: jest.fn(),
-        removeItem: jest.fn(),
-        getItems: jest.fn(),
-        clearCart: jest.fn(),
+    const mocks = {
+        addItem: { execute: jest.fn() },
+        updateItem: { execute: jest.fn() },
+        removeItem: { execute: jest.fn() },
+        getCart: { execute: jest.fn() },
+        clearCart: { execute: jest.fn() },
     };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [CartController],
-            providers: [{ provide: CartService, useValue: mockCartService }],
+            providers: [
+                { provide: AddItemToCartUseCase, useValue: mocks.addItem },
+                { provide: UpdateItemQuantityUseCase, useValue: mocks.updateItem },
+                { provide: RemoveItemUseCase, useValue: mocks.removeItem },
+                { provide: GetCartUseCase, useValue: mocks.getCart },
+                { provide: ClearCartUseCase, useValue: mocks.clearCart },
+            ],
         }).compile();
 
         cartController = module.get<CartController>(CartController);
