@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Validates and coerces environment variables at bootstrap time
 export function validateEnv(config: Record<string, unknown>) {
     const schema = z.object({
         NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

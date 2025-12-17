@@ -1,4 +1,3 @@
-// Tokens para inyección de dependencias en Inventory
 export const INVENTORY_REPOSITORY = 'INVENTORY_REPOSITORY';
 export const INVENTORY_WRITE_REPOSITORY = 'INVENTORY_WRITE_REPOSITORY';
 export const INVENTORY_READ_REPOSITORY = 'INVENTORY_READ_REPOSITORY';

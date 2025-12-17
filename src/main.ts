@@ -10,24 +10,14 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // security
   app.use(helmet());
-
-  // logging
   app.use(morgan('combined'));
-
-  // cookie parser
   app.use(cookieParser());
-
-  // validation + transformation
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-
-  // Domain -> HTTP mapping
   app.useGlobalFilters(new DomainExceptionFilter());
 
   app.setGlobalPrefix('api');
 
-  // enable swagger in non-production
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('Tienda Lite API')

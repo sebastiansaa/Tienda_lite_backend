@@ -1,5 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
-import { AdjustStockDto } from '../../../src/contexts/inventory/api/dtos';
+import { AdjustStockDto } from 'src/contexts/inventory/api/dtos';
 
 describe('Inventory DTO validation', () => {
     const pipe = new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true });

@@ -24,7 +24,6 @@ export class AddressMapper {
     }
 
     static toPersistence(address: AddressEntity, userId?: string): Prisma.AddressUncheckedCreateInput {
-        // userId is optional here because it might be added by the repository context
         const data: Prisma.AddressUncheckedCreateInput = {
             id: address.id,
             street: address.street,
@@ -33,18 +32,10 @@ export class AddressMapper {
             zipCode: address.zipCode,
             createdAt: address.createdAt,
             updatedAt: address.updatedAt,
-            userId: userId || '', // This might be an issue if userId is strictly required by type, but repo handles it. 
-            // However, Repository calls `toPersistence(address)` without userId then adds it.
+            userId: userId || '',
         };
-        // If strict typing requires userId, we might need to adjust signature or handle partial.
-        // Prisma.AddressUncheckedCreateInput REQUIRES userId.
-        // We will make it required in `toPersistence` but handle where calls come from.
-        // Actually, Repository does: `const data = AddressMapper.toPersistence(address); const saved = create({ data: { ...data, userId } });`
-        // So `toPersistence` should return Omit<..., 'userId'> or optional.
         return data;
     }
-
-    // Better implementation for Repository usage:
     static toPersistencePartial(address: AddressEntity): Omit<Prisma.AddressUncheckedCreateInput, 'userId'> {
         return {
             id: address.id,

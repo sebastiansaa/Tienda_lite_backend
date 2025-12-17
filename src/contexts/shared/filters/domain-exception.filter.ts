@@ -1,6 +1,4 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpStatus } from '@nestjs/common';
-
-// Domain errors
 import { StockInsufficientError, NegativeStockError, InvalidStockError } from '../../products/domain/errors/stock.errors';
 import {
     EmptyTitleError,

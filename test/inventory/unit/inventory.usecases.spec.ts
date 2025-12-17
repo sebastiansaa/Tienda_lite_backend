@@ -1,14 +1,14 @@
-import { InsufficientStockError } from '../../../src/contexts/inventory/domain/errors/inventory.errors';
-import { InventoryItemEntity } from '../../../src/contexts/inventory/domain/entity/inventory-item.entity';
-import { IncreaseStockUsecase } from '../../../src/contexts/inventory/app/usecases/increase-stock.usecase';
-import { DecreaseStockUsecase } from '../../../src/contexts/inventory/app/usecases/decrease-stock.usecase';
-import { ReserveStockUsecase } from '../../../src/contexts/inventory/app/usecases/reserve-stock.usecase';
-import { IInventoryReadRepository } from '../../../src/contexts/inventory/app/ports/inventory-read.repository';
-import { IInventoryWriteRepository } from '../../../src/contexts/inventory/app/ports/inventory-write.repository';
-import ProductReadOnlyPort from '../../../src/contexts/inventory/app/ports/product-read.port';
-import IncreaseStockCommand from '../../../src/contexts/inventory/app/commands/increase-stock.command';
-import DecreaseStockCommand from '../../../src/contexts/inventory/app/commands/decrease-stock.command';
-import ReserveStockCommand from '../../../src/contexts/inventory/app/commands/reserve-stock.command';
+import { InsufficientStockError } from 'src/contexts/inventory/domain/errors/inventory.errors';
+import { InventoryItemEntity } from 'src/contexts/inventory/domain/entity/inventory-item.entity';
+import { IncreaseStockUsecase } from 'src/contexts/inventory/app/usecases/increase-stock.usecase';
+import { DecreaseStockUsecase } from 'src/contexts/inventory/app/usecases/decrease-stock.usecase';
+import { ReserveStockUsecase } from 'src/contexts/inventory/app/usecases/reserve-stock.usecase';
+import { IInventoryReadRepository } from 'src/contexts/inventory/app/ports/inventory-read.repository';
+import { IInventoryWriteRepository } from 'src/contexts/inventory/app/ports/inventory-write.repository';
+import ProductReadOnlyPort from 'src/contexts/inventory/app/ports/product-read.port';
+import IncreaseStockCommand from 'src/contexts/inventory/app/commands/increase-stock.command';
+import DecreaseStockCommand from 'src/contexts/inventory/app/commands/decrease-stock.command';
+import ReserveStockCommand from 'src/contexts/inventory/app/commands/reserve-stock.command';
 
 describe('Inventory usecases', () => {
     const productSnapshot = { id: 1 };

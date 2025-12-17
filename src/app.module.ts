@@ -25,14 +25,11 @@ import { validateEnv } from './config/env.validation';
       ignoreEnvFile: false,
       validate: validateEnv,
     }),
-    // basic in-memory cache & rate limit (throttling)
     CacheModule.register({
-      ttl: 60, // seconds
+      ttl: 60,
       max: 100,
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
-    // Prisma provider (created in src/prisma)
-    // note: PrismaModule provides a ready-to-use PrismaService
     PrismaModule,
     AuthModule,
     ProductsModule,

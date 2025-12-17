@@ -1,5 +1,6 @@
 import { CategoryProps } from "../interfaces/category.props";
 import { TitleVO, Slug, ImageUrlVO, SoftDeleteVO } from "../../../shared/v-o";
+import { InvalidSortOrderError } from "../errors/category.errors";
 
 export class CategoryEntity {
     private readonly idValue?: number;
@@ -18,7 +19,7 @@ export class CategoryEntity {
         this.slugVO = new Slug(props.slug);
         this.imageVO = new ImageUrlVO(props.image);
         this.descriptionValue = props.description;
-        this.sortOrderValue = props.sortOrder ?? 0;
+        this.sortOrderValue = this.ensureValidSortOrder(props.sortOrder ?? 0);
         this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
         const now = new Date();
         this.createdAtValue = props.createdAt ?? now;
@@ -47,7 +48,7 @@ export class CategoryEntity {
             if (props.active && this.deletedAtVO.isDeleted()) this.restore();
             if (!props.active && !this.deletedAtVO.isDeleted()) this.delete();
         }
-        if (props.sortOrder !== undefined) this.sortOrderValue = props.sortOrder;
+        if (props.sortOrder !== undefined) this.sortOrderValue = this.ensureValidSortOrder(props.sortOrder);
         this.touch();
     }
 
@@ -71,6 +72,11 @@ export class CategoryEntity {
     get deletedAt(): Date | undefined { return this.deletedAtVO.value; }
     get createdAt(): Date { return this.createdAtValue; }
     get updatedAt(): Date { return this.updatedAtValue; }
+
+    private ensureValidSortOrder(value: number): number {
+        if (!Number.isInteger(value) || value < 0) throw new InvalidSortOrderError();
+        return value;
+    }
 
     private touch(): void {
         this.updatedAtValue = new Date();

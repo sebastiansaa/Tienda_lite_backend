@@ -3,7 +3,7 @@ export interface ProductReadDto {
     title: string;
     price: number;
     stock: number;
-    image?: string; // only the first image
+    image?: string;
     slug?: string;
 }
 

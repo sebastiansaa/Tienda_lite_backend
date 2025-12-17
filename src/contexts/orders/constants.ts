@@ -1,4 +1,3 @@
-// Tokens de inyección para Order
 export const ORDER_WRITE_REPOSITORY = 'ORDER_WRITE_REPOSITORY';
 export const ORDER_READ_REPOSITORY = 'ORDER_READ_REPOSITORY';
 export const ORDER_CART_READONLY = 'ORDER_CART_READONLY';

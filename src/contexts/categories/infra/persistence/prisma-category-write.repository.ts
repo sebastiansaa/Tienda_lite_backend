@@ -10,17 +10,13 @@ export class PrismaCategoryWriteRepository implements ICategoryWriteRepository {
 
     async save(category: CategoryEntity): Promise<CategoryEntity> {
         const data = CategoryMapper.toPersistence(category);
+        const payload = { ...data, updatedAt: category.updatedAt };
 
-        if (category.id) {
-            const updated = await this.prisma.category.update({
-                where: { id: category.id },
-                data: { ...data, updatedAt: new Date() },
-            });
-            return CategoryMapper.toDomain(updated);
-        }
+        const record = category.id
+            ? await this.prisma.category.update({ where: { id: category.id }, data: payload })
+            : await this.prisma.category.create({ data: payload });
 
-        const created = await this.prisma.category.create({ data });
-        return CategoryMapper.toDomain(created);
+        return CategoryMapper.toDomain(record);
     }
 
     async delete(id: number): Promise<void> {

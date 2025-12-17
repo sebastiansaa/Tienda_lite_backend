@@ -13,7 +13,7 @@ const generateClientSecret = (): string => `cs_test_${randomUUID().replace(/-/g,
 @Injectable()
 export class PaymentProviderFakeAdapter implements PaymentProviderPort {
     async initiatePayment(_input: PaymentProviderInitInput): Promise<PaymentProviderResult> {
-        await delay(150 + Math.random() * 250); // simulate network
+        await delay(150 + Math.random() * 250);
         if (randomFail(0.1)) {
             return this.buildResult('FAILED');
         }

@@ -2,6 +2,7 @@ import { CreateCategoryCommand } from "../commands/create-category.command";
 import { ICategoryReadRepository } from "../ports/category-read.repository";
 import { ICategoryWriteRepository } from "../ports/category-write.repository";
 import { CategoryEntity } from "../../domain/entity/category.entity";
+import { DuplicateCategoryError } from "../../domain/errors/category.errors";
 
 export class CreateCategoryUseCase {
     constructor(
@@ -11,9 +12,7 @@ export class CreateCategoryUseCase {
 
     async execute(command: CreateCategoryCommand): Promise<CategoryEntity> {
         const existing = await this.readRepo.findBySlug(command.slug);
-        if (existing) {
-            throw new Error(`Category with slug ${command.slug} already exists`);
-        }
+        if (existing) throw new DuplicateCategoryError(`Category with slug ${command.slug} already exists`);
 
         const entity = CategoryEntity.create({
             title: command.title,

@@ -31,7 +31,6 @@ import ProductReadOnlyPort from './app/ports/product-read.port';
             provide: INVENTORY_READ_REPOSITORY,
             useClass: InventoryPrismaReadRepository,
         },
-        // Alias legado si algo sigue usando el token combinado
         {
             provide: INVENTORY_REPOSITORY,
             useClass: InventoryPrismaWriteRepository,

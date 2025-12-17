@@ -1,9 +1,3 @@
-/**
- * Utilidades compartidas para filtros: paginación y parseo de sort.
- * Estas utilidades viven en `shared/helpers` para ser reutilizables
- * por diferentes contextos sin exponer detalles de persistencia.
- */
-
 export const DEFAULT_LIMIT = 20;
 export const MAX_LIMIT = 100;
 

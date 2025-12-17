@@ -4,7 +4,7 @@ import { CategoriesController } from './api/controller/categories.controller';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaCategoryWriteRepository } from './infra/persistence/prisma-category-write.repository';
 import { PrismaCategoryReadRepository } from './infra/persistence/prisma-category-read.repository';
-import { CATEGORY_REPOSITORY, CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY } from './constants';
+import { CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY } from './constants';
 import {
     CreateCategoryUseCase,
     UpdateCategoryUseCase,
@@ -28,11 +28,6 @@ import { CategorySharedAdapter } from './infra/adapters/category-shared.adapter'
         {
             provide: CATEGORY_READ_REPOSITORY,
             useClass: PrismaCategoryReadRepository,
-        },
-        // Legacy support if needed, or alias for shared adapter usage within module
-        {
-            provide: CATEGORY_REPOSITORY,
-            useClass: PrismaCategoryReadRepository
         },
         {
             provide: 'CategoryReadOnlyPort',
@@ -64,6 +59,6 @@ import { CategorySharedAdapter } from './infra/adapters/category-shared.adapter'
             inject: [CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY],
         },
     ],
-    exports: [CATEGORY_WRITE_REPOSITORY, CATEGORY_READ_REPOSITORY, CATEGORY_REPOSITORY, 'CategoryReadOnlyPort']
+    exports: [CATEGORY_WRITE_REPOSITORY, CATEGORY_READ_REPOSITORY, 'CategoryReadOnlyPort']
 })
 export class CategoriesModule { }

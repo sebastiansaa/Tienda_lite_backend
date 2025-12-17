@@ -1,8 +1,3 @@
-/**- Son OBJ inmutables que representan un concepto del dominio, pero no tienen identidad propia (a diferencia de una entidad).
-- Encapsulan reglas de negocio y validaciones alrededor de un valor primitivo → no es un simple valor, sino un concepto con reglas.
-- Se comparan por valor, no por identidad: dos VO con el mismo contenido son equivalentes aunque sean instancias distintas.
-- Garantizan consistencia: si un VO existe, su valor ya pasó todas las validaciones y es válido en cualquier parte del sistema.  */
-
 import { InvalidSlugError } from '../errors/shared.errors';
 
 export class Slug {

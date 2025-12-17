@@ -38,7 +38,7 @@ export class ConfirmPaymentUsecase {
             payment.markFailed();
             return;
         }
-        if (status === 'PENDING') return; // no-op
+        if (status === 'PENDING') return;
         throw new InvalidPaymentStateError('Unknown provider status');
     }
 }

@@ -1,4 +1,3 @@
-// al final del proyecto ver si es necesario, o eliminar
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

@@ -1,8 +1,3 @@
-/**
- * Funciones para validar y sanitizar campos de consulta compartidos.
- * Aquí se concentra la lógica de parse/whitelist para `sort`.
- */
-
 export function isAllowedField(field: string, allowed: string[]): boolean {
     return allowed.includes(field);
 }

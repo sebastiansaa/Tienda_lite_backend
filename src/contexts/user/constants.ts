@@ -1,4 +1,3 @@
-// Tokens de inyección para User
 export const USER_READ_REPOSITORY = 'USER_READ_REPOSITORY';
 export const USER_WRITE_REPOSITORY = 'USER_WRITE_REPOSITORY';
 export const USER_READONLY = 'USER_READONLY';
