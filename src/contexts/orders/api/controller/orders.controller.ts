@@ -38,7 +38,9 @@ export class OrdersController {
 
     @Post('from-cart')
     @ApiOperation({ summary: 'Crear una orden a partir del carrito del usuario autenticado' })
-    @ApiResponse({ status: 201, type: OrderResponseDto })
+    @ApiResponse({ status: 201, type: OrderResponseDto, description: 'Orden creada desde carrito' })
+    @ApiResponse({ status: 400, description: 'Carrito vacío o productos no disponibles' })
+    @ApiResponse({ status: 409, description: 'Estado inválido de la orden' })
     async createFromCartHandler(@CurrentUser() user: AuthenticatedUser): Promise<OrderResponseDto> {
         try {
             const command = OrderApiMapper.toCreateFromCartCommand(user.sub);
@@ -51,7 +53,9 @@ export class OrdersController {
 
     @Post()
     @ApiOperation({ summary: 'Crear una orden con items específicos' })
-    @ApiResponse({ status: 201, type: OrderResponseDto })
+    @ApiResponse({ status: 201, type: OrderResponseDto, description: 'Orden creada con items' })
+    @ApiResponse({ status: 400, description: 'Items inválidos o sin stock' })
+    @ApiResponse({ status: 409, description: 'Estado inválido de la orden' })
     async createFromItemsHandler(
         @CurrentUser() user: AuthenticatedUser,
         @Body() dto: CreateOrderFromItemsDto,
@@ -77,6 +81,7 @@ export class OrdersController {
     @Get(':id')
     @ApiOperation({ summary: 'Obtener una orden por ID (propiedad requerida)' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
+    @ApiResponse({ status: 404, description: 'Order not found' })
     async getById(
         @CurrentUser() user: AuthenticatedUser,
         @Param('id') id: string,
@@ -91,6 +96,8 @@ export class OrdersController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Cancelar una orden en estado PENDING' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
+    @ApiResponse({ status: 400, description: 'Estado inválido para cancelar' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
     async cancel(
         @CurrentUser() user: AuthenticatedUser,
         @Param('id') id: string,
@@ -109,6 +116,8 @@ export class OrdersController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Marcar una orden como pagada' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
+    @ApiResponse({ status: 400, description: 'Estado inválido para pagar' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
     async markPaid(
         @CurrentUser() user: AuthenticatedUser,
         @Param('id') id: string,
@@ -127,6 +136,8 @@ export class OrdersController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Marcar una orden como completada (debe estar pagada)' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
+    @ApiResponse({ status: 400, description: 'Estado inválido para completar' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
     async complete(
         @CurrentUser() user: AuthenticatedUser,
         @Param('id') id: string,

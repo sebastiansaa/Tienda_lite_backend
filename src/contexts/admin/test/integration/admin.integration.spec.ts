@@ -5,7 +5,6 @@ import { AdminModule } from 'src/contexts/admin/admin.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAdminUserDetailsUsecase } from 'src/contexts/admin/app/usecases/get-user-details.usecase';
 
-// Load .env.test if present
 if (fs.existsSync('.env.test')) require('dotenv').config({ path: '.env.test' });
 
 const hasDb = Boolean(process.env.DATABASE_URL);

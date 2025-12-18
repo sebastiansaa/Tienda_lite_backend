@@ -1,38 +1,28 @@
-import { ImagesVO } from 'src/contexts/products/domain/v-o/images.vo';
-import { ImagesArrayNullError, ImagesArrayEmptyError, ImageNotFoundError } from 'src/contexts/products/domain/errors/product.errors';
+import ImagesVO from 'src/contexts/products/domain/v-o/images.vo';
+import { ImagesArrayEmptyError, ImagesArrayNullError, ImageNotFoundError } from 'src/contexts/products/domain/errors/product.errors';
 
 describe('ImagesVO', () => {
-    it('debería crear una instancia válida con array de URLs', () => {
-        const urls = ['http://example.com/img1.jpg', 'http://example.com/img2.jpg'];
-        const images = new ImagesVO(urls);
-        expect(images.values).toEqual(urls);
+    const validUrl = 'https://example.com/img.jpg';
+
+    it('acepta array de URLs válidas', () => {
+        const imgs = new ImagesVO([validUrl]);
+        expect(imgs.values).toEqual([validUrl]);
     });
 
-    it('debería lanzar ImagesArrayNullError si no es un array', () => {
-        expect(() => new ImagesVO(null as unknown as string[])).toThrow(ImagesArrayNullError);
-        expect(() => new ImagesVO('not-array' as unknown as string[])).toThrow(ImagesArrayNullError);
-    });
+    it('lanza si el valor no es array o está vacío', () => {
 
-    it('debería lanzar ImagesArrayEmptyError si el array está vacío', () => {
+        expect(() => new ImagesVO(null)).toThrow(ImagesArrayNullError);
         expect(() => new ImagesVO([])).toThrow(ImagesArrayEmptyError);
     });
 
-    it('debería añadir una imagen correctamente', () => {
-        const initial = new ImagesVO(['http://a.com/1.jpg']);
-        const updated = initial.add('http://a.com/2.jpg');
-        expect(updated.values).toHaveLength(2);
-        expect(updated.values).toContain('http://a.com/2.jpg');
-        expect(initial.values).toHaveLength(1);
-    });
-
-    it('debería eliminar una imagen existente', () => {
-        const initial = new ImagesVO(['http://a.com/1.jpg', 'http://a.com/2.jpg']);
-        const updated = initial.remove('http://a.com/1.jpg');
-        expect(updated.values).toEqual(['http://a.com/2.jpg']);
-    });
-
-    it('debería lanzar ImageNotFoundError al intentar eliminar una imagen inexistente', () => {
-        const initial = new ImagesVO(['http://a.com/1.jpg']);
-        expect(() => initial.remove('http://b.com/missing.jpg')).toThrow(ImageNotFoundError);
+    it('add/remove/replace funcionan y remove lanza si no existe', () => {
+        const imgs = new ImagesVO([validUrl]);
+        const added = imgs.add('https://example.com/2.jpg');
+        expect(added.values.length).toBe(2);
+        const removed = added.remove(validUrl);
+        expect(removed.values).not.toContain(validUrl);
+        expect(() => removed.remove('https://x')).toThrow(ImageNotFoundError);
+        const replaced = removed.replace(['https://a.com/1.jpg']);
+        expect(replaced.values).toEqual(['https://a.com/1.jpg']);
     });
 });

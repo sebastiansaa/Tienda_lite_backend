@@ -1,25 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminProductResponseDto {
-    @ApiProperty()
+    @ApiProperty({ example: 1 })
     id!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'Camiseta básica' })
     title!: string;
 
-    @ApiProperty({ type: Number })
+    @ApiProperty({ type: Number, example: 19.99 })
     price!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: 120 })
     stock!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: true })
     active!: boolean;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
     createdAt!: Date;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-02T00:00:00.000Z' })
     updatedAt!: Date;
 }
 

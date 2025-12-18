@@ -34,6 +34,8 @@ export class PaymentController {
     @Post('initiate')
     @ApiOperation({ summary: 'Initiate a payment for an order' })
     @ApiResponse({ status: 201, type: PaymentResponseDto })
+    @ApiResponse({ status: 400, description: 'Invalid payment state or payload' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
     async initiate(
         @CurrentUser() user: AuthUser,
         @Body() dto: InitiatePaymentDto,
@@ -50,6 +52,9 @@ export class PaymentController {
     @Post(':id/confirm')
     @ApiOperation({ summary: 'Confirm a payment' })
     @ApiResponse({ status: 200, type: PaymentResponseDto })
+    @ApiResponse({ status: 400, description: 'Invalid payment state' })
+    @ApiResponse({ status: 404, description: 'Payment not found' })
+    @ApiResponse({ status: 409, description: 'Payment already processed' })
     async confirm(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<PaymentResponseDto> {
         try {
             const command = PaymentApiMapper.toConfirmCommand(id, user.sub);
@@ -63,6 +68,9 @@ export class PaymentController {
     @Post(':id/fail')
     @ApiOperation({ summary: 'Mark a payment as failed' })
     @ApiResponse({ status: 200, type: PaymentResponseDto })
+    @ApiResponse({ status: 400, description: 'Invalid payment state' })
+    @ApiResponse({ status: 404, description: 'Payment not found' })
+    @ApiResponse({ status: 409, description: 'Payment already processed' })
     async fail(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<PaymentResponseDto> {
         try {
             const command = PaymentApiMapper.toFailCommand(id, user.sub);
@@ -85,6 +93,7 @@ export class PaymentController {
     @Get(':id')
     @ApiOperation({ summary: 'Get payment by id for current user' })
     @ApiResponse({ status: 200, type: PaymentResponseDto })
+    @ApiResponse({ status: 404, description: 'Payment not found' })
     async getById(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<PaymentResponseDto> {
         const query = PaymentApiMapper.toGetByIdQuery(id, user.sub);
         const payment = await this.getPaymentById.execute(query);

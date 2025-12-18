@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import * as morgan from 'morgan';
-import * as cookieParser from 'cookie-parser';
+import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DomainExceptionFilter } from './contexts/shared/filters/domain-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: "http://localhost:5173", // puerto donde corre tu frontend (Vite por defecto)
+    credentials: true,
+  });
 
   app.use(helmet());
   app.use(morgan('combined'));

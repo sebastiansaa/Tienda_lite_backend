@@ -1,25 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminUserResponseDto {
-    @ApiProperty()
+    @ApiProperty({ example: 'user-uuid-1' })
     id!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'ada@example.com' })
     email!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'Ada Lovelace' })
     name!: string;
 
-    @ApiProperty({ nullable: true })
+    @ApiProperty({ nullable: true, example: '+34123456789' })
     phone!: string | null;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'ACTIVE' })
     status!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
     createdAt!: Date;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-02T00:00:00.000Z' })
     updatedAt!: Date;
 }
 

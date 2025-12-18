@@ -2,10 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { CartItemResponseDto } from './cart-item.response.dto';
 
 export class CartResponseDto {
-    @ApiProperty()
+    @ApiProperty({ example: 'cart-uuid' })
     id: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'user-uuid' })
     userId: string;
 
     @ApiProperty({ type: [CartItemResponseDto] })

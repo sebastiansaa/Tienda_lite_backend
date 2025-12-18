@@ -33,6 +33,7 @@ export class CartController {
     @Get()
     @ApiOperation({ summary: 'Obtener el carrito del usuario autenticado' })
     @ApiResponse({ status: 200, type: CartResponseDto })
+    @ApiResponse({ status: 400, description: 'Usuario no autenticado' })
     async getCart(@Req() req: Request & { user?: { sub?: string } }): Promise<CartResponseDto> {
         const userId = this.getUserId(req);
         const query = CartApiMapper.toGetQuery(userId);
@@ -44,6 +45,9 @@ export class CartController {
     @Post('items')
     @ApiOperation({ summary: 'Agregar un producto al carrito' })
     @ApiResponse({ status: 201, type: CartResponseDto })
+    @ApiResponse({ status: 400, description: 'Producto inválido o cantidad inválida' })
+    @ApiResponse({ status: 404, description: 'Carrito no encontrado' })
+    @ApiResponse({ status: 409, description: 'Producto duplicado en carrito' })
     async addItemToCart(
         @Req() req: Request & { user?: { sub?: string } },
         @Body() dto: AddItemDto,
@@ -61,6 +65,8 @@ export class CartController {
     @Put('items/:productId')
     @ApiOperation({ summary: 'Actualizar la cantidad de un producto en el carrito' })
     @ApiResponse({ status: 200, type: CartResponseDto })
+    @ApiResponse({ status: 400, description: 'Cantidad inválida' })
+    @ApiResponse({ status: 404, description: 'Item no encontrado' })
     async updateItem(
         @Req() req: Request & { user?: { sub?: string } },
         @Param('productId', ParseIntPipe) productId: number,
@@ -79,6 +85,7 @@ export class CartController {
     @Delete('items/:productId')
     @ApiOperation({ summary: 'Eliminar un producto del carrito' })
     @ApiResponse({ status: 200, type: CartResponseDto })
+    @ApiResponse({ status: 404, description: 'Item no encontrado' })
     async removeItemFromCart(
         @Req() req: Request & { user?: { sub?: string } },
         @Param('productId', ParseIntPipe) productId: number,
@@ -97,6 +104,7 @@ export class CartController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Vaciar el carrito del usuario' })
     @ApiResponse({ status: 204 })
+    @ApiResponse({ status: 404, description: 'Carrito no encontrado' })
     async clear(@Req() req: Request & { user?: { sub?: string } }): Promise<void> {
         try {
             const userId = this.getUserId(req);

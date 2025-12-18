@@ -77,6 +77,7 @@ export class AdminController {
     @Patch('users/:id/status')
     @ApiOperation({ summary: 'Cambiar estado de usuario' })
     @ApiResponse({ status: 200, type: AdminUserResponseDto })
+    @ApiResponse({ status: 404, description: 'User not found' })
     async changeStatusHandler(@Param('id') id: string, @Body() dto: ChangeUserStatusDto): Promise<AdminUserResponseDto> {
         const user = await this.changeUserStatus.execute(id, dto.status);
         if (!user) throw new NotFoundException('User not found');
@@ -104,6 +105,7 @@ export class AdminController {
     @Patch('products/:id')
     @ApiOperation({ summary: 'Actualizar producto parcialmente' })
     @ApiResponse({ status: 200, type: AdminProductResponseDto })
+    @ApiResponse({ status: 404, description: 'Product not found' })
     async updateProductHandler(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateProductDto,
@@ -197,6 +199,7 @@ export class AdminController {
     @Patch('inventory/:productId/adjust')
     @ApiOperation({ summary: 'Ajustar stock manualmente' })
     @ApiResponse({ status: 200, type: AdminInventoryResponseDto })
+    @ApiResponse({ status: 404, description: 'Inventory not found' })
     async adjustStockHandler(
         @Param('productId', ParseIntPipe) productId: number,
         @Body() dto: AdjustStockDto,

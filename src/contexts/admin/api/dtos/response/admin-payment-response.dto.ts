@@ -1,28 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminPaymentResponseDto {
-    @ApiProperty()
+    @ApiProperty({ example: 'payment-uuid' })
     id!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'order-uuid' })
     orderId!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'user-uuid' })
     userId!: string;
 
-    @ApiProperty({ type: Number })
+    @ApiProperty({ type: Number, example: 120.5 })
     amount!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'PAID' })
     status!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'FAKE' })
     provider!: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
     createdAt!: Date;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-02T00:00:00.000Z' })
     updatedAt!: Date;
 }
 

@@ -58,6 +58,7 @@ export class InventoryController {
     @Roles('admin')
     @ApiOperation({ summary: 'Increase on-hand stock for a product' })
     @ApiResponse({ status: 201, type: StockResponseDto })
+    @ApiResponse({ status: 400, description: 'Movimiento inválido' })
     async increase(
         @Param('productId', ParseIntPipe) productId: number,
         @Body() dto: AdjustStockDto,
@@ -77,6 +78,7 @@ export class InventoryController {
     @Roles('admin')
     @ApiOperation({ summary: 'Decrease on-hand stock for a product' })
     @ApiResponse({ status: 201, type: StockResponseDto })
+    @ApiResponse({ status: 400, description: 'Stock insuficiente o movimiento inválido' })
     async decrease(
         @Param('productId', ParseIntPipe) productId: number,
         @Body() dto: AdjustStockDto,
@@ -96,6 +98,7 @@ export class InventoryController {
     @Roles('admin')
     @ApiOperation({ summary: 'Reserve stock for a product' })
     @ApiResponse({ status: 201, type: StockResponseDto })
+    @ApiResponse({ status: 400, description: 'Stock insuficiente' })
     async reserve(
         @Param('productId', ParseIntPipe) productId: number,
         @Body() dto: AdjustStockDto,
@@ -115,6 +118,7 @@ export class InventoryController {
     @Roles('admin')
     @ApiOperation({ summary: 'Release reserved stock for a product' })
     @ApiResponse({ status: 201, type: StockResponseDto })
+    @ApiResponse({ status: 400, description: 'Movimiento inválido' })
     async release(
         @Param('productId', ParseIntPipe) productId: number,
         @Body() dto: AdjustStockDto,

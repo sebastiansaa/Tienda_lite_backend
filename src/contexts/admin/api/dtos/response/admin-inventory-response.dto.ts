@@ -1,19 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminInventoryResponseDto {
-    @ApiProperty()
+    @ApiProperty({ example: 10 })
     productId!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: 120 })
     onHand!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: 5 })
     reserved!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: 115 })
     available!: number;
 
-    @ApiProperty()
+    @ApiProperty({ example: '2024-01-02T00:00:00.000Z' })
     updatedAt!: Date;
 }
 
