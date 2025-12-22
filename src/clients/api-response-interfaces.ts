@@ -1,4 +1,3 @@
-// Interfaces converted from backend Response DTOs
 // Uso: importar estas interfaces en el frontend para tipado de respuestas HTTP
 
 export interface ProductResponse {

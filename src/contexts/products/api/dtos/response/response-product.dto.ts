@@ -33,4 +33,7 @@ export class ResponseProductDto {
 
     @ApiProperty({ example: '2024-01-02T00:00:00.000Z', description: 'ISO string' })
     readonly updatedAt: string; // ISO string
+
+    @ApiProperty({ example: '2024-02-01T00:00:00.000Z', required: false, description: 'ISO string or null if not deleted' })
+    readonly deletedAt?: string | null;
 }

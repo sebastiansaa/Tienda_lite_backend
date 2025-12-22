@@ -1,6 +1,7 @@
 export interface ListProductsParams {
   readonly page?: number;
   readonly limit?: number;
+  readonly categoryId?: number;
 }
 
 export class ListProductsQuery {

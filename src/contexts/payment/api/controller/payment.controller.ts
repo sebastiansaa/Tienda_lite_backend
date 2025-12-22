@@ -2,7 +2,7 @@ import { BadRequestException, Body, ConflictException, Controller, Get, NotFound
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
-import { InitiatePaymentDto, PaymentResponseDto } from '../dtos';
+import { ConfirmPaymentDto, InitiatePaymentDto, PaymentResponseDto } from '../dtos';
 import PaymentApiMapper from '../mappers/payment-api.mapper';
 import {
     InitiatePaymentUsecase,
@@ -55,9 +55,9 @@ export class PaymentController {
     @ApiResponse({ status: 400, description: 'Invalid payment state' })
     @ApiResponse({ status: 404, description: 'Payment not found' })
     @ApiResponse({ status: 409, description: 'Payment already processed' })
-    async confirm(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<PaymentResponseDto> {
+    async confirm(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: ConfirmPaymentDto): Promise<PaymentResponseDto> {
         try {
-            const command = PaymentApiMapper.toConfirmCommand(id, user.sub);
+            const command = PaymentApiMapper.toConfirmCommand(id, user.sub, dto?.paymentMethodToken);
             const payment = await this.confirmPayment.execute(command);
             return PaymentApiMapper.toResponseDto(payment);
         } catch (error) {

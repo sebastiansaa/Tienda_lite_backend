@@ -4,10 +4,13 @@ export interface PaymentProviderInitInput {
     paymentId: string;
     orderId: string;
     amount: number;
+    currency?: string;
+    paymentMethodToken?: string;
 }
 
 export interface PaymentProviderConfirmInput {
     externalPaymentId: string;
+    paymentMethodToken?: string;
 }
 
 export interface PaymentProviderFailInput {

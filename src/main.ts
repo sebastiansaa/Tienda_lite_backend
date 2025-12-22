@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DomainExceptionFilter } from './contexts/shared/filters/domain-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +24,9 @@ async function bootstrap() {
   app.useGlobalFilters(new DomainExceptionFilter());
 
   app.setGlobalPrefix('api');
+
+  // Servir carpeta pública de imágenes
+  app.use('/uploads', express.static(join(__dirname, '..', 'public/uploads')));
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()

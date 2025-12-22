@@ -3,6 +3,7 @@ import { InvalidPaymentStateError } from '../../domain/errors/payment.errors';
 import { IPaymentWriteRepository } from '../ports/payment-write.repository';
 import PaymentProviderPort from '../ports/payment-provider.port';
 import OrderReadOnlyPort from '../ports/order-read.port';
+import OrderWritePort from '../ports/order-write.port';
 import InitiatePaymentCommand from '../commands/initiate-payment.command';
 
 export class InitiatePaymentUsecase {
@@ -10,16 +11,23 @@ export class InitiatePaymentUsecase {
         private readonly paymentWriteRepo: IPaymentWriteRepository,
         private readonly provider: PaymentProviderPort,
         private readonly orderRead: OrderReadOnlyPort,
+        private readonly orderWrite: OrderWritePort,
     ) { }
 
     async execute(cmd: InitiatePaymentCommand): Promise<PaymentEntity> {
-        const order = await this.orderRead.findById(cmd.orderId);
+        let targetOrderId = cmd.orderId;
+        if (!targetOrderId) {
+            const created = await this.orderWrite.createCheckoutOrder({ userId: cmd.userId, totalAmount: cmd.amount, items: cmd.items });
+            targetOrderId = created.id;
+        }
+
+        const order = await this.orderRead.findById(targetOrderId);
         if (!order) throw new Error('Order not found');
         if (order.userId !== cmd.userId) throw new Error('Order does not belong to user');
         if (order.totalAmount !== cmd.amount) throw new Error('Payment amount mismatch');
 
         const payment = new PaymentEntity({
-            orderId: cmd.orderId,
+            orderId: targetOrderId,
             userId: cmd.userId,
             amount: cmd.amount,
             status: 'PENDING',
@@ -30,6 +38,8 @@ export class InitiatePaymentUsecase {
             paymentId: payment.id,
             orderId: payment.orderId,
             amount: payment.amount,
+            currency: cmd.currency,
+            paymentMethodToken: cmd.paymentMethodToken,
         });
 
         payment.setExternalInfo(providerResult.externalPaymentId, providerResult.clientSecret);

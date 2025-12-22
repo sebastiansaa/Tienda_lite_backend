@@ -44,6 +44,7 @@ export class ProductApiMapper {
         return new ListProductsQuery({
             page: dto?.page,
             limit: dto?.limit,
+            categoryId: dto?.categoryId,
         });
     }
 
@@ -80,6 +81,7 @@ export class ProductApiMapper {
             categoryId: entity.categoryId,
             createdAt: entity.createdAt.toISOString(),
             updatedAt: entity.updatedAt.toISOString(),
+            deletedAt: entity.deletedAt ? entity.deletedAt.toISOString() : null,
         };
     }
 

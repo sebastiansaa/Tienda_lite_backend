@@ -18,7 +18,7 @@ export class ConfirmPaymentUsecase {
         if (payment.userId !== cmd.userId) throw new Error('Payment does not belong to user');
         if (!payment.externalPaymentId) throw new Error('Payment has no external reference');
 
-        const providerResult = await this.provider.confirmPayment({ externalPaymentId: payment.externalPaymentId });
+        const providerResult = await this.provider.confirmPayment({ externalPaymentId: payment.externalPaymentId, paymentMethodToken: cmd.paymentMethodToken });
         this.applyProviderStatus(payment, providerResult.status);
         payment.setExternalInfo(providerResult.externalPaymentId, providerResult.clientSecret);
 

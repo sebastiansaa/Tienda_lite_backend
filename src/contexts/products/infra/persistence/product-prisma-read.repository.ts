@@ -18,7 +18,7 @@ export class ProductPrismaReadRepository implements ProductReadOnlyPort, IProduc
         return ProductPrismaMapper.toDomain(row);
     }
 
-    async findAll(params?: { page?: number; limit?: number }): Promise<{ products: ProductEntity[]; total: number }> {
+    async findAll(params?: { page?: number; limit?: number; categoryId?: number }): Promise<{ products: ProductEntity[]; total: number }> {
         const args = buildFindManyArgs(params);
         const [rows, total] = await Promise.all([
             this.prisma.product.findMany(args),

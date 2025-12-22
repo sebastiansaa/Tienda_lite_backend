@@ -4,6 +4,10 @@ import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
 import { Roles } from '../../../auth/api/decorators/roles.decorator';
 import { ChangeUserStatusDto, UpdateProductDto, AdjustStockDto } from '../dtos/request';
+import { UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import {
     AdminUserResponseDto,
     AdminProductResponseDto,
@@ -207,6 +211,29 @@ export class AdminController {
         const item = await this.adjustStock.execute(productId, dto.quantity, dto.reason);
         if (!item) throw new NotFoundException('Inventory not found');
         return AdminApiMapper.toInventoryResponse(item);
+    }
+
+    @Post('products/:id/upload-image')
+    @ApiOperation({ summary: 'Subir imagen de producto' })
+    @ApiResponse({ status: 200, description: 'Imagen subida correctamente' })
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+            destination: './public/uploads',
+            filename: (req, file, cb) => {
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                cb(null, uniqueSuffix + extname(file.originalname));
+            },
+        }),
+    }))
+    async uploadProductImage(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile() file: Express.Multer.File,//subir las imagenes
+    ) {
+        return {
+            productId: id,
+            filename: file.filename,
+            path: `/uploads/${file.filename}`,
+        };
     }
 }
 

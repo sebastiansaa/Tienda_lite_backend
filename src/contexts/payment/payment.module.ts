@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { PaymentController } from './api/controller/payment.controller';
-import { PAYMENT_ORDER_READONLY, PAYMENT_PROVIDER, PAYMENT_READ_REPOSITORY, PAYMENT_WRITE_REPOSITORY } from './constants';
+import { PAYMENT_ORDER_READONLY, PAYMENT_ORDER_WRITE, PAYMENT_PROVIDER, PAYMENT_READ_REPOSITORY, PAYMENT_WRITE_REPOSITORY } from './constants';
 import { PaymentPrismaReadRepository } from './infra/persistence/payment-prisma-read.repository';
 import { PaymentPrismaWriteRepository } from './infra/persistence/payment-prisma-write.repository';
 import { PaymentProviderFakeAdapter } from './infra/adapters/payment-provider-fake.adapter';
 import { PaymentOrderReadAdapter } from './infra/adapters/order-read.adapter';
+import { PaymentOrderWriteAdapter } from './infra/adapters/order-write.adapter';
 import {
     InitiatePaymentUsecase,
     ConfirmPaymentUsecase,
@@ -18,6 +19,7 @@ import { IPaymentReadRepository } from './app/ports/payment-read.repository';
 import { IPaymentWriteRepository } from './app/ports/payment-write.repository';
 import PaymentProviderPort from './app/ports/payment-provider.port';
 import OrderReadOnlyPort from './app/ports/order-read.port';
+import OrderWritePort from './app/ports/order-write.port';
 
 @Module({
     imports: [AuthModule, PrismaModule],
@@ -40,10 +42,14 @@ import OrderReadOnlyPort from './app/ports/order-read.port';
             useClass: PaymentOrderReadAdapter,
         },
         {
+            provide: PAYMENT_ORDER_WRITE,
+            useClass: PaymentOrderWriteAdapter,
+        },
+        {
             provide: InitiatePaymentUsecase,
-            useFactory: (writeRepo: IPaymentWriteRepository, provider: PaymentProviderPort, orderRead: OrderReadOnlyPort) =>
-                new InitiatePaymentUsecase(writeRepo, provider, orderRead),
-            inject: [PAYMENT_WRITE_REPOSITORY, PAYMENT_PROVIDER, PAYMENT_ORDER_READONLY],
+            useFactory: (writeRepo: IPaymentWriteRepository, provider: PaymentProviderPort, orderRead: OrderReadOnlyPort, orderWrite: OrderWritePort) =>
+                new InitiatePaymentUsecase(writeRepo, provider, orderRead, orderWrite),
+            inject: [PAYMENT_WRITE_REPOSITORY, PAYMENT_PROVIDER, PAYMENT_ORDER_READONLY, PAYMENT_ORDER_WRITE],
         },
         {
             provide: ConfirmPaymentUsecase,

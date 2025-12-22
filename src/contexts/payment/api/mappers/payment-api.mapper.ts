@@ -8,11 +8,18 @@ import { PaymentEntity } from '../../domain/entity/payment.entity';
 
 export class PaymentApiMapper {
     static toInitiateCommand(dto: InitiatePaymentDto, userId: string): InitiatePaymentCommand {
-        return new InitiatePaymentCommand(dto.orderId, dto.amount, userId);
+        return new InitiatePaymentCommand(
+            dto.orderId ?? null,
+            dto.amount,
+            userId,
+            dto.items,
+            dto.paymentMethodToken,
+            dto.currency,
+        );
     }
 
-    static toConfirmCommand(paymentId: string, userId: string): ConfirmPaymentCommand {
-        return new ConfirmPaymentCommand(paymentId, userId);
+    static toConfirmCommand(paymentId: string, userId: string, paymentMethodToken?: string): ConfirmPaymentCommand {
+        return new ConfirmPaymentCommand(paymentId, userId, paymentMethodToken);
     }
 
     static toFailCommand(paymentId: string, userId: string): FailPaymentCommand {

@@ -16,4 +16,11 @@ export class ListProductsRequestDto {
     @IsInt()
     @Min(1)
     readonly limit?: number;
+
+    @ApiPropertyOptional({ example: 3, description: 'Category identifier to filter products' })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    readonly categoryId?: number;
 }
