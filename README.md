@@ -13,6 +13,12 @@ Filosofia arquitectural
 - Autenticacion transversal: Auth provee identidad (sub, roles) sin acoplarse al dominio User.
 - TypeScript estricto: sin any, sin castings inseguros; tipado fuerte en VOs, entidades, puertos y mappers.
 
+## Resumen operativo (backend)
+- Propósito: proveer API modular para auth, catálogo, carrito, órdenes, pagos y admin.
+- Endpoints usados: auth (`/auth/*`), productos (`/products`, `/products/search`, `/products/low-stock`), categorías (`/categories`), carrito (`/cart`), órdenes (`/orders`), pagos (`/payments/*`), admin (`/admin/*`).
+- Roles requeridos: público para catálogo; JWT para carrito/órdenes/pagos; rol admin para `/admin/*`, `/products/low-stock` y mutaciones protegidas.
+- Estados posibles: orden `pending|paid|completed|cancelled`, pago `pending|succeeded|failed`, usuario `ACTIVE|SUSPENDED|DELETED`, stock con onHand/reserved.
+
 CQRS
 
 - Aplicado en contextos de negocio donde hay lectura/escritura diferenciada (Product, Inventory, Order, etc.).

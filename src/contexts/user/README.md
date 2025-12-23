@@ -60,3 +60,9 @@ User
 
 - No expone entidades a otros contextos; solo proyecciones via puerto readonly.
 - Mantiene reglas de estado dentro del dominio User.
+
+Resumen operativo
+- Propósito: gestionar perfil y direcciones de usuario; exponer lectura básica.
+- Endpoints: `GET/PATCH /users/me`, `POST/PATCH/DELETE /users/me/addresses/:id`, admin `GET /admin/users`, `GET /admin/users/:id`, `PATCH /admin/users/:id/status`.
+- Roles requeridos: JWT; admin para endpoints `/admin/users*`.
+- Estados: usuario `ACTIVE|SUSPENDED|DELETED`; direcciones activas/eliminadas.

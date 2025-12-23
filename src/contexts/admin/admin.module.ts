@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { CategoriesModule } from '../categories/categories.module';
 import { ADMIN_USER_READ, ADMIN_PRODUCT_READ, ADMIN_ORDER_READ, ADMIN_PAYMENT_READ, ADMIN_INVENTORY_READ } from './constants';
 import { AdminController } from './api/controller/admin.controller';
 import { AdminUserPrismaAdapter } from './infra/adapters/admin-user.prisma.adapter';
@@ -31,9 +32,19 @@ import {
     GetAdminInventoryDetailsUsecase,
     AdjustAdminStockUsecase,
 } from './app/usecases';
+import { CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY } from '../categories/constants';
+import { ICategoryReadRepository } from '../categories/app/ports/category-read.repository';
+import { ICategoryWriteRepository } from '../categories/app/ports/category-write.repository';
+import {
+    CreateCategoryUseCase,
+    UpdateCategoryUseCase,
+    GetCategoryUseCase,
+    ListCategoriesUseCase,
+    DeleteCategoryUseCase,
+} from '../categories/app/usecases';
 
 @Module({
-    imports: [AuthModule, PrismaModule],
+    imports: [AuthModule, PrismaModule, CategoriesModule],
     controllers: [AdminController],
     providers: [
         { provide: ADMIN_USER_READ, useClass: AdminUserPrismaAdapter },
@@ -57,6 +68,11 @@ import {
         { provide: ListAdminInventoryUsecase, useFactory: (port: InventoryAdminReadOnlyPort) => new ListAdminInventoryUsecase(port), inject: [ADMIN_INVENTORY_READ] },
         { provide: GetAdminInventoryDetailsUsecase, useFactory: (port: InventoryAdminReadOnlyPort) => new GetAdminInventoryDetailsUsecase(port), inject: [ADMIN_INVENTORY_READ] },
         { provide: AdjustAdminStockUsecase, useFactory: (port: InventoryAdminReadOnlyPort) => new AdjustAdminStockUsecase(port), inject: [ADMIN_INVENTORY_READ] },
+        { provide: ListCategoriesUseCase, useFactory: (repo: ICategoryReadRepository) => new ListCategoriesUseCase(repo), inject: [CATEGORY_READ_REPOSITORY] },
+        { provide: GetCategoryUseCase, useFactory: (repo: ICategoryReadRepository) => new GetCategoryUseCase(repo), inject: [CATEGORY_READ_REPOSITORY] },
+        { provide: CreateCategoryUseCase, useFactory: (read: ICategoryReadRepository, write: ICategoryWriteRepository) => new CreateCategoryUseCase(read, write), inject: [CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY] },
+        { provide: UpdateCategoryUseCase, useFactory: (read: ICategoryReadRepository, write: ICategoryWriteRepository) => new UpdateCategoryUseCase(read, write), inject: [CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY] },
+        { provide: DeleteCategoryUseCase, useFactory: (read: ICategoryReadRepository, write: ICategoryWriteRepository) => new DeleteCategoryUseCase(read, write), inject: [CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY] },
     ],
 })
 export class AdminModule { }

@@ -32,3 +32,9 @@ Notas de diseño
 
 Razon de aislamiento
 - El dominio Order solo conoce proyecciones de otros contextos; todas las verificaciones cruzadas se hacen via puertos, manteniendo reglas propias encapsuladas.
+
+Resumen operativo
+- Propósito: crear y gestionar ciclo de vida de órdenes.
+- Endpoints: `POST /orders/from-cart`, `POST /orders`, `GET /orders`, `GET /orders/:id`, `PATCH /orders/:id/cancel|pay|complete`; admin proyecciones en `/admin/orders`.
+- Roles requeridos: JWT; admin para `/admin/orders`.
+- Estados: `pending → paid → completed` o `cancelled`; valida ownership y stock/precio.

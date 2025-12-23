@@ -24,7 +24,10 @@ Endpoints
 - POST /payments/:id/fail, GET /payments, GET /payments/:id.
 
 Integraciones
-- Consume Order read-model para validar propiedad y estado; puede crear orden PENDING via puerto write cuando checkout viene solo con items; depende de Auth para usuario; puede ser consultado por Admin via su propio adaptador Prisma.
+- Consumido por Checkout del frontend vía `/payments/initiate|confirm` (sin prefijo adicional); requiere JWT.
+- Consume Order read-model para validar propiedad y estado; puede crear orden PENDING via puerto write cuando checkout viene solo con items; depende de Auth para usuario.
+- Admin puede consultar pagos vía adaptador Prisma expuesto como read-model (pendiente de consumidor front si se desea vista de pagos).
+- Si el frontend usa flags de mock (`FORCE_MOCK_PAYMENTS`), documentar que los endpoints reales siguen siendo `/payments/*` y deben usarse en producción.
 
 Diagrama textual
 - HTTP -> PaymentController -> DTO -> Mapper -> UseCase -> (PaymentRepo|Provider|OrderRead|OrderWrite ports) -> Adapters -> DB/PSP -> Mapper -> DTO.
@@ -34,3 +37,9 @@ Notas de diseño
 
 Razon de aislamiento
 - No expone ni depende de dominio Order; solo consume puerto read-only y mantiene su propio lifecycle de pago.
+
+Resumen operativo
+- Propósito: iniciar, confirmar y fallar pagos, además de listar pagos del usuario/admin.
+- Endpoints: `POST /payments/initiate`, `POST /payments/:id/confirm`, `POST /payments/:id/fail`, `GET /payments`, `GET /payments/:id`, admin `GET /admin/payments`, `GET /admin/payments/:id`.
+- Roles requeridos: JWT para pagos de usuario; rol admin para `/admin/payments`.
+- Estados: pago `PENDING → SUCCEEDED|FAILED`; bloquea doble confirmación.

@@ -58,3 +58,9 @@
 
 - **Contexto tecnico**: Sin reglas de negocio ajenas.
 - **Aislamiento**: Evita acoplarse al dominio User. Solo expone identidad y tokens.
+
+## Resumen operativo
+- Propósito: autenticar, emitir/rotar tokens y exponer identidad/roles.
+- Endpoints: `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`.
+- Roles requeridos: ninguno para login/registro; JWT requerido para `/auth/me`; roles usados por guards downstream.
+- Estados: autenticado/no, tokens vigentes/expirados; roles asignados.

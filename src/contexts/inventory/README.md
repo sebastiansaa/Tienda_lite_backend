@@ -32,3 +32,9 @@ Notas de diseño
 
 Razon de aislamiento
 - Stock se modela fuera de Productos; solo se comparten proyecciones y IDs, evitando mezclar reglas de catalogo con inventario.
+
+Resumen operativo
+- Propósito: gestionar stock, reservas y auditoría por producto.
+- Endpoints: `GET /inventory/:productId`, `GET /inventory/:productId/movements`, `POST /inventory/:productId/increase|decrease|reserve|release`; vistas admin via `/admin/inventory*`.
+- Roles requeridos: admin para mutaciones; lectura protegida (JwtAuthGuard) según configuración.
+- Estados: onHand/reserved no negativos; movimientos con before/after; errores `InsufficientStock|InvalidMovement|NegativeStock`.

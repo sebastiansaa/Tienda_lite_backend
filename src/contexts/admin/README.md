@@ -21,17 +21,19 @@ Adaptadores implementados
 
 - Prisma: admin-user.prisma.adapter.ts, admin-product.prisma.adapter.ts, admin-order.prisma.adapter.ts, admin-payment.prisma.adapter.ts, admin-inventory.prisma.adapter.ts.
 
-Endpoints principales (todos bajo /admin, rol admin requerido)
+Endpoints principales (todos bajo prefijo /admin, rol admin requerido)
 
-- Usuarios: GET /users, GET /users/:id, PATCH /users/:id/status.
-- Productos: GET /products, GET /products/:id, PATCH /products/:id.
-- Ordenes: GET /orders, GET /orders/:id, POST /orders/:id/cancel|ship|complete.
-- Pagos: GET /payments, GET /payments/:id.
-- Inventario: GET /inventory, GET /inventory/:productId, PATCH /inventory/:productId/adjust.
+- Usuarios: GET /admin/users, GET /admin/users/:id, PATCH /admin/users/:id/status.
+- Productos: GET /admin/products, GET /admin/products/:id, PATCH /admin/products/:id.
+- Categorías: GET /admin/categories, GET /admin/categories/:id, POST /admin/categories, PATCH /admin/categories/:id, DELETE /admin/categories/:id.
+- Órdenes: GET /admin/orders, GET /admin/orders/:id, POST /admin/orders/:id/cancel|ship|complete.
+- Pagos: GET /admin/payments, GET /admin/payments/:id.
+- Inventario: GET /admin/inventory, GET /admin/inventory/:productId, PATCH /admin/inventory/:productId/adjust.
 
 Integraciones
 
 - Lee datos directamente via Prisma sin tocar dominios ajenos; depende de Auth para autenticacion/roles.
+- Consumidores front deben usar el prefijo `/admin/*` con rol admin.
 
 Diagrama textual
 
@@ -45,3 +47,9 @@ Notas de diseño
 Razon de aislamiento
 
 - Evita exponer entidades o invariantes de otros dominios; opera sobre proyecciones/summary y mantiene Auth como unica dependencia transversal.
+
+Resumen operativo
+- Propósito: proyecciones y acciones acotadas para admins sobre usuarios/productos/órdenes/pagos/inventario/categorías.
+- Endpoints: `/admin/users`, `/admin/products`, `/admin/orders`, `/admin/payments`, `/admin/inventory`, `/admin/categories`.
+- Roles requeridos: admin (JwtAuthGuard + RolesGuard).
+- Estados: refleja estados de cada recurso (usuarios ACTIVE/SUSPENDED/DELETED; órdenes pending/paid/completed/cancelled; pagos pending/succeeded/failed; inventario onHand/reserved; categorías activas/inactivas).

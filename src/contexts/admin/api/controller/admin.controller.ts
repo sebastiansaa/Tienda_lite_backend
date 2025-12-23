@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
@@ -16,6 +16,9 @@ import {
     AdminInventoryResponseDto,
 } from '../dtos/response';
 import AdminApiMapper from '../mappers/admin-api.mapper';
+import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto } from '../../../categories/api/dtos';
+import { CategoryApiMapper } from '../../../categories/api/mappers/category-api.mapper';
+import { CategoryNotFoundError, DuplicateCategoryError } from '../../../categories/domain/errors/category.errors';
 import {
     ListAdminUsersUsecase,
     GetAdminUserDetailsUsecase,
@@ -34,6 +37,13 @@ import {
     GetAdminInventoryDetailsUsecase,
     AdjustAdminStockUsecase,
 } from '../../app/usecases';
+import {
+    ListCategoriesUseCase,
+    GetCategoryUseCase,
+    CreateCategoryUseCase,
+    UpdateCategoryUseCase,
+    DeleteCategoryUseCase,
+} from '../../../categories/app/usecases';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -58,6 +68,11 @@ export class AdminController {
         private readonly listInventory: ListAdminInventoryUsecase,
         private readonly getInventoryDetails: GetAdminInventoryDetailsUsecase,
         private readonly adjustStock: AdjustAdminStockUsecase,
+        private readonly listCategories: ListCategoriesUseCase,
+        private readonly getCategory: GetCategoryUseCase,
+        private readonly createCategory: CreateCategoryUseCase,
+        private readonly updateCategory: UpdateCategoryUseCase,
+        private readonly deleteCategory: DeleteCategoryUseCase,
     ) { }
 
     @Get('users')
@@ -198,6 +213,71 @@ export class AdminController {
         const item = await this.getInventoryDetails.execute(productId);
         if (!item) throw new NotFoundException('Inventory not found');
         return AdminApiMapper.toInventoryResponse(item);
+    }
+
+    @Get('categories')
+    @ApiOperation({ summary: 'Listar categorías' })
+    @ApiResponse({ status: 200, type: [CategoryResponseDto] })
+    async listCategoriesHandler(): Promise<CategoryResponseDto[]> {
+        const categories = await this.listCategories.execute();
+        return CategoryApiMapper.toResponseList(categories);
+    }
+
+    @Get('categories/:id')
+    @ApiOperation({ summary: 'Detalle de categoría' })
+    @ApiResponse({ status: 200, type: CategoryResponseDto })
+    @ApiResponse({ status: 404, description: 'Category not found' })
+    async getCategoryHandler(@Param('id', ParseIntPipe) id: number): Promise<CategoryResponseDto> {
+        try {
+            const category = await this.getCategory.execute(id);
+            if (!category) throw new NotFoundException('Category not found');
+            return CategoryApiMapper.toResponseDto(category);
+        } catch (error) {
+            if (error instanceof CategoryNotFoundError) throw new NotFoundException(error.message);
+            throw error as Error;
+        }
+    }
+
+    @Post('categories')
+    @ApiOperation({ summary: 'Crear categoría' })
+    @ApiResponse({ status: 201, type: CategoryResponseDto })
+    async createCategoryHandler(@Body() dto: CreateCategoryDto): Promise<CategoryResponseDto> {
+        try {
+            const command = CategoryApiMapper.toCreateCommand(dto);
+            const category = await this.createCategory.execute(command);
+            return CategoryApiMapper.toResponseDto(category);
+        } catch (error) {
+            if (error instanceof DuplicateCategoryError) throw new ConflictException(error.message);
+            throw error as Error;
+        }
+    }
+
+    @Patch('categories/:id')
+    @ApiOperation({ summary: 'Actualizar categoría' })
+    @ApiResponse({ status: 200, type: CategoryResponseDto })
+    async updateCategoryHandler(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCategoryDto): Promise<CategoryResponseDto> {
+        try {
+            const command = CategoryApiMapper.toUpdateCommand(id, dto);
+            const category = await this.updateCategory.execute(command);
+            if (!category) throw new NotFoundException('Category not found');
+            return CategoryApiMapper.toResponseDto(category);
+        } catch (error) {
+            if (error instanceof CategoryNotFoundError) throw new NotFoundException(error.message);
+            if (error instanceof DuplicateCategoryError) throw new ConflictException(error.message);
+            throw error as Error;
+        }
+    }
+
+    @Delete('categories/:id')
+    @ApiOperation({ summary: 'Eliminar categoría' })
+    @ApiResponse({ status: 204 })
+    async deleteCategoryHandler(@Param('id', ParseIntPipe) id: number): Promise<void> {
+        try {
+            await this.deleteCategory.execute(id);
+        } catch (error) {
+            if (error instanceof CategoryNotFoundError) throw new NotFoundException(error.message);
+            throw error as Error;
+        }
     }
 
     @Patch('inventory/:productId/adjust')

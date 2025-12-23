@@ -126,3 +126,9 @@ Razón de aislamiento
 - cambiar proveedor de productos
 - cambiar persistencia
 - sin tocar el dominio ni los casos de uso
+
+Resumen operativo
+- Propósito: gestionar carrito autenticado con totales recalculados.
+- Endpoints: `GET /cart`, `POST /cart/items`, `PUT /cart/items/:productId`, `DELETE /cart/items/:productId`, `DELETE /cart`.
+- Roles requeridos: JWT.
+- Estados: carrito crea on-demand; errores `CartNotFound|DuplicateCartItem|InvalidQuantity|InvalidProduct`.

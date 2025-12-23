@@ -57,3 +57,9 @@ Notas de diseño
 Razón de aislamiento
 
 - Otros contextos solo conocen IDs y puerto readonly; no acceden a entidades ni reglas internas de Category.
+
+Resumen operativo
+- Propósito: CRUD de categorías y exposición readonly.
+- Endpoints: `POST /categories`, `GET /categories`, `GET /categories/:id`, `PATCH /categories/:id`, `DELETE /categories/:id`; admin mirror vía `/admin/categories`.
+- Roles requeridos: público para GET; admin (JwtAuthGuard + RolesGuard) para POST/PATCH/DELETE.
+- Estados: categoría activa/inactiva, soft-delete (`deletedAt`).

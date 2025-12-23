@@ -49,3 +49,9 @@ Notas de diseño
 Razón de aislamiento
 
 - No importa entidades externas; usa IDs y puertos para categoría, permitiendo cambiar proveedor de categorías sin tocar dominio producto.
+
+Resumen operativo
+- Propósito: gestionar catálogo de productos y lectura pública/admin.
+- Endpoints: `POST /products`, `DELETE /products/:id`, `POST /products/:id/restore`, `PUT /products/:id/stock`, `GET /products`, `GET /products/search`, `GET /products/low-stock`, `GET /products/:id`.
+- Roles requeridos: público para GET; admin para POST/PUT/DELETE y low-stock.
+- Estados: producto activo/inactivo, eliminado/restaurable; stock no negativo.
