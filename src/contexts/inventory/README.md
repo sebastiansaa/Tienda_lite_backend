@@ -1,40 +1,67 @@
-Inventory
+# Inventory Context
 
-- Proposito: gestionar existencias, reservas y movimientos de stock por producto.
-- Responsabilidades: aumentar/disminuir stock, reservar/liberar, consultar disponibilidad y registrar movimientos.
+## Propósito
 
-Capas
-- Domain: `InventoryItemEntity`, `StockMovementEntity`; VOs para cantidades y fechas; errores `InsufficientStock`, `InvalidMovement`, `NegativeStock`.
-- Application: usecases IncreaseStock, DecreaseStock, ReserveStock, ReleaseStock, GetStock, ListMovements; puertos `IInventoryWriteRepository`, `IInventoryReadRepository`, `ProductReadOnlyPort`.
-- Infrastructure: `InventoryPrismaWriteRepository` (write items/movements) y `InventoryPrismaReadRepository` (read items/movements), `ProductReadOnlyAdapter` para leer productos via `PRODUCT_READONLY`.
-- API: `InventoryController` con `ValidationPipe` (whitelist/forbid/transform), DTOs, `InventoryApiMapper`; admin guard en mutaciones.
+Gestionar movimientos de inventario (entradas, salidas, reservas) con trazabilidad de operaciones.
 
-Invariantes
-- onHand y reserved no negativos; movimientos registran before/after; no se reserva mas de lo disponible.
+## Endpoints
 
-Puertos expuestos
-- `INVENTORY_WRITE_REPOSITORY`, `INVENTORY_READ_REPOSITORY`; se mantiene `INVENTORY_REPOSITORY` como alias legado. `INVENTORY_PRODUCT_READONLY` y `INVENTORY_ORDER_READONLY` reservados para integraciones.
+| Método | Ruta                              | Propósito                             |
+| ------ | --------------------------------- | ------------------------------------- |
+| `GET`  | `/inventory/:productId`           | Obtener inventario actual de producto |
+| `GET`  | `/inventory/:productId/movements` | Historial de movimientos de producto  |
+| `POST` | `/inventory/:productId/increase`  | Aumentar stock (entrada de mercancía) |
+| `POST` | `/inventory/:productId/decrease`  | Disminuir stock (salida manual)       |
+| `POST` | `/inventory/:productId/reserve`   | Reservar stock para orden             |
+| `POST` | `/inventory/:productId/release`   | Liberar reserva cancelada             |
 
-Adaptadores implementados
-- Prisma repo; product read adapter consume puerto de Products.
+## Guards/Seguridad
 
-Endpoints
-- GET /inventory/:productId, GET /inventory/:productId/movements, POST /inventory/:productId/increase|decrease|reserve|release.
+- **Endpoints públicos**: `GET /inventory/:productId`, `GET /inventory/:productId/movements`
+- **Endpoints admin**: `POST /inventory/*` (requieren rol `admin`)
+- **ValidationPipe**: Validación de cantidades y razones de movimiento
 
-Integraciones
-- Consume Products (read-only) para validar existencia; puede ser consultado por Admin; usada por Orders a traves de StockServiceAdapter (en contexto Orders).
+## Invariantes/Reglas Críticas
 
-Diagrama textual
-- HTTP -> InventoryController -> DTO -> Mapper -> UseCase -> (Inventory repo | ProductRead port) -> Prisma/Adapter -> DB -> Mapper -> DTO.
+- **Stock no negativo**: Decrementos y reservas validan disponibilidad antes de aplicar
+- **Reservas limitadas**: Stock reservado no puede exceder stock disponible (onHand - reserved ≥ 0)
+- **Trazabilidad obligatoria**: Todo movimiento requiere `reason` (auditoría)
+- **Sincronización con Products**: Actualiza stock en Products context tras cada movimiento
 
-Notas de diseño
-- Movimientos quedan auditados con razones; reserva/liberacion mantienen consistencia de onHand/reserved.
+## Estados Relevantes
 
-Razon de aislamiento
-- Stock se modela fuera de Productos; solo se comparten proyecciones y IDs, evitando mezclar reglas de catalogo con inventario.
+| Estado         | Descripción                             | Cálculo                                |
+| -------------- | --------------------------------------- | -------------------------------------- |
+| `AVAILABLE`    | Stock disponible para compra            | `onHand - reserved > 0`                |
+| `RESERVED`     | Stock reservado para órdenes pendientes | `reserved > 0`                         |
+| `OUT_OF_STOCK` | Sin stock disponible                    | `onHand - reserved = 0`                |
+| `LOW_STOCK`    | Stock bajo umbral                       | `onHand < 10` (hardcoded en Dashboard) |
 
-Resumen operativo
-- Propósito: gestionar stock, reservas y auditoría por producto.
-- Endpoints: `GET /inventory/:productId`, `GET /inventory/:productId/movements`, `POST /inventory/:productId/increase|decrease|reserve|release`; vistas admin via `/admin/inventory*`.
-- Roles requeridos: admin para mutaciones; lectura protegida (JwtAuthGuard) según configuración.
-- Estados: onHand/reserved no negativos; movimientos con before/after; errores `InsufficientStock|InvalidMovement|NegativeStock`.
+**Diagrama de flujo típico:**
+
+```
+Entrada → increase() → onHand += cantidad
+Venta → reserve() → reserved += cantidad → order confirmed → decrease() → onHand -= cantidad, reserved -= cantidad
+Cancelación → release() → reserved -= cantidad
+```
+
+## Config/Integración
+
+### Variables de Entorno
+
+- **No requiere variables específicas**: Usa configuración de Prisma del módulo global
+
+### Dependencias Externas
+
+- **Prisma**: Persistencia en PostgreSQL (tabla `Inventory`, `InventoryMovement`)
+- **Products Context**: Sincroniza stock vía puerto (no directamente implementado actualmente)
+
+### Tokens DI Expuestos
+
+- `INVENTORY_REPOSITORY`: Repositorio de inventario (usado por Orders, Admin contexts)
+
+## Notas Arquitectónicas
+
+- **Historial de movimientos**: Tabla `InventoryMovement` registra cada ajuste (increase, decrease, reserve, release) con `reason` y timestamp
+- **Stock calculado**: `Inventory` almacena `onHand` y `reserved`, disponible se calcula como `onHand - reserved`
+- **Validaciones en dominio**: Entidad valida que decrease/reserve no causen stock negativo

@@ -1,57 +1,82 @@
-Products
+# Products Context
 
-- Proposito: gestionar catalogo de productos (alta, baja, precio, stock) con reglas de titulo, slug, imagenes y categoria.
-- Responsabilidades: mantener productos activos, stock basico y busquedas; proveer lectura readonly a otros contextos.
+## Propósito
 
-Capas
+Gestionar catálogo de productos con búsqueda, categorías y control de stock.
 
-- Domain: `ProductEntity`, `StockEntity`; VOs `Title`, `Price`, `Images`, `Description`, `CategoryId`; reglas de slug, precio > 0, stock no negativo, imágenes obligatorias; errores de producto/stock.
-- app: casos SaveProduct, DeleteProduct, RestoreProduct, UpdateStock, FindProductById, ListProducts, FindLowStock, SearchProducts, DecreaseStock; puertos `IProductWriteRepository` (write), `IProductReadRepository` (read dominio) y `ProductReadOnlyPort` (read DTO cross-context); policy `ProductCategoryPolicy` para validar categoría.
-- infra: Prisma repos `ProductPrismaWriteRepository` (write) y `ProductPrismaReadRepository` (read/domain + DTO); helpers decimal; mapper `ProductPrismaMapper`; carpeta `infra/persistence`.
-- API: `ProductsController`, DTOs request/response, `ProductApiMapper`; guardias admin en escritura; ValidationPipe aplicado.
+## Endpoints
 
-CQRS
+| Método   | Ruta                              | Propósito                                          |
+| -------- | --------------------------------- | -------------------------------------------------- |
+| `GET`    | `/products`                       | Listar productos con paginación                    |
+| `GET`    | `/products/search?q=`             | Buscar productos por nombre/descripción            |
+| `GET`    | `/products/low-stock?threshold=5` | Productos con stock bajo (admin)                   |
+| `GET`    | `/products/:id`                   | Obtener producto por ID                            |
+| `POST`   | `/products`                       | Crear/actualizar producto (admin)                  |
+| `PUT`    | `/products/:id/stock`             | Actualizar stock (admin)                           |
+| `DELETE` | `/products/:id`                   | Eliminar producto (soft delete por defecto, admin) |
+| `DELETE` | `/products/:id?hard=true`         | Eliminar producto permanentemente (admin)          |
+| `POST`   | `/products/:id/restore`           | Restaurar producto eliminado (admin)               |
+| `POST`   | `/products/:id/upload-image`      | Subir imagen de producto (admin)                   |
 
-- Separación lectura/escritura.
-- Write: SaveProduct, DeleteProduct, RestoreProduct, UpdateStock, DecreaseStock usan `IProductWriteRepository`; Save/Restore consultan read repo y policy de categoría.
-- Read: FindProductById, ListProducts, SearchProducts, FindLowStock usan `IProductReadRepository` / `ProductReadOnlyPort`.
-- Repos Prisma divididos en read/write.
-- Providers expuestos: `PRODUCT_WRITE`, `PRODUCT_READONLY`.
+**Ejemplo Request/Response:**
 
-Invariantes
+```json
+// GET /products/search?q=laptop
+{
+  "products": [
+    {
+      "id": 1,
+      "title": "Laptop Pro 15",
+      "slug": "laptop-pro-15",
+      "description": "High-performance laptop",
+      "price": 1299.99,
+      "stock": 15,
+      "category": { "id": 2, "name": "Electronics" },
+      "images": ["/uploads/laptop-pro.jpg"]
+    }
+  ],
+  "total": 1
+}
+```
 
-- Titulo y slug no vacíos ni inválidos; precio > 0; stock no negativo; imágenes obligatorias; categoría válida (>0).
+## Guards/Seguridad
 
-Puertos expuestos
+- **Endpoints públicos**: `GET /products`, `GET /products/search`, `GET /products/:id`
+- **Endpoints admin**: `POST /products`, `PUT /products/:id/stock`, `DELETE /products/:id`, `POST /products/:id/restore`, `GET /products/low-stock`, `POST /products/:id/upload-image`
+- **ValidationPipe**: Validación automática de DTOs con whitelist
 
-- `PRODUCT_WRITE`, `PRODUCT_READONLY` para otros contextos; `ProductCategoryPolicy` depende de `CategoryRepositoryPort`.
+## Invariantes/Reglas Críticas
 
-Adaptadores implementados
+- **Stock no negativo**: Decrementos de stock validan disponibilidad antes de aplicar
+- **Slug único**: Generado automáticamente desde título, debe ser único en DB
+- **Categoría válida**: Valida existencia de categoría vía `ProductCategoryPolicy` (puerto a Categories context)
+- **Precio positivo**: Price VO valida que precio > 0
 
-- Prisma write/read; policy de categoría usa `CategoryRepositoryPort` sin acoplar dominio Category.
+## Estados Relevantes
 
-Endpoints
+| Estado      | Descripción                    | Impacto Frontend/BC    |
+| ----------- | ------------------------------ | ---------------------- |
+| `ACTIVE`    | Producto visible y disponible  | Aparece en catálogo    |
+| `DELETED`   | Soft delete (no visible)       | No aparece en catálogo |
+| `LOW_STOCK` | Stock < threshold (default: 5) | Alerta en panel admin  |
 
-- POST /products (create/update), DELETE /products/:id, POST /products/:id/restore, PUT /products/:id/stock, GET /products, /products/search, /products/low-stock, /products/:id.
+## Config/Integración
 
-Integraciones
+### Dependencias Externas
 
-- Depende de Categories via puerto `CategoryRepositoryPort`; exporta `PRODUCT_READONLY` para Inventory/Orders/Admin.
+- **Prisma**: Persistencia en PostgreSQL (tablas `Product`, `Category`)
+- **Categories Context**: Valida existencia de categoría vía `CategoryRepositoryPort`
+- **Multer**: Upload de imágenes (storage: `./public/uploads`)
 
-Diagrama textual
+### Tokens DI Expuestos
 
-- HTTP -> ProductsController -> DTO -> Mapper -> UseCase -> (ProductWrite/Read + Category policy) -> Prisma adapters -> DB -> Mapper -> DTO.
+- `PRODUCT_READ_REPOSITORY`: Puerto de lectura (usado por Cart, Orders, Inventory)
+- `PRODUCT_WRITE_REPOSITORY`: Puerto de escritura (usado por Admin, Inventory)
 
-Notas de diseño
+## Notas Arquitectónicas
 
-- Stock básico en dominio producto; movimientos detallados se delegan a Inventory.
-
-Razón de aislamiento
-
-- No importa entidades externas; usa IDs y puertos para categoría, permitiendo cambiar proveedor de categorías sin tocar dominio producto.
-
-Resumen operativo
-- Propósito: gestionar catálogo de productos y lectura pública/admin.
-- Endpoints: `POST /products`, `DELETE /products/:id`, `POST /products/:id/restore`, `PUT /products/:id/stock`, `GET /products`, `GET /products/search`, `GET /products/low-stock`, `GET /products/:id`.
-- Roles requeridos: público para GET; admin para POST/PUT/DELETE y low-stock.
-- Estados: producto activo/inactivo, eliminado/restaurable; stock no negativo.
+- **CQRS**: Repositorios separados para lectura y escritura
+- **Value Objects**: `Price` (validación > 0), `Slug` (generación y unicidad)
+- **Soft Delete**: Productos eliminados se marcan con `deletedAt`, recuperables con `/restore`
+- **Upload de imágenes**: Genera nombre único con timestamp + random, guarda path en array `images`

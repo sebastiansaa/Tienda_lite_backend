@@ -1,134 +1,63 @@
-Cart
+# Cart Context
 
-- Propósito: gestionar el carrito del usuario autenticado (agregar, actualizar cantidades, eliminar y vaciar), garantizando precios recalculados y consistencia de stock básico.
-- Responsabilidades: mantener items y cantidades, validar productos y cantidades, recalcular totales vía servicio de pricing, exponer lectura del carrito actual.
+## Propósito
 
-Capas
-Domain
-
-- Entidades:
-- CartEntity
-- CartItemEntity
-- Value Objects:
-- CartId, UserId, ProductId, Quantity, Price
-- Reglas:
-- cantidad positiva
-- no permitir items duplicados
-- totales calculados solo vía puerto de pricing
-- Errores:
-- CartNotFound
-- DuplicateCartItem
-- InvalidQuantity
-- InvalidProduct
-
-App
-Casos de uso (CQRS):
-Commands (write)
-
-- AddItemToCart
-- UpdateItemQuantity
-- RemoveItem
-- ClearCart
-  Queries (read)
-- GetCart
-  Puertos
-- `ICartReadRepository` (lectura del carrito)
-- `ICartWriteRepository` (escritura del carrito)
-- `PricingServicePort` (cálculo de totales y validación de producto/precio)
-
-Infra
-
-- Persistencia:
-- `CartPrismaReadRepository` (implementa `ICartReadRepository`)
-- `CartPrismaWriteRepository` (implementa `ICartWriteRepository`)
-- Servicios:
-- `CartPricingService` (implementa `PricingServicePort`)
-- Mappers:
-- `CartPrismaMapper` (Prisma ↔ Entidad)
-
-API
-
-- `CartController`
-- DTOs request/response
-- `CartApiMapper`
-- Protegido con `JwtAuthGuard`
-
-CQRS
-
-- Separación total lectura/escritura.
-- Write:
-- `AddItemToCart`, `UpdateItemQuantity`, `RemoveItem`, `ClearCart`
-- usan `ICartReadRepository` + `ICartWriteRepository` + `PricingServicePort`
-- Read:
-- `GetCart`
-- usa `ICartReadRepository`
-- Handlers separados por carpeta (simetría con Products).
-- CommandBus para mutaciones, QueryBus para lecturas.
-
-Invariantes
-
-- Cantidad siempre positiva (Quantity > 0).
-- No se permiten productos duplicados en el carrito.
-- Totales siempre recalculados en cada comando.
-- El carrito se crea on-demand si no existe.
-- El dominio no conoce precios concretos, solo VOs y puertos.
-- El dominio no conoce productos, solo ProductId.
-
-Puertos expuestos
-
-- `ICartReadRepository`
-- `ICartWriteRepository`
-- `PricingServicePort`
-  Exportables para otros contextos si fuera necesario (por ejemplo, Orders).
-
-Adaptadores implementados
-
-- **Prisma**:
-  - `CartPrismaReadRepository` (infra/persistence/cart-prisma-read.repository.ts)
-  - `CartPrismaWriteRepository` (infra/persistence/cart-prisma-write.repository.ts)
-- Pricing in-memory:
-  `CartPricingService` (infra/services/cart-pricing.service.ts)
+Gestionar carrito de compras del usuario autenticado con validación de stock y cálculo de totales.
 
 ## Endpoints
 
-- `GET /cart` → obtener carrito actual (Query)
-- `POST /cart/items` → agregar item (Command)
-- `PUT /cart/items/:productId` → actualizar cantidad (Command)
-- `DELETE /cart/items/:productId` → eliminar item (Command)
-- `DELETE /cart` → vaciar carrito (Command)
+| Método   | Ruta                     | Propósito                                  |
+| -------- | ------------------------ | ------------------------------------------ |
+| `GET`    | `/cart`                  | Obtener carrito del usuario autenticado    |
+| `POST`   | `/cart/items`            | Agregar producto al carrito                |
+| `PUT`    | `/cart/items/:productId` | Actualizar cantidad de producto en carrito |
+| `DELETE` | `/cart/items/:productId` | Eliminar producto del carrito              |
+| `DELETE` | `/cart`                  | Vaciar carrito completo                    |
 
-Integraciones
+## Guards/Seguridad
 
-- Consume productos vía ProductsModule solo a través del PricingServicePort (validación de existencia y precio).
-- Usa Auth para identificar al usuario (JwtAuthGuard).
-- No depende directamente de ProductEntity ni ProductRepository.
+- **JwtAuthGuard**: Todos los endpoints requieren autenticación
+- **Sin roles específicos**: Cualquier usuario autenticado puede gestionar su carrito
+- **ValidationPipe**: Validación automática de DTOs con whitelist
 
-Diagrama textual
--HTTP (API) -> CartController -> DTO -> ApiMapper-> (Command|Query) -> CommandBus/QueryBus -> UseCase Handler
--> (CartRepositoryPort | PricingServicePort) -> Adaptadores (Prisma / Pricing) -> DB / Servicio externo -> Mapper -> DTO -> HTTP
+## Invariantes/Reglas Críticas
 
-Notas de diseño
-• El carrito no almacena precios finales, solo los recibe del servicio de pricing.
-• El carrito se crea automáticamente si no existe para el usuario.
-• Los errores de dominio se mapean a HTTP en el controller.
-• El dominio es completamente puro: sin Prisma, sin DTOs, sin NestJS.
+- **Un carrito por usuario**: Cada usuario tiene un único carrito activo
+- **Cantidad > 0**: No se permiten cantidades negativas o cero (eliminar item en su lugar)
+- **Validación de stock**: Verifica disponibilidad del producto antes de agregar/actualizar
+- **Cálculo automático de totales**: Total del carrito se recalcula en cada operación
 
-Razón de aislamiento
+## Estados Relevantes
 
-- El dominio del carrito no conoce productos, precios ni stock real.
-  Solo conoce:
-- ProductId
-- Quantity
-- Price como VO
-- PricingServicePort para obtener totales
-  Esto permite:
-- cambiar motor de precios
-- cambiar proveedor de productos
-- cambiar persistencia
-- sin tocar el dominio ni los casos de uso
+| Estado         | Descripción                    | Impacto Frontend/BC                |
+| -------------- | ------------------------------ | ---------------------------------- |
+| `EMPTY`        | Carrito sin items              | Frontend muestra "carrito vacío"   |
+| `WITH_ITEMS`   | Carrito con productos          | Muestra resumen y permite checkout |
+| `ITEM_ADDED`   | Producto agregado exitosamente | Actualiza contador de items        |
+| `ITEM_REMOVED` | Producto eliminado             | Recalcula total                    |
 
-Resumen operativo
-- Propósito: gestionar carrito autenticado con totales recalculados.
-- Endpoints: `GET /cart`, `POST /cart/items`, `PUT /cart/items/:productId`, `DELETE /cart/items/:productId`, `DELETE /cart`.
-- Roles requeridos: JWT.
-- Estados: carrito crea on-demand; errores `CartNotFound|DuplicateCartItem|InvalidQuantity|InvalidProduct`.
+## Config/Integración
+
+### Variables de Entorno
+
+- **No requiere variables específicas**: Usa configuración de Prisma del módulo global
+
+### Dependencias Externas
+
+- **Prisma**: Persistencia en PostgreSQL (tabla `Cart`, `CartItem`)
+- **Products Context**: Valida existencia y stock de productos vía `PRODUCT_READONLY_PORT`
+
+### Eventos
+
+- **No publica eventos**: Operaciones síncronas
+- **No consume eventos**: Autónomo
+
+### Tokens DI Expuestos
+
+- `CART_REPOSITORY`: Repositorio de carritos (usado por Orders context)
+
+## Notas Arquitectónicas
+
+- **Agregado Cart**: `CartEntity` contiene colección de `CartItemEntity`
+- **Validación de productos**: Usa puerto readonly de Products para verificar stock sin acoplar entidades
+- **Auto-creación**: Si usuario no tiene carrito, se crea automáticamente en primer `GET`

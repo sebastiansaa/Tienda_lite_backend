@@ -1,65 +1,61 @@
-Categories
+# Categories Context
 
-- Proposito: administrar categorías del catálogo.
-- Responsabilidades: alta/edición/baja/listado y exponer lectura ligera para otros contextos.
+## Propósito
 
-Capas
+Gestionar categorías de productos con jerarquía simple (sin subcategorías) y validación de unicidad.
 
-- Domain: `CategoryEntity` con VOs (`TitleVO`, `Slug`, `ImageUrlVO`, `SoftDeleteVO`), invariantes de título/slug, soft delete.
-- app: casos CreateCategory, UpdateCategory, GetCategory, ListCategories, DeleteCategory; puertos `ICategoryWriteRepository` y `ICategoryReadRepository`.
-- infra: `PrismaCategoryWriteRepository` (write) y `PrismaCategoryReadRepository` (read); `CategorySharedAdapter` expone `CategoryReadOnlyPort` usando el repo de lectura; mapper `CategoryMapper`.
-- API: `CategoriesController` con `ValidationPipe` (whitelist/forbid/transform), DTOs request/response, `CategoryApiMapper`; escritura protegida con `JwtAuthGuard` + `RolesGuard`.
+## Endpoints
 
-CQRS
+| Método   | Ruta              | Propósito                                         |
+| -------- | ----------------- | ------------------------------------------------- |
+| `GET`    | `/categories`     | Listar todas las categorías                       |
+| `GET`    | `/categories/:id` | Obtener categoría por ID                          |
+| `POST`   | `/categories`     | Crear nueva categoría (admin)                     |
+| `PATCH`  | `/categories/:id` | Actualizar categoría (admin)                      |
+| `DELETE` | `/categories/:id` | Eliminar categoría (admin, solo si sin productos) |
 
-- Separación lectura/escritura por tokens: `CATEGORY_WRITE_REPOSITORY` (write) y `CATEGORY_READ_REPOSITORY` (read).
-- Write: CreateCategory, UpdateCategory, DeleteCategory.
-- Read: GetCategory, ListCategories.
-- Adapter readonly (`CategoryReadOnlyPort`) reusa el repo de lectura y se exporta para otros contextos.
-- Providers exportados: `CATEGORY_WRITE_REPOSITORY`, `CATEGORY_READ_REPOSITORY`, `CategoryReadOnlyPort` (se mantiene `CATEGORY_REPOSITORY` como alias legada).
+## Guards/Seguridad
 
-Invariantes
+- **Endpoints públicos**: `GET /categories`, `GET /categories/:id`
+- **Endpoints admin**: `POST /categories`, `PATCH /categories/:id`, `DELETE /categories/:id` (requieren rol `admin`)
+- **ValidationPipe**: Validación de nombres y slugs
 
-- Título y slug no vacíos; slug único (validado en repositorio/BD).
-- sortOrder >= 0; soft delete marca `deletedAt` y `active=false`.
+## Invariantes/Reglas Críticas
 
-Puertos expuestos
+- **Nombre único**: No se permiten categorías con nombres duplicados
+- **Slug único**: Generado automáticamente desde nombre, debe ser único
+- **No eliminar con productos**: Categoría con productos asociados no puede eliminarse
+- **Nombre no vacío**: Requiere al menos 2 caracteres
 
-- `CATEGORY_WRITE_REPOSITORY`, `CATEGORY_READ_REPOSITORY` para casos internos.
-- `CategoryReadOnlyPort` para lectura ligera desde otros contextos (Products, etc.).
+## Estados Relevantes
 
-Adaptadores implementados
+| Estado          | Descripción                       | Impacto Frontend/BC              |
+| --------------- | --------------------------------- | -------------------------------- |
+| `ACTIVE`        | Categoría visible y usable        | Aparece en filtros y formularios |
+| `WITH_PRODUCTS` | Categoría con productos asociados | No eliminable                    |
+| `EMPTY`         | Categoría sin productos           | Eliminable por admin             |
 
-- Prisma (read/write) y adapter readonly hacia `CategoryReadOnlyPort`.
+## Config/Integración
 
-Endpoints
+### Variables de Entorno
 
-- POST /categories
-- GET /categories
-- GET /categories/:id
-- PATCH /categories/:id
-- DELETE /categories/:id
+- **No requiere variables específicas**: Usa configuración de Prisma del módulo global
 
-Integraciones
+### Dependencias Externas
 
-- Products consume `CategoryReadOnlyPort` para validar categorías.
-- Depende de Auth para operaciones admin.
+- **Prisma**: Persistencia en PostgreSQL (tabla `Category`)
 
-Diagrama textual
+### Eventos
 
-- HTTP → CategoriesController → ValidationPipe → DTO → Mapper → UseCase → (Write/Read Repo + ReadOnlyPort) → Prisma → DB → Mapper → DTO.
+- **No publica eventos**: Operaciones síncronas
+- **No consume eventos**: Autónomo
 
-Notas de diseño
+### Tokens DI Expuestos
 
-- Puerto readonly evita exponer entidades del dominio y desacopla Products.
-- Validación en DTO + VOs del dominio mantienen integridad antes de persistir.
+- `CATEGORY_REPOSITORY_PORT`: Puerto de lectura para Products context (validación de categoría)
 
-Razón de aislamiento
+## Notas Arquitectónicas
 
-- Otros contextos solo conocen IDs y puerto readonly; no acceden a entidades ni reglas internas de Category.
-
-Resumen operativo
-- Propósito: CRUD de categorías y exposición readonly.
-- Endpoints: `POST /categories`, `GET /categories`, `GET /categories/:id`, `PATCH /categories/:id`, `DELETE /categories/:id`; admin mirror vía `/admin/categories`.
-- Roles requeridos: público para GET; admin (JwtAuthGuard + RolesGuard) para POST/PATCH/DELETE.
-- Estados: categoría activa/inactiva, soft-delete (`deletedAt`).
+- **Contexto simple**: Sin jerarquías ni subcategorías (flat structure)
+- **Usado por Products**: Products valida existencia de categoría vía puerto, sin acoplar entidades
+- **Caché recomendado**: Categorías cambian poco, candidato para caché en memoria

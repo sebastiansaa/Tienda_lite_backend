@@ -1,68 +1,67 @@
-User
+# User Context
 
-- Proposito: gestionar perfil de usuario y direcciones; exponer lectura basica para otros contextos.
-- Responsabilidades: CRUD de perfil, manejo de direcciones, cambio de estado y listado administrativo.
+## Propósito
 
-  Capas
+Gestionar perfiles de usuario, direcciones de envío y estados de cuenta (ACTIVE, INACTIVE, BANNED).
 
-- Domain: UserEntity, AddressEntity; VOs Email, Name, Phone, UserStatus, AddressId, City, Country, Street, ZipCode, timestamps; errores de validacion.
+## Endpoints
 
-- app: casos GetUserProfile, UpdateUserProfile, AddAddress, UpdateAddress, DeleteAddress, ChangeUserStatus, ListUsers; puertos `IUserReadRepository`, `IUserWriteRepository`, `UserReadOnlyPort`.
+| Método   | Ruta                      | Propósito                                    |
+| -------- | ------------------------- | -------------------------------------------- |
+| `GET`    | `/users/me`               | Obtener perfil del usuario autenticado       |
+| `PATCH`  | `/users/me`               | Actualizar perfil (name, phone, preferences) |
+| `POST`   | `/users/me/addresses`     | Agregar dirección de envío                   |
+| `PATCH`  | `/users/me/addresses/:id` | Actualizar dirección existente               |
+| `DELETE` | `/users/me/addresses/:id` | Eliminar dirección                           |
+| `GET`    | `/users/:id`              | Obtener perfil de usuario (admin)            |
+| `GET`    | `/users`                  | Listar todos los usuarios (admin)            |
+| `PATCH`  | `/users/:id/status`       | Cambiar estado de usuario (admin)            |
 
-- infra: repos separados `UserPrismaReadRepository` y `UserPrismaWriteRepository`; `UserReadOnlyAdapter` (consulta ligera), mappers infra.
+## Guards/Seguridad
 
-- API: UserController, DTOs y UserApiMapper; protegido con JwtAuthGuard y RolesGuard para rutas admin; `ValidationPipe` con whitelist/transform.
+- **JwtAuthGuard + RolesGuard**: Todos los endpoints requieren autenticación
+- **Endpoints públicos (autenticados)**: `/users/me`, `/users/me/addresses/*`
+- **Endpoints admin**: `/users/:id`, `/users`, `/users/:id/status` (requieren rol `admin`)
+- **ValidationPipe**: Validación automática de DTOs con UUID validation para addressId
 
-  CQRS
+## Invariantes/Reglas Críticas
 
-- Separación lectura/escritura cuando aplica.
-- Write: UpdateUserProfile, AddAddress, UpdateAddress, DeleteAddress, ChangeUserStatus usando `IUserWriteRepository`.
-- Read: GetUserProfile, ListUsers usando `IUserReadRepository` y `UserReadOnlyPort`.
-- Repos Prisma divididos en write/read + adapter readonly cross-context.
-- Providers expuestos: `USER_READ_REPOSITORY`, `USER_WRITE_REPOSITORY`, `USER_READONLY`.
+- **Email único**: Validado en Auth context, User solo almacena referencia
+- **Direcciones con ownership**: Usuario solo puede modificar sus propias direcciones
+- **Estados válidos**: ACTIVE (default), INACTIVE (suspendido temporalmente), BANNED (bloqueado permanentemente)
+- **Dirección completa**: Requiere street, city, country, zipCode (validado en VO)
 
-  Invariantes
+## Estados Relevantes
 
-- Email valido y unico.
-- UserStatus restringido a valores permitidos.
-- Direcciones requieren campos obligatorios.
+| Estado           | Descripción                       | Impacto Frontend/BC                          |
+| ---------------- | --------------------------------- | -------------------------------------------- |
+| `ACTIVE`         | Usuario activo                    | Puede realizar operaciones normalmente       |
+| `INACTIVE`       | Usuario suspendido                | Login bloqueado, órdenes existentes visibles |
+| `BANNED`         | Usuario bloqueado permanentemente | Login bloqueado, acceso denegado             |
+| `WITH_ADDRESSES` | Usuario con direcciones guardadas | Checkout pre-llena direcciones               |
 
-  Puertos expuestos
+## Config/Integración
 
-- USER_READ_REPOSITORY y USER_WRITE_REPOSITORY (lectura/escritura separadas).
-- USER_READONLY (read-model cross-context).
+### Variables de Entorno
 
-  Adaptadores implementados
+- **No requiere variables específicas**: Usa configuración de Prisma del módulo global
 
-- Prisma: repositorio principal (write/read) y adaptador readonly para consultas directas.
+### Dependencias Externas
 
-  Endpoints
+- **Prisma**: Persistencia en PostgreSQL (tabla `User`, `Address`)
+- **Auth Context**: Comparte tabla `User` pero no importa entidades (solo IDs)
 
-- GET/PATCH /users/me
-- POST/PATCH/DELETE /users/me/addresses/:id
-- Admin: GET /users, GET /users/:id, PATCH /users/:id/status
+### Eventos
 
-  Integraciones
+- **No publica eventos**: Operaciones síncronas
+- **No consume eventos**: Autónomo
 
-- Consumido por Order/Payment/Admin via USER_READONLY.
-- Depende de Auth para identidad/roles.
+### Tokens DI Expuestos
 
-  Diagrama textual
+- `USER_REPOSITORY`: Repositorio de usuarios (usado por Auth, Admin contexts)
 
-- HTTP → UserController → DTO → Mapper → UseCase → (UserRepositoryPort UserReadOnlyPort) → PrismaAdapter → DB → Mapper → DTO.
+## Notas Arquitectónicas
 
-  Notas de diseño
-
-- DTOs y mappers encapsulan Address → command.
-- El dominio agrega/reemplaza direcciones aplicando invariantes.
-
-  Razon de aislamiento
-
-- No expone entidades a otros contextos; solo proyecciones via puerto readonly.
-- Mantiene reglas de estado dentro del dominio User.
-
-Resumen operativo
-- Propósito: gestionar perfil y direcciones de usuario; exponer lectura básica.
-- Endpoints: `GET/PATCH /users/me`, `POST/PATCH/DELETE /users/me/addresses/:id`, admin `GET /admin/users`, `GET /admin/users/:id`, `PATCH /admin/users/:id/status`.
-- Roles requeridos: JWT; admin para endpoints `/admin/users*`.
-- Estados: usuario `ACTIVE|SUSPENDED|DELETED`; direcciones activas/eliminadas.
+- **Separación Auth/User**: Auth maneja credenciales y tokens, User maneja perfil y datos de negocio
+- **Agregado User**: `UserEntity` contiene colección de `AddressEntity` (VOs)
+- **Preferences JSON**: Campo flexible para configuraciones futuras (theme, notifications, etc.)

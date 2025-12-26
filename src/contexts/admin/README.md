@@ -1,55 +1,57 @@
-Admin
+# Admin Context
 
-- Proposito: capa tecnica de orquestacion para vistas y operaciones administrativas, sin dominio propio.
-- Responsabilidades: exponer consultas y acciones seguras sobre usuarios, productos, ordenes, pagos e inventario con puertos read-only.
+## Propósito
 
-Capas
+Proporcionar una interfaz centralizada para **Métricas, Analíticas y Dashboard** de la tienda.
 
-- app: usecases de listado/detalle y acciones simples (cambiar estado de usuario, actualizar producto, cancelar/ship/complete orden, ajustar stock) sobre puertos admin.
+- **Nota Arquitectónica**: Este contexto **NO** realiza operaciones CRUD (Crear, Editar, Listar, Borrar) sobre entidades de negocio (Producto, Orden, Usuario). Cada una de esas responsabilidades pertenece a su propio Contexto (`/products`, `/users`, `/orders`, `/inventory`) y es consumida directamente por el frontend administrativo.
+- El contexto `Admin` actúa como un **Agregador de Lectura** para facilitar vistas globales.
 
-- infra: adaptadores Prisma por recurso (user/product/order/payment/inventory) que implementan los puertos readonly.
+## Endpoints
 
-- API: AdminController, DTOs, mapper plano; protegido con JwtAuthGuard + RolesGuard (rol admin).
+| Método | Ruta               | Propósito                                                 | Guards                           |
+| :----- | :----------------- | :-------------------------------------------------------- | :------------------------------- |
+| `GET`  | `/admin/dashboard` | Obtener métricas agregadas (Usuarios, Ventas, Stock Bajo) | `JwtAuthGuard`, `Roles('admin')` |
 
-- Domain: no aplica (contexto tecnico).
+**Ejemplo Response:**
 
-Puertos expuestos
+```json
+// GET /admin/dashboard
+{
+  "totalUsers": 1523,
+  "totalRevenue": 45687.5,
+  "totalOrders": 892,
+  "pendingOrdersCount": 23,
+  "lowStockProductsCount": 7
+}
+```
 
-- Read-only: UserAdminReadOnlyPort, ProductAdminReadOnlyPort, OrderAdminReadOnlyPort, PaymentAdminReadOnlyPort, InventoryAdminReadOnlyPort.
+## Seguridad
 
-Adaptadores implementados
+- Todos los endpoints están protegidos por `JwtAuthGuard`.
+- Requieren el rol explícito `admin`.
 
-- Prisma: admin-user.prisma.adapter.ts, admin-product.prisma.adapter.ts, admin-order.prisma.adapter.ts, admin-payment.prisma.adapter.ts, admin-inventory.prisma.adapter.ts.
+## Invariantes y Reglas
 
-Endpoints principales (todos bajo prefijo /admin, rol admin requerido)
+- **Solo Lectura Agregada**: El Admin Context no debe modificar el estado de las órdenes o el stock; eso es responsabilidad de `OrderContext` y `InventoryContext`.
+- **Performance**: Las consultas de dashboard deben estar optimizadas (usando `count`, `sum` o agregaciones en DB) para no cargar grandes volúmenes de datos en memoria.
 
-- Usuarios: GET /admin/users, GET /admin/users/:id, PATCH /admin/users/:id/status.
-- Productos: GET /admin/products, GET /admin/products/:id, PATCH /admin/products/:id.
-- Categorías: GET /admin/categories, GET /admin/categories/:id, POST /admin/categories, PATCH /admin/categories/:id, DELETE /admin/categories/:id.
-- Órdenes: GET /admin/orders, GET /admin/orders/:id, POST /admin/orders/:id/cancel|ship|complete.
-- Pagos: GET /admin/payments, GET /admin/payments/:id.
-- Inventario: GET /admin/inventory, GET /admin/inventory/:productId, PATCH /admin/inventory/:productId/adjust.
+## Config/Integración
 
-Integraciones
+### Dependencias
 
-- Lee datos directamente via Prisma sin tocar dominios ajenos; depende de Auth para autenticacion/roles.
-- Consumidores front deben usar el prefijo `/admin/*` con rol admin.
+- **PrismaService**: Realiza consultas de agregación transversales a toda la base de datos
 
-Diagrama textual
+### Tokens DI
 
-- HTTP -> AdminController -> DTO -> Mapper -> UseCase -> AdminPort -> PrismaAdapter -> DB -> respuesta -> Mapper -> DTO.
+- `GetDashboardStatsUsecase`: Único caso de uso que agrega métricas desde Prisma
 
-Notas de diseño
+**Arquitectura Limpia:**
 
-- Solo lectura/modificaciones acotadas; no se crean reglas nuevas de negocio aqui.
-- Usa tokens ADMIN\_\* para DI y mantener independencia de implementaciones.
-
-Razon de aislamiento
-
-- Evita exponer entidades o invariantes de otros dominios; opera sobre proyecciones/summary y mantiene Auth como unica dependencia transversal.
-
-Resumen operativo
-- Propósito: proyecciones y acciones acotadas para admins sobre usuarios/productos/órdenes/pagos/inventario/categorías.
-- Endpoints: `/admin/users`, `/admin/products`, `/admin/orders`, `/admin/payments`, `/admin/inventory`, `/admin/categories`.
-- Roles requeridos: admin (JwtAuthGuard + RolesGuard).
-- Estados: refleja estados de cada recurso (usuarios ACTIVE/SUSPENDED/DELETED; órdenes pending/paid/completed/cancelled; pagos pending/succeeded/failed; inventario onHand/reserved; categorías activas/inactivas).
+```
+Frontend Admin → llama directo a:
+  - /products/* (CRUD productos)
+  - /inventory/* (ajustes stock)
+  - /orders/* (gestión órdenes)
+  - /admin/dashboard (métricas agregadas)
+```

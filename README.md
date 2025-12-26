@@ -1,141 +1,158 @@
 # Tienda Lite Backend
 
-Backend modular construido con NestJS aplicando DDD y Arquitectura Hexagonal. Cada bounded context es autonomo y se comunica solo por puertos.
+> NestJS · DDD · Hexagonal Architecture · CQRS · Prisma · PostgreSQL
 
-Filosofia arquitectural
+Backend modular con arquitectura hexagonal estricta y domain-driven design. Cada contexto es autónomo y se comunica solo mediante puertos definidos.
 
-- DDD estricto: entidades ricas, Value Objects, invariantes y errores propios por contexto de negocio.
-- Hexagonal: Application define puertos, Infrastructure los implementa, API adapta HTTP; Domain no depende de frameworks.
-- DRY y separacion de capas: sin logica de negocio en API/Infra; sin DTOs ni Prisma en Domain/Application.
-- Tokens DI: cada puerto se identifica con constantes en `constants.ts`, facilitando el intercambio de adaptadores.
-- Mappers dedicados: API mapea DTO<->Command/Query; Infra mapea ORM<->Entidad/DTO.
-- Casos de uso explicitos: toda accion pasa por un UseCase que orquesta puertos y entidades.
-- Autenticacion transversal: Auth provee identidad (sub, roles) sin acoplarse al dominio User.
-- TypeScript estricto: sin any, sin castings inseguros; tipado fuerte en VOs, entidades, puertos y mappers.
+---
 
-## Resumen operativo (backend)
-- Propósito: proveer API modular para auth, catálogo, carrito, órdenes, pagos y admin.
-- Endpoints usados: auth (`/auth/*`), productos (`/products`, `/products/search`, `/products/low-stock`), categorías (`/categories`), carrito (`/cart`), órdenes (`/orders`), pagos (`/payments/*`), admin (`/admin/*`).
-- Roles requeridos: público para catálogo; JWT para carrito/órdenes/pagos; rol admin para `/admin/*`, `/products/low-stock` y mutaciones protegidas.
-- Estados posibles: orden `pending|paid|completed|cancelled`, pago `pending|succeeded|failed`, usuario `ACTIVE|SUSPENDED|DELETED`, stock con onHand/reserved.
+## 🏗️ Stack & Principios
 
-CQRS
+- **NestJS** + TypeScript estricto (sin `any`)
+- **PostgreSQL** + Prisma ORM
+- **DDD**: Entidades ricas, Value Objects, errores de dominio
+- **Hexagonal**: Domain sin frameworks | Infra reemplazable | API adapta HTTP
+- **CQRS**: Commands (write) | Queries (readonly), adaptadores separados
+- **Dependency Injection**: Tokens en `constants.ts` para intercambio de adaptadores
 
-- Aplicado en contextos de negocio donde hay lectura/escritura diferenciada (Product, Inventory, Order, etc.).
-- Separación estricta entre lectura y escritura en Application cuando corresponde.
-- Commands modifican estado usando puertos write; Queries solo leen usando puertos readonly.
-- Repositorios y puertos divididos en read/write por contexto cuando aplica.
-- Cuando un contexto define puertos separados de lectura y escritura (CQRS), la infraestructura debe proveer adaptadores separados (ej. ProductPrismaWriteRepository y ProductPrismaReadRepository). Un puerto = un adaptador.
-- Controllers mapean DTO → Command/Query según corresponda.
+---
 
-Estructura por contexto
+## 📁 Estructura por Contexto
 
 ```
-src/contexts/<contexto>/
-  domain/          # Entidades, VOs, reglas, errores (no aplica a Auth/Admin)
-  app/     # UseCases, commands/queries, ports (contratos)
-  infra/  # Adaptadores concretos (Prisma, servicios externos), mappers
-  api/             # Controllers, DTOs, mappers, guards
-  constants.ts     # Tokens de inyeccion
-  <context>.module.ts  # Composition root
+src/contexts/<context>/
+  ├── domain/       # Entidades, VOs, errores, invariantes
+  ├── app/          # UseCases, Commands/Queries, Puertos (read + write)
+  ├── infra/        # Adaptadores (Prisma, servicios externos), Mappers
+  ├── api/          # Controllers, DTOs, Mappers HTTP, Guards
+  ├── constants.ts  # Tokens DI
+  └── <context>.module.ts
 ```
 
-Bounded contexts
+**Contextos activos:** Auth, User, Products, Categories, Cart, Orders, Payment, Inventory, Admin
 
-- Tecnicos: Auth, Admin.
-- Negocio: User, Product, Category, Inventory, Cart, Order, Payment.
+---
 
-Comunicacion entre contextos
+## 🔐 Seguridad & Roles
 
-- Siempre via puertos definidos en Application (ej. ProductReadOnlyPort, UserReadOnlyPort, OrderReadOnlyPort).
-- Sin importaciones de entidades/VO/errores de otro dominio.
-- Auth solo expone identidad y roles; Admin usa proyecciones y puertos readonly.
+| Nivel           | Rutas                                                         | Acceso            |
+| --------------- | ------------------------------------------------------------- | ----------------- |
+| **Público**     | `/products`, `/categories`                                    | Sin autenticación |
+| **Usuario JWT** | `/cart`, `/orders`, `/payments`                               | Token JWT válido  |
+| **Admin**       | `/admin/*`, `/inventory/*`, mutaciones en Products/Categories | Rol `admin`       |
 
-Documentacion y Swagger
+**Guards**: `JwtAuthGuard` + `RolesGuard` con decorador `@Roles('admin')`
 
-- Cada contexto tiene README propio con proposito, capas, puertos, adaptadores, endpoints e integraciones.
-- Swagger habilitado; anadir decoradores en controllers y DTOs para mantener contratos claros.
+---
 
-Pruebas y verificacion
+## 🔄 Estados Clave
 
-- Usecases y entidades se prueban aislados con mocks de puertos.
-- Ejecutar `npm run test` y `npm run type` para validar casos y tipos.
+| Entidad     | Estados                                        | Notas                              |
+| ----------- | ---------------------------------------------- | ---------------------------------- |
+| **Orden**   | `pending` → `paid` → `completed` / `cancelled` | Máquina de estados estricta        |
+| **Pago**    | `pending` → `succeeded` / `failed`             | Estados finales inmutables         |
+| **Usuario** | `ACTIVE` / `INACTIVE` / `BANNED`               | Login bloqueado en INACTIVE/BANNED |
+| **Stock**   | `onHand` + `reserved`                          | Disponible = onHand - reserved     |
 
- Estructura de pruebas
+---
 
-La capa de testing sigue la misma separación modular del backend y replica la arquitectura hexagonal en tres niveles: unit, integration y e2e. Cada tipo de prueba valida un nivel distinto del sistema.
+## 🧪 Testing
 
-Organización de carpetas
+| Tipo            | Alcance                         | Base de Datos         | Velocidad |
+| --------------- | ------------------------------- | --------------------- | --------- |
+| **Unit**        | Dominio + UseCases (mocks)      | —                     | ⚡⚡⚡    |
+| **Integration** | Nest + Prisma + módulos reales  | Test DB (puerto 5433) | ⚡⚡      |
+| **E2E**         | App completa, flujos de negocio | Test DB (puerto 5433) | ⚡        |
 
-src/contexts/<context>/unit/        # Unit tests puros (entidades, VOs, usecases con mocks)
-test/<context>/integration/         # Integraciones reales (Nest + Prisma + módulos reales)
-test/<context>/unit/                # Unit tests de API (controllers/DTO) cuando no usan Nest real
-test/e2e/                           # Pruebas end-to-end de la aplicación completa
+**Limpieza**: Truncado de tablas + teardown Prisma tras cada suite  
+**Comandos**:
 
-Tipos de pruebas
+```bash
+npm run test              # Unit + Integration
+npm run test:e2e          # End-to-end
+npm run test:cov          # Cobertura
+npm run type              # Verificación de tipos estricta
+```
 
-Unit tests
-- No usan NestJS ni Prisma.
-- Mockean todos los puertos definidos en Application.
-- Validan reglas de dominio, invariantes, VOs, entidades y casos de uso.
-- Se ejecutan rápido y garantizan que el dominio es puro y determinista.
+---
 
-Integration tests
-- Usan el módulo real del contexto (<context>.module.ts).
-- Ejecutan casos de uso reales contra adaptadores concretos (Prisma).
-- Requieren .env.test y una base de datos de test.
-- Limpian tablas antes de cada suite para asegurar aislamiento.
-- Verifican wiring, tokens DI, mappers y persistencia.
+## 🐘 PostgreSQL: Local vs Contenedor
 
-E2E tests
-- Levantan la aplicación completa con NestFactory.
-- Cubren flujos reales de negocio: auth → productos → stock → órdenes → pagos.
-- Usan base de datos de test y teardown completo entre ejecuciones.
-- Validan contratos HTTP, guards, roles, DTOs y comportamiento transversal.
+**Contenedor mapeado a `localhost:5433`** para evitar colisión con PostgreSQL local en `5432`.
 
- Limpieza y aislamiento
-Cada suite de integración y E2E ejecuta:
-- truncado de tablas relevantes
-- recreación de datos mínimos (ej. usuarios, productos, stock)
-- cierre explícito de Prisma al finalizar
+```bash
+# Ver contenedores activos
+docker ps
 
-Esto garantiza reproducibilidad y evita contaminación entre contextos.
+# Verificar tablas en contenedor
+docker compose exec postgres psql -U postgres -d eccomerce -c "\dt"
+```
 
- Comandos
-- npm run test — unit + integration
-- npm run test:e2e — pruebas end-to-end
-- npm run test:cov — cobertura
-- npm run type — verificación estricta de tipos
+Si prefieres `5432 → 5432`, detén PostgreSQL local y remapea puerto en `docker-compose.yml`.
 
-**Postgres Local vs Contenedor**
+---
 
-- **Puerto del contenedor:** en este proyecto el servicio Postgres del contenedor está mapeado al host en `5433:5432`. Por tanto `DATABASE_URL` en `.env` usa `localhost:5433`.
-- **Motivo:** si tienes PostgreSQL instalado localmente en Windows escuchando en `5432`, mapear `5432:5432` colisiona y Prisma (ejecutado en el host) puede conectarse al Postgres local en vez del contenedor. Para evitarlo se usa `5433` en el host.
-- **Comprobar estado:**
-  - Ver contenedores y puertos: `docker ps`
-  - Ver tablas dentro del contenedor: `docker compose exec postgres psql -U postgres -d eccomerce -c "\\dt"`
-- **Cambiar el comportamiento:**
-  - Si prefieres que `localhost:5432` apunte al contenedor, detén el Postgres local y remapea el puerto en `docker-compose.yml` a `5432:5432`.
-  - Alternativa segura: dejar `5433:5432` y mantener `DATABASE_URL` apuntando a `localhost:5433`.
+## 🚀 Comandos Rápidos
 
-Incluye esta nota para evitar confusiones al ejecutar migraciones o seeds con Prisma.
+### Instalación
 
+```bash
+npm install
+npx prisma generate
+```
 
-Scripts basicos
+### Migraciones
 
-- Instalacion: `npm install`
-- Prisma: `npx prisma generate` y `npx prisma migrate dev --name <name>`
-- Desarrollo: `npm run start:dev`
-- Produccion: `npm run start:prod`
-- Tests: `npm run test` | `npm run test:e2e` | `npm run test:cov`
+```bash
+npx prisma migrate dev --name <migration-name>
+npx prisma studio  # UI para explorar DB
+```
 
-Lineamientos de diseno
+### Desarrollo
 
-- Sin dependencias circulares entre contextos.
-- Sin filtraciones de dominio hacia API o entre dominios.
-- Adaptadores reemplazables cambiando solo Infrastructure/composition.
-- Roles via `JwtAuthGuard` + `RolesGuard` y metadata `@Roles`.
+```bash
+docker compose up -d        # Levantar PostgreSQL
+npm run start:dev           # Modo watch (hot-reload)
+```
 
-Diagrama textual global
+### Producción
 
-- HTTP -> Controller (API) -> DTO -> ApiMapper -> UseCase (Application) -> Puertos -> Adaptadores (Infrastructure) -> DB/servicios externos -> Mapper -> DTO -> HTTP.
+```bash
+npm run build
+npm run start:prod
+```
+
+---
+
+## 📖 Swagger & Documentación
+
+- Swagger UI disponible en `/api` (development)
+- Cada contexto tiene `README.md` con endpoints, guards, invariantes
+- Decoradores OpenAPI en Controllers/DTOs mantienen contratos sincronizados
+
+---
+
+## ✅ Checklist de Desarrollo
+
+1. Define entidad + VOs + errores en `domain/`
+2. Crea puertos (read/write si aplica CQRS) en `app/`
+3. Implementa adaptadores en `infra/` con mappers ORM↔Entidad
+4. Expone API: Controller → DTO → Mapper → Command/Query → UseCase
+5. Añade guards/roles y documenta en Swagger
+6. Escribe tests: unit → integration → e2e
+
+---
+
+## 🧭 Comunicación entre Contextos
+
+- Solo mediante **puertos readonly** definidos en `Application`
+- Ejemplos: `OrderReadOnlyPort`, `ProductReadOnlyPort`
+- **Nunca** importar entidades/VOs de otro dominio (anti-corruption layer)
+
+---
+
+## 📚 Recursos
+
+- [NestJS Docs](https://docs.nestjs.com)
+- [Prisma Docs](https://www.prisma.io/docs)
+- [DDD Patterns](https://martinfowler.com/bliki/DomainDrivenDesign.html)
