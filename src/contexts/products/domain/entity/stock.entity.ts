@@ -1,48 +1,38 @@
-import {
-    NegativeStockError,
-    StockInsufficientError,
-    InvalidStockError,
-} from "../errors";
+// ...existing code...
+import { StockVO } from "../v-o";
 
 export class StockEntity {
-    private quantity: number;
+    private stock: StockVO;
 
-    constructor(stock: number) {
-        if (!Number.isInteger(stock) || stock < 0) {
-            throw new NegativeStockError();
-        }
-        this.quantity = stock;
+    constructor(stock: number | StockVO) {
+        this.stock = stock instanceof StockVO ? stock : new StockVO(stock);
     }
 
     public set(quantity: number): void {
-        if (!Number.isInteger(quantity) || quantity < 0) throw new InvalidStockError();
-        this.quantity = quantity;
+        this.stock.set(quantity);
     }
 
     public increment(amount: number): void {
-        if (!Number.isInteger(amount) || amount <= 0) throw new InvalidStockError();
-        this.quantity += amount;
+        this.stock.increment(amount);
     }
 
     public decrement(amount: number): void {
-        if (!Number.isInteger(amount) || amount <= 0) throw new InvalidStockError();
-        if (this.quantity - amount < 0) throw new StockInsufficientError();
-        this.quantity -= amount;
+        this.stock.decrement(amount);
     }
 
     public hasSufficient(amount: number): boolean {
-        return this.quantity >= amount;
+        return this.stock.hasSufficient(amount);
     }
 
     public isLowStock(threshold: number = 5): boolean {
-        return this.quantity < threshold;
+        return this.stock.isLowStock(threshold);
     }
 
     public isEmpty(): boolean {
-        return this.quantity === 0;
+        return this.stock.isEmpty();
     }
 
     public get value(): number {
-        return this.quantity;
+        return this.stock.value;
     }
 }

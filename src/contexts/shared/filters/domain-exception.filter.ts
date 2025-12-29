@@ -14,6 +14,7 @@ import {
     DesactiveProductError,
     ActiveProductError,
     InvalidCategoryError,
+    ProductHasStockError,
 } from '../../products/domain/errors/product.errors';
 import { UserNotFoundError } from '../../auth/domain/errors/auth.errors';
 import { InvalidTitleError, InvalidImageUrlError, InvalidSlugError as SharedInvalidSlugError } from '../errors/shared.errors';
@@ -29,6 +30,8 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
         if (exception instanceof StockInsufficientError) {
             status = HttpStatus.CONFLICT;
+            // StockInsufficientError suele venir de StockVO (operación de decremento)
+            // Para la regla de entidad de borrar producto con stock, mapeamos abajo ProductHasStockError a CONFLICT
         } else if (exception instanceof NegativeStockError || exception instanceof InvalidStockError) {
             status = HttpStatus.BAD_REQUEST;
         } else if (exception instanceof ImageNotFoundError) {
@@ -49,6 +52,8 @@ export class DomainExceptionFilter implements ExceptionFilter {
             exception instanceof ProductInvalidImageUrlError
         ) {
             status = HttpStatus.BAD_REQUEST;
+        } else if (exception instanceof ProductHasStockError) {
+            status = HttpStatus.CONFLICT;
         } else if (exception instanceof InvalidTitleError || exception instanceof InvalidImageUrlError || exception instanceof SharedInvalidSlugError) {
             status = HttpStatus.BAD_REQUEST;
         } else if (exception instanceof UserNotFoundError) {

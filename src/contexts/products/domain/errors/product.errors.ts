@@ -13,6 +13,15 @@ export class InvalidProductTitleError extends Error {
     }
 }
 
+// ---Descripción ---
+export class EmptyDescriptionError extends Error {
+    constructor(message: string = "La descripción no puede estar vacía") {
+        super(message);
+        this.name = "EmptyDescriptionError";
+    }
+}
+
+
 // --- Slug ---
 export class EmptySlugError extends Error {
     constructor(message: string = "El slug no puede estar vacío") {
@@ -93,5 +102,14 @@ export class InvalidCategoryError extends Error {
     constructor(message: string = "La categoría proporcionada no es válida") {
         super(message);
         this.name = "InvalidCategoryError";
+    }
+}
+
+// --- Producto con stock ---
+//error expresa una regla de negocio del  Producto, entonces es más correcto dejarlo
+export class ProductHasStockError extends Error {
+    constructor(message: string = "El producto tiene stock y no se puede eliminar") {
+        super(message);
+        this.name = "ProductHasStockError";
     }
 }

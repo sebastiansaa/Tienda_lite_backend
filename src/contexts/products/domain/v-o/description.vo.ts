@@ -1,9 +1,11 @@
+import { EmptyDescriptionError } from "../errors";
+
 export class Description {
     private readonly valor: string;
 
     constructor(valor: string) {
         if (valor === undefined || valor === null) {
-            throw new Error('La descripción no puede ser nula');
+            throw new EmptyDescriptionError();
         }
         this.valor = valor.trim();
     }

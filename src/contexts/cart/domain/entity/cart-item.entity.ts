@@ -1,7 +1,6 @@
 import ProductIdVO from '../v-o/product-id.vo';
 import QuantityVO from '../v-o/quantity.vo';
 import PriceVO from '../v-o/price.vo';
-import { InvalidQuantityError } from '../errors/cart.errors';
 
 export interface CartItemProps {
     productId: number;
@@ -37,7 +36,6 @@ export class CartItemEntity {
     }
 
     updateQuantity(quantity: number): void {
-        if (quantity <= 0) throw new InvalidQuantityError();
         this.quantityVO = new QuantityVO(quantity);
     }
 

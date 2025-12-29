@@ -1,14 +1,11 @@
 import {
-    ImagesArrayNullError,
     ActiveProductError,
     DesactiveProductError,
-    InvalidCategoryError,
-    ImageNotFoundError,
+    ProductHasStockError,
 } from '../errors';
 import { ProductProps } from './productPropInterface';
 import { Slug, SoftDeleteVO } from '../../../shared/v-o';
-import { Price, Title, ImagesVO, Description, CategoryId } from '../v-o';
-import { StockEntity } from './stock.entity';
+import { Price, Title, ImagesVO, Description, CategoryId, StockVO } from '../v-o';
 
 export class ProductEntity {
     private readonly idValue?: number;
@@ -16,7 +13,7 @@ export class ProductEntity {
     private slugVO: Slug;
     private priceVO: Price;
     private descriptionVO: Description;
-    private stockEntity: StockEntity;
+    private stockVO: StockVO;
     private imagesVO: ImagesVO;
     private deletedAtVO: SoftDeleteVO;
     private categoryIdVO: CategoryId;
@@ -24,15 +21,12 @@ export class ProductEntity {
     private updatedAtValue: Date;
 
     private constructor(props: ProductProps) {
-        if (!props.images || props.images.length === 0) throw new ImagesArrayNullError();
-        if (!props.categoryId || props.categoryId <= 0) throw new InvalidCategoryError();
-
         this.idValue = props.id;
         this.titleVO = new Title(props.title);
         this.slugVO = new Slug(props.slug);
         this.priceVO = new Price(props.price);
         this.descriptionVO = new Description(props.description ?? '');
-        this.stockEntity = new StockEntity(props.stock);
+        this.stockVO = StockVO.from(props.stock);
         this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
         this.imagesVO = new ImagesVO(props.images);
         this.categoryIdVO = new CategoryId(props.categoryId);
@@ -40,7 +34,7 @@ export class ProductEntity {
         this.createdAtValue = props.createdAt ?? now;
         this.updatedAtValue = props.updatedAt ?? now;
 
-        if (this.stockEntity.isEmpty()) this.markAsInactive();
+        if (this.stockVO.isEmpty()) this.markAsInactive();
     }
 
     static create(props: Omit<ProductProps, 'createdAt' | 'updatedAt' | 'deletedAt'> & { deletedAt?: Date | null }): ProductEntity {
@@ -58,7 +52,7 @@ export class ProductEntity {
 
     remove(): void {
         if (!this.active) throw new DesactiveProductError();
-        if (!this.stockEntity.isEmpty()) throw new Error('No puedes eliminar un producto con stock');
+        if (!this.stockVO.isEmpty()) throw new ProductHasStockError('No puedes eliminar un producto con stock');
         this.deletedAtVO = this.deletedAtVO.delete();
         this.touch();
     }
@@ -70,7 +64,7 @@ export class ProductEntity {
     }
 
     canBePurchased(): boolean {
-        return this.active && !this.stockEntity.isEmpty();
+        return this.active && !this.stockVO.isEmpty();
     }
 
     changePrice(newPrice: number | string): void {
@@ -99,12 +93,8 @@ export class ProductEntity {
     }
 
     removeImage(url: string): void {
-        try {
-            this.imagesVO = this.imagesVO.remove(url);
-            this.touch();
-        } catch {
-            throw new ImageNotFoundError();
-        }
+        this.imagesVO = this.imagesVO.remove(url);
+        this.touch();
     }
 
     replaceImages(urls: string[]): void {
@@ -113,7 +103,7 @@ export class ProductEntity {
     }
 
     setStock(quantity: number): void {
-        this.stockEntity.set(quantity);
+        this.stockVO.set(quantity);
         this.touch();
     }
 
@@ -130,7 +120,7 @@ export class ProductEntity {
     get slug(): string { return this.slugVO.value; }
     get price(): number { return this.priceVO.value; }
     get description(): string { return this.descriptionVO.value; }
-    get stock(): number { return this.stockEntity.value; }
+    get stock(): number { return this.stockVO.value; }
     get categoryId(): number { return this.categoryIdVO.value; }
     get createdAt(): Date { return this.createdAtValue; }
     get updatedAt(): Date { return this.updatedAtValue; }
