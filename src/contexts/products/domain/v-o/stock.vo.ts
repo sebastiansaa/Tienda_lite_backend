@@ -50,4 +50,3 @@ export class StockVO {
         return new StockVO(stock);
     }
 }
-// ...existing code...

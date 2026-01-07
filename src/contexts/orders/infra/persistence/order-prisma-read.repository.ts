@@ -17,4 +17,9 @@ export class OrderPrismaReadRepository implements IOrderReadRepository {
         const records = await this.prisma.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
         return records.map((r) => orderPrismaToDomain(r)!).filter(Boolean);
     }
+
+    async listAll(): Promise<OrderEntity[]> {
+        const records = await this.prisma.order.findMany({ orderBy: { createdAt: 'desc' } });
+        return records.map((r) => orderPrismaToDomain(r)!).filter(Boolean);
+    }
 }

@@ -1,61 +1,34 @@
 # Payment Context
 
-## Propósito
+Responsable de la integración con pasarelas de pago virtuales y el seguimiento de transacciones vinculadas a las órdenes del sistema.
 
-Gestionar procesamiento de pagos con integración a pasarelas externas (Stripe) y registro de transacciones.
+## Estructura de Carpetas
 
-## Endpoints
+- `api/`: Controllers para inicio y confirmación de pagos por el usuario.
+- `app/`: Casos de uso (iniciar pago, confirmar éxito, registrar fallo).
+- `domain/`: Entidades de pago y gestión de estados de transacción.
+- `infra/`: Adaptadores para pasarelas de pago y repositorios Prisma.
 
-| Método | Ruta                    | Propósito                                 |
-| ------ | ----------------------- | ----------------------------------------- |
-| `POST` | `/payments/initiate`    | Crear Payment Intent de Stripe para orden |
-| `POST` | `/payments/:id/confirm` | Confirmar pago tras tokenización exitosa  |
-| `POST` | `/payments/:id/fail`    | Marcar pago como fallido                  |
-| `GET`  | `/payments`             | Listar pagos del usuario autenticado      |
-| `GET`  | `/payments/:id`         | Obtener detalles de pago por ID           |
+## Casos de Uso y Endpoints
 
-## Guards/Seguridad
+- `POST /payments/initiate`: Inicia una intención de pago para una orden.
+- `POST /payments/:id/confirm`: Confirma la recepción del pago.
+- `GET /payments`: Historial de transacciones del usuario autenticado.
+- `Admin Transacciones`: Auditoría global de pagos (vía AdminContext).
 
-- **JwtAuthGuard**: Todos los endpoints requieren autenticación
-- **Ownership validation**: Usuario solo puede ver pagos de sus propias órdenes
-- **ValidationPipe**: Validación automática de DTOs
+## Ejemplo de Uso
 
-## Invariantes/Reglas Críticas
+```typescript
+// Iniciar pago de una orden
+const payment = await initiateUseCase.execute({
+  orderId: 'O-456',
+  method: 'CREDIT_CARD',
+});
+console.log(`Pago pendiente: ${payment.id}`);
+```
 
-- **Idempotencia**: Múltiples intentos de pago con mismo parámetro retornan mismo resultado
-- **Monto inmutable**: Monto del pago debe coincidir con total de la orden
-- **Estados finales**: `SUCCEEDED` y `FAILED` son estados terminales, no modificables
-- **Ownership estricto**: Solo el owner de la orden puede confirmar/fallar su pago
+## Notas de Integración
 
-## Estados Relevantes
-
-| Estado       | Descripción                            | Impacto Frontend/BC                             |
-| ------------ | -------------------------------------- | ----------------------------------------------- |
-| `PENDING`    | Payment creado, esperando confirmación | Muestra spinner de carga                        |
-| `PROCESSING` | Pago en proceso por pasarela           | Bloquea UI, espera confirmación                 |
-| `SUCCEEDED`  | Pago exitoso                           | Actualiza orden a PAID, redirige a confirmación |
-| `FAILED`     | Pago rechazado                         | Muestra error, permite reintentar               |
-
-## Config/Integración
-
-### Variables de Entorno
-
-- `STRIPE_SECRET_KEY`: API key de Stripe para backend
-- `STRIPE_PUBLISHABLE_KEY`: Public key para frontend (opcional, puede estar en .env frontend)
-
-### Dependencias Externas
-
-- **Stripe SDK**: Procesamiento de pagos (`stripe` npm package)
-- **Prisma**: Persistencia en PostgreSQL (tabla `Payment`)
-- **Orders Context**: Actualiza estado de orden tras pago exitoso vía `ORDER_WRITE_REPOSITORY`
-
-### Tokens DI Expuestos
-
-- `PAYMENT_REPOSITORY`: Repositorio de pagos (usado por Admin context)
-- `STRIPE_SERVICE`: Servicio de integración con Stripe (si existe adapter específico)
-
-## Notas Arquitectónicas
-
-- **Anti-Corruption Layer**: Adaptador de Stripe traduce respuestas externas a dominio interno
-- **Retry logic**: Pagos fallidos permiten reintentos creando nuevo Payment Intent
-- **Ownership**: Validación estricta de que usuario solo accede a sus propios pagos
+- **Seguridad**: Uso opcional de Webhooks.
+- **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
+- **Validación**: Verifica que la orden esté en estado PENDING.

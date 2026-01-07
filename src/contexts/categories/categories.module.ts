@@ -59,6 +59,6 @@ import { CategorySharedAdapter } from './infra/adapters/category-shared.adapter'
             inject: [CATEGORY_READ_REPOSITORY, CATEGORY_WRITE_REPOSITORY],
         },
     ],
-    exports: [CATEGORY_WRITE_REPOSITORY, CATEGORY_READ_REPOSITORY, 'CategoryReadOnlyPort']
+    exports: [CATEGORY_WRITE_REPOSITORY, CATEGORY_READ_REPOSITORY, 'CategoryReadOnlyPort', CreateCategoryUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase]
 })
 export class CategoriesModule { }

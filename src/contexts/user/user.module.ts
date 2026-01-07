@@ -62,6 +62,6 @@ import { IUserWriteRepository } from './app/ports/user-write.repository';
             inject: [USER_READ_REPOSITORY]
         },
     ],
-    exports: [USER_READONLY, USER_READ_REPOSITORY, USER_WRITE_REPOSITORY],
+    exports: [USER_READONLY, USER_READ_REPOSITORY, USER_WRITE_REPOSITORY, GetUserProfileUseCase, ListUsersUseCase, ChangeUserStatusUseCase],
 })
 export class UserModule { }

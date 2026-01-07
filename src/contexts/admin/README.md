@@ -1,57 +1,68 @@
-# Admin Context
+# Admin Context (Centralized Administration Orchestrator)
 
 ## Propósito
 
-Proporcionar una interfaz centralizada para **Métricas, Analíticas y Dashboard** de la tienda.
+El contexto `Admin` actúa como el **Orquestador Central** de todas las operaciones administrativas de la plataforma. Su responsabilidad es centralizar los puntos de entrada para la gestión de usuarios, productos, categorías e inventario, delegando la ejecución real a los dominios correspondientes mediante un patrón de **Ports and Adapters** (Hexagonal Architecture).
 
-- **Nota Arquitectónica**: Este contexto **NO** realiza operaciones CRUD (Crear, Editar, Listar, Borrar) sobre entidades de negocio (Producto, Orden, Usuario). Cada una de esas responsabilidades pertenece a su propio Contexto (`/products`, `/users`, `/orders`, `/inventory`) y es consumida directamente por el frontend administrativo.
-- El contexto `Admin` actúa como un **Agregador de Lectura** para facilitar vistas globales.
+### Objetivos Clave:
+
+- **Centralización**: Todos los endpoints `/admin/*` residen aquí.
+- **Desacoplamiento**: El orquestador no conoce detalles de implementación de otros dominios; se comunica mediante interfaces (Ports).
+- **Consolidación de Métricas**: Proporciona un dashboard unificado con datos agregados de múltiples contextos.
+
+## Arquitectura (Hexagonal)
+
+El contexto Admin define **Ports** (interfaces) que representan las necesidades administrativas. Cada dominio interesado implementa un **Adapter** para satisfacer ese Port.
+
+### Flujo de Comunicación:
+
+1. `AdminController` recibe el request.
+2. `AdminController` llama a un `Port` (ej: `ProductAdminPort`).
+3. El `Adapter` del dominio (ej: `ProductAdminAdapter` en el contexto `Products`) recibe la llamada.
+4. El `Adapter` ejecuta los Casos de Uso internos de su propio dominio.
 
 ## Endpoints
 
-| Método | Ruta               | Propósito                                                 | Guards                           |
-| :----- | :----------------- | :-------------------------------------------------------- | :------------------------------- |
-| `GET`  | `/admin/dashboard` | Obtener métricas agregadas (Usuarios, Ventas, Stock Bajo) | `JwtAuthGuard`, `Roles('admin')` |
+### Dashboard (Métricas)
 
-**Ejemplo Response:**
+- `GET /admin/dashboard`: Estadísticas globales (ventas, usuarios, stock bajo).
 
-```json
-// GET /admin/dashboard
-{
-  "totalUsers": 1523,
-  "totalRevenue": 45687.5,
-  "totalOrders": 892,
-  "pendingOrdersCount": 23,
-  "lowStockProductsCount": 7
-}
-```
+### Usuarios
+
+- `GET /admin/users`: Listado completo de usuarios.
+- `GET /admin/users/:id`: Perfil detallado de usuario.
+- `PATCH /admin/users/:id/status`: Activar/Inactivar usuarios.
+
+### Productos
+
+- `POST /admin/products`: Crear o actualizar productos.
+- `GET /admin/products/low-stock`: Consultar productos con bajo inventario.
+- `PUT /admin/products/:id/stock`: Ajustar stock base.
+- `DELETE /admin/products/:id`: Eliminación física o lógica.
+- `POST /admin/products/:id/restore`: Restaurar productos eliminados lógicamente.
+- `POST /admin/products/:id/upload-image`: Gestión de assets de productos.
+
+### Categorías
+
+- `POST /admin/categories`: Crear nuevas categorías.
+- `PATCH /admin/categories/:id`: Editar metadatos de categoría.
+- `DELETE /admin/categories/:id`: Eliminar categorías.
+
+### Inventario (Ajustes Granulares)
+
+- `POST /admin/inventory/:productId/increase`: Incrementar stock con motivo.
+- `POST /admin/inventory/:productId/decrease`: Disminuir stock con motivo.
 
 ## Seguridad
 
-- Todos los endpoints están protegidos por `JwtAuthGuard`.
-- Requieren el rol explícito `admin`.
+- **Autenticación**: Todos los endpoints requieren un JWT válido (`JwtAuthGuard`).
+- **Autorización**: Acceso restringido exclusivamente a usuarios con rol `admin` (`RolesGuard` + `@Roles('admin')`).
 
-## Invariantes y Reglas
+## Formato de Respuesta Uniforme
 
-- **Solo Lectura Agregada**: El Admin Context no debe modificar el estado de las órdenes o el stock; eso es responsabilidad de `OrderContext` y `InventoryContext`.
-- **Performance**: Las consultas de dashboard deben estar optimizadas (usando `count`, `sum` o agregaciones en DB) para no cargar grandes volúmenes de datos en memoria.
+Todas las respuestas siguen la estructura: `{ "statusCode": number, "message": string, "data": any | null }`. Incluso las operaciones `void` devuelven `data: null`.
 
-## Config/Integración
+## Estándar de Tipado (Gold Standard)
 
-### Dependencias
-
-- **PrismaService**: Realiza consultas de agregación transversales a toda la base de datos
-
-### Tokens DI
-
-- `GetDashboardStatsUsecase`: Único caso de uso que agrega métricas desde Prisma
-
-**Arquitectura Limpia:**
-
-```
-Frontend Admin → llama directo a:
-  - /products/* (CRUD productos)
-  - /inventory/* (ajustes stock)
-  - /orders/* (gestión órdenes)
-  - /admin/dashboard (métricas agregadas)
-```
+- **DTOs de Dominio**: Se utilizan los DTOs originales de cada contexto para garantizar la consistencia en la validación y documentación de Swagger.
+- **Strict Typing**: Uso de interfaces explícitas para todos los Ports y tipos de retorno definidos en lugar de `any`.

@@ -70,5 +70,6 @@ import ProductReadOnlyPort from './app/ports/product-read.port';
             inject: [INVENTORY_READ_REPOSITORY],
         },
     ],
+    exports: [IncreaseStockUsecase, DecreaseStockUsecase, ReserveStockUsecase, ReleaseStockUsecase],
 })
 export class InventoryModule { }

@@ -9,19 +9,33 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { join } from 'path';
 import * as express from 'express';
 
+import { ResponseMappingInterceptor } from './contexts/shared/interceptors/response-mapping.interceptor';
+import { Reflector } from '@nestjs/core';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: "http://localhost:5173", // puerto donde corre tu frontend (Vite por defecto)
+    origin: "http://localhost:5173",
     credentials: true,
   });
 
   app.use(helmet());
   app.use(morgan('combined'));
   app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  // Global Validation
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true
+  }));
+
+  // Global Exception Filter
   app.useGlobalFilters(new DomainExceptionFilter());
+
+  // Global Response Interceptor
+  app.useGlobalInterceptors(new ResponseMappingInterceptor(new Reflector()));
 
   app.setGlobalPrefix('api');
 

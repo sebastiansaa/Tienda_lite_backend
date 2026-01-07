@@ -14,6 +14,8 @@ import {
     FailPaymentUsecase,
     GetPaymentByIdUsecase,
     ListPaymentsForUserUsecase,
+    ListAllPaymentsUsecase,
+    AdminGetPaymentByIdUsecase,
 } from './app/usecases';
 import { IPaymentReadRepository } from './app/ports/payment-read.repository';
 import { IPaymentWriteRepository } from './app/ports/payment-write.repository';
@@ -73,6 +75,22 @@ import OrderWritePort from './app/ports/order-write.port';
             useFactory: (readRepo: IPaymentReadRepository) => new ListPaymentsForUserUsecase(readRepo),
             inject: [PAYMENT_READ_REPOSITORY],
         },
+        {
+            provide: ListAllPaymentsUsecase,
+            useFactory: (readRepo: IPaymentReadRepository) => new ListAllPaymentsUsecase(readRepo),
+            inject: [PAYMENT_READ_REPOSITORY],
+        },
+        {
+            provide: AdminGetPaymentByIdUsecase,
+            useFactory: (readRepo: IPaymentReadRepository) => new AdminGetPaymentByIdUsecase(readRepo),
+            inject: [PAYMENT_READ_REPOSITORY],
+        },
+    ],
+    exports: [
+        PAYMENT_READ_REPOSITORY,
+        PAYMENT_WRITE_REPOSITORY,
+        ListAllPaymentsUsecase,
+        AdminGetPaymentByIdUsecase,
     ],
 })
 export class PaymentModule { }

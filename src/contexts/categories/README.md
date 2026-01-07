@@ -1,61 +1,30 @@
 # Categories Context
 
-## Propósito
+Clasificación y agrupación lógica de productos en el catálogo para facilitar la navegación y el filtrado por el cliente.
 
-Gestionar categorías de productos con jerarquía simple (sin subcategorías) y validación de unicidad.
+## Estructura de Carpetas
 
-## Endpoints
+- `api/`: Controladores, DTOs y mappers para la consulta de categorías.
+- `app/`: Casos de uso para listar y obtener detalles de categorías.
+- `domain/`: Entidad Category, Value Objects y errores de unicidad/formato.
+- `infra/`: Adaptadores Prisma para la persistencia y lectura de categorías.
 
-| Método   | Ruta              | Propósito                                         |
-| -------- | ----------------- | ------------------------------------------------- |
-| `GET`    | `/categories`     | Listar todas las categorías                       |
-| `GET`    | `/categories/:id` | Obtener categoría por ID                          |
-| `POST`   | `/categories`     | Crear nueva categoría (admin)                     |
-| `PATCH`  | `/categories/:id` | Actualizar categoría (admin)                      |
-| `DELETE` | `/categories/:id` | Eliminar categoría (admin, solo si sin productos) |
+## Casos de Uso y Endpoints
 
-## Guards/Seguridad
+- `GET /categories`: Recupera el listado completo de categorías activas.
+- `GET /categories/:id`: Obtiene el detalle de una categoría específica.
+- `Filtros`: Permite la clasificación de productos en otros contextos.
 
-- **Endpoints públicos**: `GET /categories`, `GET /categories/:id`
-- **Endpoints admin**: `POST /categories`, `PATCH /categories/:id`, `DELETE /categories/:id` (requieren rol `admin`)
-- **ValidationPipe**: Validación de nombres y slugs
+## Ejemplo de Uso
 
-## Invariantes/Reglas Críticas
+```typescript
+// Listar todas las categorías
+const categories = await listUseCase.execute();
+console.log(`Disponibles: ${categories.length} categorías`);
+```
 
-- **Nombre único**: No se permiten categorías con nombres duplicados
-- **Slug único**: Generado automáticamente desde nombre, debe ser único
-- **No eliminar con productos**: Categoría con productos asociados no puede eliminarse
-- **Nombre no vacío**: Requiere al menos 2 caracteres
+## Notas de Integración
 
-## Estados Relevantes
-
-| Estado          | Descripción                       | Impacto Frontend/BC              |
-| --------------- | --------------------------------- | -------------------------------- |
-| `ACTIVE`        | Categoría visible y usable        | Aparece en filtros y formularios |
-| `WITH_PRODUCTS` | Categoría con productos asociados | No eliminable                    |
-| `EMPTY`         | Categoría sin productos           | Eliminable por admin             |
-
-## Config/Integración
-
-### Variables de Entorno
-
-- **No requiere variables específicas**: Usa configuración de Prisma del módulo global
-
-### Dependencias Externas
-
-- **Prisma**: Persistencia en PostgreSQL (tabla `Category`)
-
-### Eventos
-
-- **No publica eventos**: Operaciones síncronas
-- **No consume eventos**: Autónomo
-
-### Tokens DI Expuestos
-
-- `CATEGORY_REPOSITORY_PORT`: Puerto de lectura para Products context (validación de categoría)
-
-## Notas Arquitectónicas
-
-- **Contexto simple**: Sin jerarquías ni subcategorías (flat structure)
-- **Usado por Products**: Products valida existencia de categoría vía puerto, sin acoplar entidades
-- **Caché recomendado**: Categorías cambian poco, candidato para caché en memoria
+- **Seguridad**: Endpoints de consulta son públicos.
+- **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
+- **Admin**: La gestión administrativa se centraliza en `AdminContext`.

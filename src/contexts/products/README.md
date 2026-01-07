@@ -1,82 +1,34 @@
 # Products Context
 
-## Propósito
+Catálogo central de productos, integrando búsqueda avanzada, gestión de metadatos, categorías y sincronización de disponibilidad de stock.
 
-Gestionar catálogo de productos con búsqueda, categorías y control de stock.
+## Estructura de Carpetas
 
-## Endpoints
+- `api/`: Controladores públicos para búsqueda y visualización de productos.
+- `app/`: Casos de uso (obtener por ID, listar con filtros, búsqueda global).
+- `domain/`: Entidades ricas, Value Objects (Slug, Price, Stock) y reglas de negocio.
+- `infra/`: Persistencia Prisma, mappers de datos y repositorios optimizados.
 
-| Método   | Ruta                              | Propósito                                          |
-| -------- | --------------------------------- | -------------------------------------------------- |
-| `GET`    | `/products`                       | Listar productos con paginación                    |
-| `GET`    | `/products/search?q=`             | Buscar productos por nombre/descripción            |
-| `GET`    | `/products/low-stock?threshold=5` | Productos con stock bajo (admin)                   |
-| `GET`    | `/products/:id`                   | Obtener producto por ID                            |
-| `POST`   | `/products`                       | Crear/actualizar producto (admin)                  |
-| `PUT`    | `/products/:id/stock`             | Actualizar stock (admin)                           |
-| `DELETE` | `/products/:id`                   | Eliminar producto (soft delete por defecto, admin) |
-| `DELETE` | `/products/:id?hard=true`         | Eliminar producto permanentemente (admin)          |
-| `POST`   | `/products/:id/restore`           | Restaurar producto eliminado (admin)               |
-| `POST`   | `/products/:id/upload-image`      | Subir imagen de producto (admin)                   |
+## Casos de Uso y Endpoints
 
-**Ejemplo Request/Response:**
+- `GET /products`: Listado paginado de productos activos en el catálogo.
+- `GET /products/search`: Búsqueda por similitud de texto en título/descripción.
+- `GET /products/:id`: Detalle extendido de un producto por su identificador.
+- `Filtrado`: Soporte de filtros por categoría y parámetros de ordenamiento.
 
-```json
-// GET /products/search?q=laptop
-{
-  "products": [
-    {
-      "id": 1,
-      "title": "Laptop Pro 15",
-      "slug": "laptop-pro-15",
-      "description": "High-performance laptop",
-      "price": 1299.99,
-      "stock": 15,
-      "category": { "id": 2, "name": "Electronics" },
-      "images": ["/uploads/laptop-pro.jpg"]
-    }
-  ],
-  "total": 1
-}
+## Ejemplo de Uso
+
+```typescript
+// Buscar productos
+const { products, total } = await searchUseCase.execute({
+  q: 'smartphone',
+  limit: 10,
+});
+console.log(`Encontrados ${total} resultados`);
 ```
 
-## Guards/Seguridad
+## Notas de Integración
 
-- **Endpoints públicos**: `GET /products`, `GET /products/search`, `GET /products/:id`
-- **Endpoints admin**: `POST /products`, `PUT /products/:id/stock`, `DELETE /products/:id`, `POST /products/:id/restore`, `GET /products/low-stock`, `POST /products/:id/upload-image`
-- **ValidationPipe**: Validación automática de DTOs con whitelist
-
-## Invariantes/Reglas Críticas
-
-- **Stock no negativo**: Decrementos de stock validan disponibilidad antes de aplicar
-- **Slug único**: Generado automáticamente desde título, debe ser único en DB
-- **Categoría válida**: Valida existencia de categoría vía `ProductCategoryPolicy` (puerto a Categories context)
-- **Precio positivo**: Price VO valida que precio > 0
-
-## Estados Relevantes
-
-| Estado      | Descripción                    | Impacto Frontend/BC    |
-| ----------- | ------------------------------ | ---------------------- |
-| `ACTIVE`    | Producto visible y disponible  | Aparece en catálogo    |
-| `DELETED`   | Soft delete (no visible)       | No aparece en catálogo |
-| `LOW_STOCK` | Stock < threshold (default: 5) | Alerta en panel admin  |
-
-## Config/Integración
-
-### Dependencias Externas
-
-- **Prisma**: Persistencia en PostgreSQL (tablas `Product`, `Category`)
-- **Categories Context**: Valida existencia de categoría vía `CategoryRepositoryPort`
-- **Multer**: Upload de imágenes (storage: `./public/uploads`)
-
-### Tokens DI Expuestos
-
-- `PRODUCT_READ_REPOSITORY`: Puerto de lectura (usado por Cart, Orders, Inventory)
-- `PRODUCT_WRITE_REPOSITORY`: Puerto de escritura (usado por Admin, Inventory)
-
-## Notas Arquitectónicas
-
-- **CQRS**: Repositorios separados para lectura y escritura
-- **Value Objects**: `Price` (validación > 0), `Slug` (generación y unicidad)
-- **Soft Delete**: Productos eliminados se marcan con `deletedAt`, recuperables con `/restore`
-- **Upload de imágenes**: Genera nombre único con timestamp + random, guarda path en array `images`
+- **Seguridad**: Endpoints públicos. Mutaciones restringidas a `AdminContext`.
+- **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
+- **Optimización**: VOs garantizan Slugs únicos y precios válidos.

@@ -18,3 +18,10 @@ export class InvalidSlugError extends Error {
         this.name = "InvalidSlugError";
     }
 }
+
+export class InvalidEmailError extends Error {
+    constructor(message: string = "El email no es válido") {
+        super(message);
+        this.name = "InvalidEmailError";
+    }
+}

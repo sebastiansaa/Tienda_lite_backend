@@ -11,6 +11,9 @@ import {
     CancelOrderUsecase,
     MarkOrderAsPaidUsecase,
     MarkOrderAsCompletedUsecase,
+    ListAllOrdersUsecase,
+    AdminGetOrderByIdUsecase,
+    AdminMarkOrderAsCompletedUsecase,
 } from './app/usecases';
 import { ORDER_CART_READONLY, ORDER_PRODUCT_READONLY, ORDER_PRICING_SERVICE, ORDER_STOCK_SERVICE, ORDER_READ_REPOSITORY, ORDER_WRITE_REPOSITORY } from './constants';
 import { OrderPrismaReadRepository } from './infra/persistence/order-prisma-read.repository';
@@ -101,7 +104,29 @@ import StockServicePort from './app/ports/stock.service.port';
             useFactory: (readRepo: IOrderReadRepository, writeRepo: IOrderWriteRepository) => new MarkOrderAsCompletedUsecase(readRepo, writeRepo),
             inject: [ORDER_READ_REPOSITORY, ORDER_WRITE_REPOSITORY],
         },
+        {
+            provide: ListAllOrdersUsecase,
+            useFactory: (readRepo: IOrderReadRepository) => new ListAllOrdersUsecase(readRepo),
+            inject: [ORDER_READ_REPOSITORY],
+        },
+        {
+            provide: AdminGetOrderByIdUsecase,
+            useFactory: (readRepo: IOrderReadRepository) => new AdminGetOrderByIdUsecase(readRepo),
+            inject: [ORDER_READ_REPOSITORY],
+        },
+        {
+            provide: AdminMarkOrderAsCompletedUsecase,
+            useFactory: (readRepo: IOrderReadRepository, writeRepo: IOrderWriteRepository) => new AdminMarkOrderAsCompletedUsecase(readRepo, writeRepo),
+            inject: [ORDER_READ_REPOSITORY, ORDER_WRITE_REPOSITORY],
+        },
     ],
-    exports: [],
+    exports: [
+        ORDER_READ_REPOSITORY,
+        ORDER_WRITE_REPOSITORY,
+        ListAllOrdersUsecase,
+        AdminGetOrderByIdUsecase,
+        AdminMarkOrderAsCompletedUsecase,
+        MarkOrderAsCompletedUsecase,
+    ],
 })
 export class OrdersModule { }

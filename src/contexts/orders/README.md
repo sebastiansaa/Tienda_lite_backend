@@ -1,102 +1,32 @@
 # Orders Context
 
-## Propósito
+Gestiona el ciclo de vida de los pedidos, desde la creación a partir del carrito hasta la gestión de estados (PENDING, PAID, COMPLETED, CANCELLED).
 
-Gestionar ciclo de vida completo de órdenes de compra con transiciones de estado y validación de ownership.
+## Estructura de Carpetas
 
-## Endpoints
+- `api/`: Controladores para que el usuario gestione sus propios pedidos.
+- `app/`: Casos de uso (crear desde carrito, cancelar, marcar pago).
+- `domain/`: Entidad Order, lógica de máquina de estados y errores de propiedad.
+- `infra/`: Adaptadores de persistencia y puertos para el panel administrativo.
 
-| Método  | Ruta                   | Propósito                                        |
-| ------- | ---------------------- | ------------------------------------------------ |
-| `POST`  | `/orders/from-cart`    | Crear orden desde carrito del usuario            |
-| `POST`  | `/orders`              | Crear orden con items específicos                |
-| `GET`   | `/orders`              | Listar órdenes del usuario autenticado           |
-| `GET`   | `/orders/:id`          | Obtener orden por ID (validación de ownership)   |
-| `PATCH` | `/orders/:id/cancel`   | Cancelar orden en estado PENDING                 |
-| `PATCH` | `/orders/:id/pay`      | Marcar orden como pagada                         |
-| `PATCH` | `/orders/:id/complete` | Marcar orden como completada (debe estar pagada) |
+## Casos de Uso y Endpoints
 
-**Ejemplo Request/Response:**
+- `POST /orders/from-cart`: Crea un pedido usando los productos del carrito actual.
+- `GET /orders`: Listado de pedidos del usuario autenticado.
+- `GET /orders/:id`: Detalle de un pedido (requiere validación de dueño).
+- `PATCH /orders/:id/cancel`: Cancela pedidos pendientes.
+- `Admin Management`: Listado global y cierre de órdenes (vía AdminContext).
 
-```json
-// POST /orders/from-cart
-{}  // Usa el carrito actual del usuario
+## Ejemplo de Uso
 
-// Response 201
-{
-  "id": "order-uuid",
-  "userId": "user-uuid",
-  "status": "PENDING",
-  "totalAmount": 129.99,
-  "items": [
-    { "productId": 1, "quantity": 2, "price": 49.99, "lineTotal": 99.98 },
-    { "productId": 3, "quantity": 1, "price": 30.01, "lineTotal": 30.01 }
-  ],
-  "createdAt": "2025-12-26T12:00:00Z"
-}
+```typescript
+// Crear orden desde carrito
+const order = await createOrderUseCase.execute({ userId: 'user-123' });
+console.log(`Orden creada: ${order.id}`);
 ```
 
-## Guards/Seguridad
+## Notas de Integración
 
-- **JwtAuthGuard**: Todos los endpoints requieren autenticación
-- **Ownership validation**: Usuario solo puede ver/modificar sus propias órdenes
-- **Sin roles específicos**: Cualquier usuario autenticado gestiona sus órdenes
-- **ValidationPipe**: Validación automática de DTOs
-
-## Invariantes/Reglas Críticas
-
-- **Máquina de estados estricta**: Solo transiciones válidas permitidas (ver diagrama)
-- **Orden no vacía**: Debe tener al menos un item con cantidad > 0
-- **Validación de stock**: Verifica disponibilidad de productos al crear orden
-- **Ownership inmutable**: Usuario asignado a orden no puede cambiar
-
-## Estados Relevantes
-
-**Máquina de Estados:**
-
-```
-         ┌─────────┐
-         │ PENDING │ ◄─── Order created
-         └────┬────┘
-              │
-      ┌───────┼───────┐
-      │               │
-   [pay]          [cancel]
-      │               │
-      ▼               ▼
- ┌────────┐    ┌───────────┐
- │  PAID  │    │ CANCELLED │ (final)
- └───┬────┘    └───────────┘
-     │
- [complete]
-     │
-     ▼
-┌───────────┐
-│ COMPLETED │ (final)
-└───────────┘
-```
-
-| Estado      | Descripción                     | Transiciones Permitidas |
-| ----------- | ------------------------------- | ----------------------- |
-| `PENDING`   | Orden creada, pendiente de pago | → PAID, → CANCELLED     |
-| `PAID`      | Pago confirmado                 | → COMPLETED             |
-| `COMPLETED` | Orden entregada (final)         | —                       |
-| `CANCELLED` | Orden cancelada (final)         | —                       |
-
-## Config/Integración
-
-### Dependencias Externas
-
-- **Prisma**: Persistencia en PostgreSQL (tabla `Order`, `OrderItem`)
-- **Products Context**: Valida stock y decrementa inventario vía `PRODUCT_WRITE_REPOSITORY`
-- **Cart Context**: Lee carrito para crear orden vía `CART_REPOSITORY`
-
-### Tokens DI Expuestos
-
-- `ORDER_REPOSITORY`: Repositorio de órdenes (usado por Payment, Admin contexts)
-
-## Notas Arquitectónicas
-
-- **Agregado Order**: `OrderEntity` contiene colección de `OrderItemEntity` y `CustomerInfo` VO
-- **Transiciones de estado**: Validadas en dominio con métodos `markAsPaid()`, `markAsCompleted()`, `cancel()`
-- **Decremento de stock**: Ejecutado al crear orden, rollback manual si falla transacción
+- **Seguridad**: Requiere `JwtAuthGuard`.
+- **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
+- **Roles**: Solo Admin puede marcar órdenes como COMPLETED.

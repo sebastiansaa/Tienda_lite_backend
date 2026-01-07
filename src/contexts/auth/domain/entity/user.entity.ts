@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { EmailVO } from '../v-o/email.vo';
+import { EmailVO } from '../../../shared/v-o/email.vo';
 import { PasswordHashVO } from '../v-o/password-hash.vo';
 import { RoleVO } from '../v-o/role.vo';
 

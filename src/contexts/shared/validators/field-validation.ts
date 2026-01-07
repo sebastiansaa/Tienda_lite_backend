@@ -15,7 +15,7 @@ export function parseSort(sort: string | undefined, allowedFields: string[], def
 
 export function sanitizeSort(sort: string | undefined, allowedFields: string[], defaultOrder: Record<string, OrderDirection> = { updatedAt: 'desc' }) {
     if (!sort) return defaultOrder;
-    const parsed = parseSort(sort, allowedFields, defaultOrder as any);
+    const parsed = parseSort(sort, allowedFields, defaultOrder);
     return parsed as Record<string, OrderDirection>;
 }
 

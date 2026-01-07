@@ -14,12 +14,17 @@ export class UserPrismaReadRepository implements IUserReadRepository {
     }
 
     async findByIdWithAddresses(id: string): Promise<UserEntity | null> {
-        const result = await this.prisma.user.findUnique({ where: { id }, include: { addresses: true } });
+        const result = await this.prisma.user.findUnique({
+            where: { id },
+            include: { addresses: true }
+        });
         return result ? UserMapper.toDomain(result) : null;
     }
 
     async listAll(): Promise<UserEntity[]> {
-        const result = await this.prisma.user.findMany();
+        const result = await this.prisma.user.findMany({
+            include: { addresses: true } // Better to include them if we want a full list
+        });
         return result.map((u) => UserMapper.toDomain(u));
     }
 }

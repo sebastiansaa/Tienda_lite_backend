@@ -29,3 +29,7 @@ export class InvalidEmailError extends Error {
 export class InvalidPasswordHashError extends Error {
     constructor(message = 'Invalid password hash') { super(message); this.name = 'InvalidPasswordHashError'; }
 }
+
+export class InvalidRoleError extends Error {
+    constructor(message = 'Invalid role') { super(message); this.name = 'InvalidRoleError'; }
+}

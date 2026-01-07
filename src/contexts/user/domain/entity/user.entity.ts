@@ -1,10 +1,5 @@
-import UserIdVO from '../v-o/user-id.vo';
-import EmailVO from '../v-o/email.vo';
-import NameVO from '../v-o/name.vo';
-import PhoneVO from '../v-o/phone.vo';
+import { EmailVO, NameVO, DateVO, Slug } from '../../../shared/v-o';
 import UserStatusVO, { UserStatus } from '../v-o/user-status.vo';
-import CreatedAtVO from '../v-o/created-at.vo';
-import UpdatedAtVO from '../v-o/updated-at.vo';
 import AddressEntity, { AddressProps } from './address.entity';
 import { AddressNotFoundError, InvalidUserStatusError } from '../errors/user.errors';
 
@@ -21,32 +16,32 @@ export interface UserProps {
 }
 
 export class UserEntity {
-    private readonly idVO: UserIdVO;
+    private readonly idVO: Slug;
     private emailVO: EmailVO;
     private nameVO: NameVO;
-    private phoneVO: PhoneVO;
+    private phoneValue: string;
     private statusVO: UserStatusVO;
     private preferencesValue: Record<string, unknown> | null;
     private addressesInternal: AddressEntity[];
-    private createdAtVO: CreatedAtVO;
-    private updatedAtVO: UpdatedAtVO;
+    private createdAtVO: DateVO;
+    private updatedAtVO: DateVO;
 
     constructor(props: UserProps) {
-        this.idVO = new UserIdVO(props.id);
+        this.idVO = new Slug(props.id);
         this.emailVO = new EmailVO(props.email);
         this.nameVO = new NameVO(props.name);
-        this.phoneVO = new PhoneVO(props.phone);
+        this.phoneValue = props.phone ?? 'N/A';
         this.statusVO = new UserStatusVO(props.status ?? 'ACTIVE');
         this.preferencesValue = props.preferences ?? null;
         this.addressesInternal = (props.addresses ?? []).map((a) => new AddressEntity(a));
-        this.createdAtVO = new CreatedAtVO(props.createdAt);
-        this.updatedAtVO = UpdatedAtVO.from(props.updatedAt);
+        this.createdAtVO = new DateVO(props.createdAt);
+        this.updatedAtVO = DateVO.from(props.updatedAt);
     }
 
     get id(): string { return this.idVO.value; }
     get email(): string { return this.emailVO.value; }
     get name(): string { return this.nameVO.value; }
-    get phone(): string | null { return this.phoneVO.value; }
+    get phone(): string | null { return this.phoneValue; }
     get status(): UserStatus { return this.statusVO.value; }
     get preferences(): Record<string, unknown> | null { return this.preferencesValue; }
     get addresses(): AddressEntity[] { return [...this.addressesInternal]; }
@@ -55,7 +50,7 @@ export class UserEntity {
 
     updateProfile(data: { name?: string; phone?: string | null; preferences?: Record<string, unknown> | null }): void {
         if (data.name !== undefined) this.nameVO = new NameVO(data.name);
-        if (data.phone !== undefined) this.phoneVO = new PhoneVO(data.phone);
+        if (data.phone !== undefined) this.phoneValue = data.phone ?? 'N/A';
         if (data.preferences !== undefined) this.preferencesValue = data.preferences;
         this.touch();
     }
@@ -88,7 +83,7 @@ export class UserEntity {
     }
 
     private touch(): void {
-        this.updatedAtVO = UpdatedAtVO.now();
+        this.updatedAtVO = DateVO.now();
     }
 }
 

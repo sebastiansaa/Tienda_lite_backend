@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../prisma/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import type { OrderStatsPort } from '../ports/order-stats.port';
+import type { ProductAdminPort } from '../ports/product-admin.port';
+import type { UserAdminPort } from '../ports/user-admin.port';
 
 export interface DashboardStatsResult {
     totalUsers: number;
@@ -11,40 +13,26 @@ export interface DashboardStatsResult {
 
 @Injectable()
 export class GetDashboardStatsUsecase {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        @Inject('OrderStatsPort') private readonly orderStats: OrderStatsPort,
+        @Inject('ProductAdminPort') private readonly productAdmin: ProductAdminPort,
+        @Inject('UserAdminPort') private readonly userAdmin: UserAdminPort,
+    ) { }
 
     async execute(): Promise<DashboardStatsResult> {
-        const totalUsers = await this.prisma.user.count();
+        const users = await this.userAdmin.listUsers();
+        const totalUsers = users.length;
 
-        const totalOrders = await this.prisma.order.count();
+        const totalOrders = await this.orderStats.countTotal();
+        const totalRevenue = await this.orderStats.sumRevenue('PAID');
+        const pendingOrdersCount = await this.orderStats.countByStatus('PENDING');
 
-        const ordersRevenue = await this.prisma.order.aggregate({
-            _sum: {
-                totalAmount: true,
-            },
-            where: {
-                status: 'PAID',
-            },
-        });
-
-        const pendingOrdersCount = await this.prisma.order.count({
-            where: {
-                status: 'PENDING',
-            },
-        });
-
-        const lowStockThreshold = 10;
-        const lowStockProductsCount = await this.prisma.product.count({
-            where: {
-                stock: {
-                    lt: lowStockThreshold,
-                },
-            },
-        });
+        const lowStockProducts = await this.productAdmin.findLowStock(10);
+        const lowStockProductsCount = lowStockProducts.length;
 
         return {
             totalUsers,
-            totalRevenue: ordersRevenue._sum.totalAmount || 0,
+            totalRevenue,
             totalOrders,
             pendingOrdersCount,
             lowStockProductsCount,

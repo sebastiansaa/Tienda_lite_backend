@@ -1,7 +1,6 @@
-import { BadRequestException, Body, ConflictException, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
-
 import { CreateOrderFromItemsDto, OrderResponseDto } from '../dtos';
 import OrderApiMapper from '../mappers/order-api.mapper';
 import {
@@ -11,14 +10,10 @@ import {
     ListOrdersForUserUsecase,
     CancelOrderUsecase,
     MarkOrderAsPaidUsecase,
-    MarkOrderAsCompletedUsecase,
 } from '../../app/usecases';
-import { EmptyOrderError, InvalidOrderStateError, ProductUnavailableError, OrderOwnershipError } from '../../domain/errors/order.errors';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
-
-interface AuthenticatedUser {
-    sub: string;
-}
+import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
+import type { AuthUserPayload } from '../../../shared/interfaces/auth-user-payload.interface';
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -33,57 +28,52 @@ export class OrdersController {
         private readonly listOrdersForUser: ListOrdersForUserUsecase,
         private readonly cancelOrderUsecase: CancelOrderUsecase,
         private readonly markOrderAsPaidUsecase: MarkOrderAsPaidUsecase,
-        private readonly markOrderAsCompletedUsecase: MarkOrderAsCompletedUsecase,
     ) { }
 
     @Post('from-cart')
+    @ResponseMessage('Order created from cart successfully')
     @ApiOperation({ summary: 'Crear una orden a partir del carrito del usuario autenticado' })
     @ApiResponse({ status: 201, type: OrderResponseDto, description: 'Orden creada desde carrito' })
     @ApiResponse({ status: 400, description: 'Carrito vacío o productos no disponibles' })
     @ApiResponse({ status: 409, description: 'Estado inválido de la orden' })
-    async createFromCartHandler(@CurrentUser() user: AuthenticatedUser): Promise<OrderResponseDto> {
-        try {
-            const command = OrderApiMapper.toCreateFromCartCommand(user.sub);
-            const order = await this.createFromCart.execute(command);
-            return OrderApiMapper.toResponse(order);
-        } catch (error) {
-            this.mapError(error);
-        }
+    async createFromCartHandler(@CurrentUser() user: AuthUserPayload): Promise<OrderResponseDto> {
+        const command = OrderApiMapper.toCreateFromCartCommand(user.sub);
+        const order = await this.createFromCart.execute(command);
+        return OrderApiMapper.toResponse(order);
     }
 
     @Post()
+    @ResponseMessage('Order created successfully')
     @ApiOperation({ summary: 'Crear una orden con items específicos' })
     @ApiResponse({ status: 201, type: OrderResponseDto, description: 'Orden creada con items' })
     @ApiResponse({ status: 400, description: 'Items inválidos o sin stock' })
     @ApiResponse({ status: 409, description: 'Estado inválido de la orden' })
     async createFromItemsHandler(
-        @CurrentUser() user: AuthenticatedUser,
+        @CurrentUser() user: AuthUserPayload,
         @Body() dto: CreateOrderFromItemsDto,
     ): Promise<OrderResponseDto> {
-        try {
-            const command = OrderApiMapper.toCreateFromItemsCommand(user.sub, dto);
-            const order = await this.createFromItems.execute(command);
-            return OrderApiMapper.toResponse(order);
-        } catch (error) {
-            this.mapError(error);
-        }
+        const command = OrderApiMapper.toCreateFromItemsCommand(user.sub, dto);
+        const order = await this.createFromItems.execute(command);
+        return OrderApiMapper.toResponse(order);
     }
 
     @Get()
+    @ResponseMessage('User orders retrieved successfully')
     @ApiOperation({ summary: 'Listar órdenes del usuario autenticado' })
     @ApiResponse({ status: 200, type: [OrderResponseDto] })
-    async list(@CurrentUser() user: AuthenticatedUser): Promise<OrderResponseDto[]> {
+    async list(@CurrentUser() user: AuthUserPayload): Promise<OrderResponseDto[]> {
         const query = { userId: user.sub } as const;
         const orders = await this.listOrdersForUser.execute(query);
         return orders.map((o) => OrderApiMapper.toResponse(o));
     }
 
     @Get(':id')
+    @ResponseMessage('Order details retrieved successfully')
     @ApiOperation({ summary: 'Obtener una orden por ID (propiedad requerida)' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
     @ApiResponse({ status: 404, description: 'Order not found' })
     async getById(
-        @CurrentUser() user: AuthenticatedUser,
+        @CurrentUser() user: AuthUserPayload,
         @Param('id') id: string,
     ): Promise<OrderResponseDto> {
         const query = { orderId: id, userId: user.sub } as const;
@@ -94,74 +84,35 @@ export class OrdersController {
 
     @Patch(':id/cancel')
     @HttpCode(HttpStatus.OK)
+    @ResponseMessage('Order cancelled successfully')
     @ApiOperation({ summary: 'Cancelar una orden en estado PENDING' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
     @ApiResponse({ status: 400, description: 'Estado inválido para cancelar' })
     @ApiResponse({ status: 404, description: 'Order not found' })
     async cancel(
-        @CurrentUser() user: AuthenticatedUser,
+        @CurrentUser() user: AuthUserPayload,
         @Param('id') id: string,
     ): Promise<OrderResponseDto> {
-        try {
-            const command = { orderId: id, userId: user.sub };
-            const order = await this.cancelOrderUsecase.execute(command);
-            if (!order) throw new NotFoundException('Order not found');
-            return OrderApiMapper.toResponse(order);
-        } catch (error) {
-            this.mapError(error);
-        }
+        const command = { orderId: id, userId: user.sub };
+        const order = await this.cancelOrderUsecase.execute(command);
+        if (!order) throw new NotFoundException('Order not found');
+        return OrderApiMapper.toResponse(order);
     }
 
     @Patch(':id/pay')
     @HttpCode(HttpStatus.OK)
+    @ResponseMessage('Order marked as paid successfully')
     @ApiOperation({ summary: 'Marcar una orden como pagada' })
     @ApiResponse({ status: 200, type: OrderResponseDto })
     @ApiResponse({ status: 400, description: 'Estado inválido para pagar' })
     @ApiResponse({ status: 404, description: 'Order not found' })
     async markPaid(
-        @CurrentUser() user: AuthenticatedUser,
+        @CurrentUser() user: AuthUserPayload,
         @Param('id') id: string,
     ): Promise<OrderResponseDto> {
-        try {
-            const command = { orderId: id, userId: user.sub };
-            const order = await this.markOrderAsPaidUsecase.execute(command);
-            if (!order) throw new NotFoundException('Order not found');
-            return OrderApiMapper.toResponse(order);
-        } catch (error) {
-            this.mapError(error);
-        }
-    }
-
-    @Patch(':id/complete')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Marcar una orden como completada (debe estar pagada)' })
-    @ApiResponse({ status: 200, type: OrderResponseDto })
-    @ApiResponse({ status: 400, description: 'Estado inválido para completar' })
-    @ApiResponse({ status: 404, description: 'Order not found' })
-    async complete(
-        @CurrentUser() user: AuthenticatedUser,
-        @Param('id') id: string,
-    ): Promise<OrderResponseDto> {
-        try {
-            const command = { orderId: id, userId: user.sub };
-            const order = await this.markOrderAsCompletedUsecase.execute(command);
-            if (!order) throw new NotFoundException('Order not found');
-            return OrderApiMapper.toResponse(order);
-        } catch (error) {
-            this.mapError(error);
-        }
-    }
-
-    private mapError(error: unknown): never {
-        if (error instanceof EmptyOrderError || error instanceof ProductUnavailableError) {
-            throw new BadRequestException(error.message);
-        }
-        if (error instanceof InvalidOrderStateError) {
-            throw new ConflictException(error.message);
-        }
-        if (error instanceof OrderOwnershipError) {
-            throw new NotFoundException('Order not found');
-        }
-        throw error as Error;
+        const command = { orderId: id, userId: user.sub };
+        const order = await this.markOrderAsPaidUsecase.execute(command);
+        if (!order) throw new NotFoundException('Order not found');
+        return OrderApiMapper.toResponse(order);
     }
 }

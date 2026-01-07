@@ -94,6 +94,6 @@ import { DecreaseStockUsecase } from './app/usecases/decrease-stock.usecase';
       inject: [PRODUCT_WRITE],
     },
   ],
-  exports: [DecreaseStockUsecase, PRODUCT_READONLY],
+  exports: [DecreaseStockUsecase, PRODUCT_READONLY, SaveProductUsecase, UpdateStockUsecase, DeleteProductUsecase, RestoreProductUsecase, FindLowStockUsecase],
 })
 export class ProductsModule { }

@@ -1,71 +1,65 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpStatus } from '@nestjs/common';
-import { StockInsufficientError, NegativeStockError, InvalidStockError } from '../../products/domain/errors/stock.errors';
+//Exception Filter y su propósito es centralizar el manejo de errores.
+
 import {
-    EmptyTitleError,
-    InvalidProductTitleError,
-    EmptySlugError,
-    InvalidSlugError,
-    NegativePriceError,
-    InvalidPriceError,
-    ImagesArrayNullError,
-    ImagesArrayEmptyError,
-    InvalidImageUrlError as ProductInvalidImageUrlError,
-    ImageNotFoundError,
-    DesactiveProductError,
-    ActiveProductError,
-    InvalidCategoryError,
-    ProductHasStockError,
-} from '../../products/domain/errors/product.errors';
-import { UserNotFoundError } from '../../auth/domain/errors/auth.errors';
-import { InvalidTitleError, InvalidImageUrlError, InvalidSlugError as SharedInvalidSlugError } from '../errors/shared.errors';
+    ExceptionFilter,
+    Catch,
+    ArgumentsHost,
+    HttpException,
+    HttpStatus,
+    Logger,
+} from '@nestjs/common';
+import { Response } from 'express';
 
-@Catch(Error)
+@Catch()
 export class DomainExceptionFilter implements ExceptionFilter {
-    catch(exception: Error, host: ArgumentsHost) {
+    private readonly logger = new Logger(DomainExceptionFilter.name);
+
+    catch(exception: any, host: ArgumentsHost) {
         const ctx = host.switchToHttp();
-        const response = ctx.getResponse();
+        const response = ctx.getResponse<Response>();
+        const request = ctx.getRequest<Request>();
 
-        let status = HttpStatus.BAD_REQUEST;
-        const message = exception.message ?? 'Bad Request';
+        let status = HttpStatus.INTERNAL_SERVER_ERROR;
+        let message = 'Internal server error';
+        let errorName = 'InternalServerError';
 
-        if (exception instanceof StockInsufficientError) {
-            status = HttpStatus.CONFLICT;
-            // StockInsufficientError suele venir de StockVO (operación de decremento)
-            // Para la regla de entidad de borrar producto con stock, mapeamos abajo ProductHasStockError a CONFLICT
-        } else if (exception instanceof NegativeStockError || exception instanceof InvalidStockError) {
-            status = HttpStatus.BAD_REQUEST;
-        } else if (exception instanceof ImageNotFoundError) {
-            status = HttpStatus.NOT_FOUND;
-        } else if (exception instanceof DesactiveProductError || exception instanceof ActiveProductError) {
-            status = HttpStatus.CONFLICT;
-        } else if (exception instanceof InvalidCategoryError) {
-            status = HttpStatus.NOT_FOUND;
-        } else if (
-            exception instanceof EmptyTitleError ||
-            exception instanceof InvalidProductTitleError ||
-            exception instanceof EmptySlugError ||
-            exception instanceof InvalidSlugError ||
-            exception instanceof NegativePriceError ||
-            exception instanceof InvalidPriceError ||
-            exception instanceof ImagesArrayNullError ||
-            exception instanceof ImagesArrayEmptyError ||
-            exception instanceof ProductInvalidImageUrlError
-        ) {
-            status = HttpStatus.BAD_REQUEST;
-        } else if (exception instanceof ProductHasStockError) {
-            status = HttpStatus.CONFLICT;
-        } else if (exception instanceof InvalidTitleError || exception instanceof InvalidImageUrlError || exception instanceof SharedInvalidSlugError) {
-            status = HttpStatus.BAD_REQUEST;
-        } else if (exception instanceof UserNotFoundError) {
-            status = HttpStatus.NOT_FOUND;
+        if (exception instanceof HttpException) {
+            status = exception.getStatus();
+            const res = exception.getResponse() as any;
+            message = res.message || exception.message;
+            errorName = exception.name;
+        } else if (exception instanceof Error) {
+            errorName = exception.name;
+            message = exception.message;
+
+            // Mapping domain errors to HTTP statuses
+            const name = exception.constructor.name;
+
+            if (name.includes('NotFound') || name.includes('OwnershipError')) {
+                status = HttpStatus.NOT_FOUND;
+            } else if (name.includes('AlreadyExists') || name.includes('Conflict') || name.includes('Duplicate')) {
+                status = HttpStatus.CONFLICT;
+            } else if (name.includes('Invalid') || name.includes('Invariants') || name.includes('Negative') || name.includes('Insufficient') || name.includes('Empty')) {
+                status = HttpStatus.BAD_REQUEST;
+            } else if (name.includes('Credentials') || name.includes('Unauthorized') || name.includes('Expired')) {
+                status = HttpStatus.UNAUTHORIZED;
+            } else if (name.includes('Forbidden') || name.includes('AccessDenied')) {
+                status = HttpStatus.FORBIDDEN;
+            }
+        }
+
+        if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
+            this.logger.error(`${request.method} ${request.url}`, exception.stack);
         }
 
         response.status(status).json({
             statusCode: status,
-            error: exception.name,
-            message,
+            message: message,
+            data: null,
+            // Keep these for debugging but they are secondary
+            error: errorName,
+            timestamp: new Date().toISOString(),
+            path: request.url,
         });
     }
 }
-
-export default DomainExceptionFilter;

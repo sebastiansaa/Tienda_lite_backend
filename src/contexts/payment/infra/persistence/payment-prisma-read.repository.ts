@@ -17,4 +17,9 @@ export class PaymentPrismaReadRepository implements IPaymentReadRepository {
         const records = await this.prisma.payment.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
         return records.map((r) => prismaToPayment(r)!) as PaymentEntity[];
     }
+
+    async listAll(): Promise<PaymentEntity[]> {
+        const records = await this.prisma.payment.findMany({ orderBy: { createdAt: 'desc' } });
+        return records.map((r) => prismaToPayment(r)!) as PaymentEntity[];
+    }
 }

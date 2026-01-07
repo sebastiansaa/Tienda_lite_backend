@@ -5,3 +5,6 @@ export * from './list-orders-for-user.usecase';
 export * from './cancel-order.usecase';
 export * from './mark-order-as-paid.usecase';
 export * from './mark-order-as-completed.usecase';
+export * from './list-all-orders.usecase';
+export * from './admin-get-order-by-id.usecase';
+export * from './admin-mark-order-as-completed.usecase';

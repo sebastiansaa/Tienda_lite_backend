@@ -11,11 +11,12 @@ export class UserPrismaWriteRepository implements IUserWriteRepository {
     constructor(private readonly prisma: PrismaService) { }
 
     async save(user: UserEntity): Promise<UserEntity> {
-        const data = UserMapper.toPersistence(user);
+        const updateData = UserMapper.toUpdatePersistence(user);
+        const createData = UserMapper.toCreatePersistence(user);
         const saved = await this.prisma.user.upsert({
             where: { id: user.id },
-            update: data,
-            create: data,
+            update: updateData,
+            create: createData,
         });
         return UserMapper.toDomain(saved);
     }

@@ -50,7 +50,8 @@ export class AddressMapper {
 }
 
 export class UserMapper {
-    static toDomain(user: UserPrisma, addresses: AddressPrisma[] = []): UserEntity {
+    static toDomain(user: UserPrisma & { addresses?: AddressPrisma[] }, addresses: AddressPrisma[] = []): UserEntity {
+        const domainAddresses = (user.addresses || addresses || []).map(AddressMapper.toDomain);
         return new UserEntity({
             id: user.id,
             email: user.email,
@@ -58,18 +59,28 @@ export class UserMapper {
             phone: user.phone ?? null,
             status: normalizeStatus(user.status),
             preferences: user.preferences as Record<string, unknown> | null,
-            addresses: addresses.map(AddressMapper.toDomain),
+            addresses: domainAddresses,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         });
     }
 
-    static toPersistence(user: UserEntity): Prisma.UserUncheckedCreateInput {
+    static toUpdatePersistence(user: UserEntity): Prisma.UserUpdateInput {
+        return {
+            name: user.name,
+            phone: user.phone,
+            status: user.status,
+            preferences: (user.preferences ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            updatedAt: user.updatedAt,
+        };
+    }
+
+    static toCreatePersistence(user: UserEntity): Prisma.UserUncheckedCreateInput {
         return {
             id: user.id,
             email: user.email,
-            passwordHash: '',
-            roles: [],
+            passwordHash: 'PROTECTED', // Should be handled by Auth Context, but required by Schema
+            roles: ['user'],
             name: user.name,
             phone: user.phone,
             status: user.status,
