@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { AuthModule } from '../../auth.module';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { AUTH_REFRESH_TOKEN_REPOSITORY } from '../../constants';
+import { RefreshTokenEntity } from '../../domain/entity/refresh-token.entity';
 import { cleanDatabase, ensureTestEnv } from '../../../../test-utils/prisma-test-helpers';
 
 const suite = ensureTestEnv() ? describe : describe.skip;
@@ -31,7 +32,8 @@ suite('RefreshTokenPrismaAdapter integration (Prisma)', () => {
         const longHash = 'x'.repeat(60);
         await prisma.user.create({ data: { id: 'u1', email: 'user@t.test', passwordHash: longHash, roles: ['user'] } });
 
-        const token = await repo.save({ userId: 'u1', tokenHash: 'h', expiresAt: new Date(Date.now() + 1000 * 60) });
+        const tokenEntity = RefreshTokenEntity.create({ userId: 'u1', tokenHash: 'h', expiresAt: new Date(Date.now() + 1000 * 60) });
+        const token = await repo.save(tokenEntity);
         expect(token).toBeDefined();
 
         const found = await repo.findByHash('h');

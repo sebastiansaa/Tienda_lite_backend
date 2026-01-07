@@ -1,36 +1,41 @@
 # User Context
 
-Gestión de perfiles de usuario y direcciones de envío, permitiendo a los clientes mantener su información personal y preferencias actualizada.
+Gestión de perfiles de usuario con endpoints de autoservicio y administrativos para gestión global.
 
 ## Estructura de Carpetas
 
-- `api/`: Controladores, DTOs y mappers para la exposición de perfiles.
-- `app/`: Casos de uso (perfil, direcciones) y orquestación de servicios.
-- `domain/`: Entidades User/Address, Value Objects y errores específicos.
-- `infra/`: Adaptadores de persistencia Prisma y repositorios de datos.
+- `api/`: Controladores, DTOs y mappers para perfiles y administración.
+- `app/`: Casos de uso (perfil, direcciones, listado admin, cambio de estado).
+- `domain/`: Entidades User/Address con constructores privados, factories `create/rehydrate`, Value Objects (Email, Name, Phone, Preferences, Status) y validaciones de ownership.
+- `infra/`: Adaptadores de persistencia Prisma y repositorios.
 
-## Casos de Uso y Endpoints
+## Endpoints
 
-- `GET /users/me`: Recupera el perfil completo del usuario autenticado.
-- `PATCH /users/me`: Actualización de nombre, teléfono y preferencias.
-- `POST /users/me/addresses`: Registro de nuevas direcciones de envío.
-- `PATCH /users/me/addresses/:id`: Edición de direcciones existentes.
-- `DELETE /users/me/addresses/:id`: Remoción de direcciones del perfil.
+### Autoservicio (Requiere JWT)
 
-## Ejemplo de Uso
+- `GET /users/me`: Perfil del usuario autenticado.
+- `PATCH /users/me`: Actualizar nombre, teléfono y preferencias.
+- `POST /users/me/addresses`: Registrar nueva dirección de envío.
+- `PATCH /users/me/addresses/:id`: Editar dirección existente.
+- `DELETE /users/me/addresses/:id`: Eliminar dirección.
 
-```typescript
-// Actualizar perfil de usuario
-const updated = await updateProfile.execute({
-  userId: 'user-uuid',
-  name: 'Jane Doe',
-  phone: '+123456789',
-});
-console.log(`Perfil de ${updated.name} actualizado`);
-```
+### Administrativos (Requieren JWT + `@Roles('admin')`)
 
-## Notas de Integración
+- `GET /users/admin/list`: Listado completo de usuarios.
+- `GET /users/admin/:id`: Perfil detallado de usuario por ID.
+- `PATCH /users/admin/:id/status`: Activar/Inactivar usuario.
 
-- **Seguridad**: Requiere `JwtAuthGuard`.
-- **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
-- **Admin**: Acciones de gestión global se centralizan en `AdminContext`.
+## Seguridad
+
+- **Autoservicio**: `@UseGuards(JwtAuthGuard)`.
+- **Admin**: `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles('admin')`.
+
+## Formato de Respuesta
+
+`{ statusCode, message, data }`
+
+## Notas de Dominio
+
+- `UserEntity` encapsula `PhoneVO` y `PreferencesVO`, normaliza timestamps con `DateVO` y evita direcciones duplicadas mediante `InvalidAddressError`.
+- La capa infra rehidrata entidades con `UserEntity.rehydrate` y `AddressEntity.rehydrate`, por lo que ningún constructor público queda expuesto fuera del dominio.
+- Se expone el `UserVerificationPort` para que otros bounded contexts validen la existencia del usuario sin depender de repositorios Prisma.

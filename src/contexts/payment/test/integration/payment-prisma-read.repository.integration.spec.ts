@@ -27,7 +27,7 @@ suite('PaymentPrismaReadRepository — Integration (adapter)', () => {
     });
 
     it('findById and listByUser return PaymentEntity mapped from prisma', async () => {
-        const order = await prisma.order.create({ data: { id: `r-${Date.now()}`, userId: 'ru', items: [], totalAmount: 2 } });
+        const order = await prisma.order.create({ data: { id: `r-${Date.now()}`, userId: 'ru', items: [{ productId: 12, quantity: 1, price: 2 }], totalAmount: 2 } });
         const created = await prisma.payment.create({ data: { orderId: order.id, userId: 'ru', amount: 2, status: 'PENDING', provider: 'FAKE' } });
 
         const fetched = await readRepo.findById(created.id);

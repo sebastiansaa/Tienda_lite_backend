@@ -7,6 +7,7 @@ import CartReadOnlyPort from '../ports/cart-read.port';
 import ProductReadOnlyPort from '../ports/product-read.port';
 import PricingServicePort from '../ports/pricing.service.port';
 import StockServicePort from '../ports/stock.service.port';
+import ReserveStockPort from '../ports/reserve-stock.port';
 
 export class CreateOrderFromCartUsecase {
     constructor(
@@ -15,6 +16,7 @@ export class CreateOrderFromCartUsecase {
         private readonly productRead: ProductReadOnlyPort,
         private readonly pricing: PricingServicePort,
         private readonly stock: StockServicePort,
+        private readonly reserveStock: ReserveStockPort,
     ) { }
 
     async execute(cmd: CreateOrderFromCartCommand): Promise<OrderEntity> {
@@ -27,8 +29,19 @@ export class CreateOrderFromCartUsecase {
             items.push(item);
         }
 
-        const order = new OrderEntity({ userId: cmd.userId, items, status: 'PENDING' });
-        return this.orderWriteRepo.save(order);
+        const order = OrderEntity.create({ userId: cmd.userId, items, status: 'PENDING' });
+        const savedOrder = await this.orderWriteRepo.save(order);
+
+        // Reserve stock for all items after order creation
+        for (const item of items) {
+            await this.reserveStock.reserve(
+                item.productId,
+                item.quantity,
+                `Order ${savedOrder.id} created`,
+            );
+        }
+
+        return savedOrder;
     }
 
     private async buildItem(productId: number, quantity: number, snapshotPrice?: number): Promise<OrderItemProps> {

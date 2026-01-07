@@ -1,6 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
+import { Roles } from '../../../auth/api/decorators/roles.decorator';
 import { CreateOrderFromItemsDto, OrderResponseDto } from '../dtos';
 import OrderApiMapper from '../mappers/order-api.mapper';
 import {
@@ -10,6 +12,9 @@ import {
     ListOrdersForUserUsecase,
     CancelOrderUsecase,
     MarkOrderAsPaidUsecase,
+    ListAllOrdersUsecase,
+    AdminGetOrderByIdUsecase,
+    AdminMarkOrderAsCompletedUsecase,
 } from '../../app/usecases';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
 import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
@@ -28,6 +33,9 @@ export class OrdersController {
         private readonly listOrdersForUser: ListOrdersForUserUsecase,
         private readonly cancelOrderUsecase: CancelOrderUsecase,
         private readonly markOrderAsPaidUsecase: MarkOrderAsPaidUsecase,
+        private readonly listAllOrders: ListAllOrdersUsecase,
+        private readonly adminGetOrderById: AdminGetOrderByIdUsecase,
+        private readonly adminMarkAsCompleted: AdminMarkOrderAsCompletedUsecase,
     ) { }
 
     @Post('from-cart')
@@ -112,6 +120,42 @@ export class OrdersController {
     ): Promise<OrderResponseDto> {
         const command = { orderId: id, userId: user.sub };
         const order = await this.markOrderAsPaidUsecase.execute(command);
+        if (!order) throw new NotFoundException('Order not found');
+        return OrderApiMapper.toResponse(order);
+    }
+
+    @Get('admin/list')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('Orders listed successfully')
+    @ApiOperation({ summary: 'Listar todas las órdenes (admin)' })
+    @ApiResponse({ status: 200, type: [OrderResponseDto] })
+    async listAll(): Promise<OrderResponseDto[]> {
+        const orders = await this.listAllOrders.execute();
+        return orders.map((o) => OrderApiMapper.toResponse(o));
+    }
+
+    @Get('admin/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('Order retrieved successfully')
+    @ApiOperation({ summary: 'Obtener detalle de orden (admin)' })
+    @ApiResponse({ status: 200, type: OrderResponseDto })
+    async getByIdAdmin(@Param('id') id: string): Promise<OrderResponseDto> {
+        const order = await this.adminGetOrderById.execute(id);
+        if (!order) throw new NotFoundException('Order not found');
+        return OrderApiMapper.toResponse(order);
+    }
+
+    @Patch('admin/:id/complete')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @HttpCode(HttpStatus.OK)
+    @ResponseMessage('Order completed successfully')
+    @ApiOperation({ summary: 'Marcar orden como completada (admin)' })
+    @ApiResponse({ status: 200, type: OrderResponseDto })
+    async complete(@Param('id') id: string): Promise<OrderResponseDto> {
+        const order = await this.adminMarkAsCompleted.execute(id);
         if (!order) throw new NotFoundException('Order not found');
         return OrderApiMapper.toResponse(order);
     }

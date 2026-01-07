@@ -26,6 +26,7 @@ model User {
   updatedAt    DateTime       @updatedAt
   refreshTokens RefreshToken[]
   addresses    Address[]
+  reviews      Review[]
 }
 
 model RefreshToken {
@@ -52,6 +53,7 @@ model Product {
   category    Category  @relation(fields: [categoryId], references: [id]) 
   inventory   InventoryItem?
   movements   StockMovement[]
+  reviews     Review[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -145,4 +147,19 @@ model StockMovement {
 
   @@index([productId])
   @@index([inventoryItemId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([userId])
+  @@unique([productId, userId])
 }

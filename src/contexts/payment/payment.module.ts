@@ -6,8 +6,8 @@ import { PAYMENT_ORDER_READONLY, PAYMENT_ORDER_WRITE, PAYMENT_PROVIDER, PAYMENT_
 import { PaymentPrismaReadRepository } from './infra/persistence/payment-prisma-read.repository';
 import { PaymentPrismaWriteRepository } from './infra/persistence/payment-prisma-write.repository';
 import { PaymentProviderFakeAdapter } from './infra/adapters/payment-provider-fake.adapter';
-import { PaymentOrderReadAdapter } from './infra/adapters/order-read.adapter';
-import { PaymentOrderWriteAdapter } from './infra/adapters/order-write.adapter';
+import { OrdersModule } from '../orders/order.module';
+import { ORDER_PAYMENT_READ_PORT, ORDER_PAYMENT_WRITE_PORT } from '../orders/constants';
 import {
     InitiatePaymentUsecase,
     ConfirmPaymentUsecase,
@@ -24,7 +24,7 @@ import OrderReadOnlyPort from './app/ports/order-read.port';
 import OrderWritePort from './app/ports/order-write.port';
 
 @Module({
-    imports: [AuthModule, PrismaModule],
+    imports: [AuthModule, PrismaModule, OrdersModule],
     controllers: [PaymentController],
     providers: [
         {
@@ -41,11 +41,11 @@ import OrderWritePort from './app/ports/order-write.port';
         },
         {
             provide: PAYMENT_ORDER_READONLY,
-            useClass: PaymentOrderReadAdapter,
+            useExisting: ORDER_PAYMENT_READ_PORT,
         },
         {
             provide: PAYMENT_ORDER_WRITE,
-            useClass: PaymentOrderWriteAdapter,
+            useExisting: ORDER_PAYMENT_WRITE_PORT,
         },
         {
             provide: InitiatePaymentUsecase,

@@ -15,21 +15,21 @@ describe('UserEntity', () => {
     };
 
     it('should create a valid user', () => {
-        const user = new UserEntity(validProps);
+        const user = UserEntity.rehydrate(validProps);
         expect(user).toBeDefined();
         expect(user.id).toBe(validProps.id);
         expect(user.email).toBe(validProps.email);
     });
 
     it('should update profile', () => {
-        const user = new UserEntity(validProps);
+        const user = UserEntity.rehydrate(validProps);
         user.updateProfile({ name: 'Jane Doe', phone: '0987654321' });
         expect(user.name).toBe('Jane Doe');
         expect(user.phone).toBe('0987654321');
     });
 
     it('should add address', () => {
-        const user = new UserEntity(validProps);
+        const user = UserEntity.rehydrate(validProps);
         const address = user.addAddress({
             street: 'Main St',
             city: 'City',
@@ -41,7 +41,7 @@ describe('UserEntity', () => {
     });
 
     it('should delete address', () => {
-        const user = new UserEntity(validProps);
+        const user = UserEntity.rehydrate(validProps);
         const address = user.addAddress({
             street: 'Main St',
             city: 'City',
@@ -53,7 +53,7 @@ describe('UserEntity', () => {
     });
 
     it('should change status', () => {
-        const user = new UserEntity(validProps);
+        const user = UserEntity.rehydrate(validProps);
         user.changeStatus('SUSPENDED');
         expect(user.status).toBe('SUSPENDED');
     });

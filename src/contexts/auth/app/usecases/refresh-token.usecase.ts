@@ -46,7 +46,7 @@ export class RefreshTokenUseCase {
         await this.refreshTokenRepo.revokeByUserId(userId);
         const tokenHash = await this.tokenService.hashToken(refreshToken);
         const expiresAt = this.tokenService.getRefreshExpirationDate();
-        const token = new RefreshTokenEntity({ userId, tokenHash, expiresAt });
+        const token = RefreshTokenEntity.create({ userId, tokenHash, expiresAt });
         await this.refreshTokenRepo.save(token);
     }
 }

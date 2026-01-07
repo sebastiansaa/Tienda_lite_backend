@@ -27,7 +27,7 @@ suite('PaymentOrderReadAdapter — Integration (adapter)', () => {
     });
 
     it('findById returns id, userId and totalAmount for existing order', async () => {
-        const order = await prisma.order.create({ data: { id: `o-${Date.now()}`, userId: 'ur', items: [], totalAmount: 5 } });
+        const order = await prisma.order.create({ data: { id: `o-${Date.now()}`, userId: 'ur', items: [{ productId: 101, quantity: 1, price: 5 }], totalAmount: 5 } });
         const found = await adapter.findById(order.id);
         expect(found).toHaveProperty('id', order.id);
         expect(found).toHaveProperty('userId', 'ur');

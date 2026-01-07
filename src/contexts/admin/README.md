@@ -1,68 +1,39 @@
-# Admin Context (Centralized Administration Orchestrator)
+# Admin Context (Dashboard & Cross-Context Orchestration)
 
 ## Propósito
 
-El contexto `Admin` actúa como el **Orquestador Central** de todas las operaciones administrativas de la plataforma. Su responsabilidad es centralizar los puntos de entrada para la gestión de usuarios, productos, categorías e inventario, delegando la ejecución real a los dominios correspondientes mediante un patrón de **Ports and Adapters** (Hexagonal Architecture).
+El contexto `Admin` proporciona un **dashboard consolidado** con métricas agregadas de la plataforma. A diferencia de versiones anteriores, ya **NO centraliza endpoints de gestión** - cada contexto expone sus propios endpoints administrativos con la debida autorización.
 
-### Objetivos Clave:
+### Principios Arquitectónicos:
 
-- **Centralización**: Todos los endpoints `/admin/*` residen aquí.
-- **Desacoplamiento**: El orquestador no conoce detalles de implementación de otros dominios; se comunica mediante interfaces (Ports).
-- **Consolidación de Métricas**: Proporciona un dashboard unificado con datos agregados de múltiples contextos.
+- **Context Autonomy**: Cada bounded context (Products, Categories, User, Orders, Payment) gestiona sus propios endpoints admin.
+- **Dashboard Only**: Admin se limita a mostrar estadísticas y métricas consolidadas.
+- **No Orchestration**: Las operaciones CRUD de cada dominio residen en su controlador nativo con `@Roles('admin')`.
 
-## Arquitectura (Hexagonal)
+## Arquitectura Decentralizada
 
-El contexto Admin define **Ports** (interfaces) que representan las necesidades administrativas. Cada dominio interesado implementa un **Adapter** para satisfacer ese Port.
+### Endpoints por Contexto:
 
-### Flujo de Comunicación:
+- **Products** (`/products/*`): Gestión de productos con endpoints admin protegidos por roles.
+- **Categories** (`/categories/*`): Gestión de categorías con endpoints admin protegidos.
+- **Users** (`/users/*`): Gestión de usuarios con rutas `/admin/list`, `/admin/:id`, etc.
+- **Orders** (`/orders/*`): Gestión de órdenes con rutas `/admin/list`, `/admin/:id`, etc.
+- **Payments** (`/payments/*`): Auditoría de pagos con rutas `/admin/list`, `/admin/:id`.
+- **Inventory** (`/inventory/*`): `GET /inventory/:productId` es público; ajustes de stock y movimientos requieren rol `admin`.
 
-1. `AdminController` recibe el request.
-2. `AdminController` llama a un `Port` (ej: `ProductAdminPort`).
-3. El `Adapter` del dominio (ej: `ProductAdminAdapter` en el contexto `Products`) recibe la llamada.
-4. El `Adapter` ejecuta los Casos de Uso internos de su propio dominio.
+Consulta el README de cada contexto para los endpoints específicos.
 
 ## Endpoints
 
-### Dashboard (Métricas)
+### Dashboard (Único Endpoint)
 
-- `GET /admin/dashboard`: Estadísticas globales (ventas, usuarios, stock bajo).
-
-### Usuarios
-
-- `GET /admin/users`: Listado completo de usuarios.
-- `GET /admin/users/:id`: Perfil detallado de usuario.
-- `PATCH /admin/users/:id/status`: Activar/Inactivar usuarios.
-
-### Productos
-
-- `POST /admin/products`: Crear o actualizar productos.
-- `GET /admin/products/low-stock`: Consultar productos con bajo inventario.
-- `PUT /admin/products/:id/stock`: Ajustar stock base.
-- `DELETE /admin/products/:id`: Eliminación física o lógica.
-- `POST /admin/products/:id/restore`: Restaurar productos eliminados lógicamente.
-- `POST /admin/products/:id/upload-image`: Gestión de assets de productos.
-
-### Categorías
-
-- `POST /admin/categories`: Crear nuevas categorías.
-- `PATCH /admin/categories/:id`: Editar metadatos de categoría.
-- `DELETE /admin/categories/:id`: Eliminar categorías.
-
-### Inventario (Ajustes Granulares)
-
-- `POST /admin/inventory/:productId/increase`: Incrementar stock con motivo.
-- `POST /admin/inventory/:productId/decrease`: Disminuir stock con motivo.
+- `GET /admin/dashboard`: Estadísticas globales (ventas, usuarios activos, stock bajo).
 
 ## Seguridad
 
-- **Autenticación**: Todos los endpoints requieren un JWT válido (`JwtAuthGuard`).
-- **Autorización**: Acceso restringido exclusivamente a usuarios con rol `admin` (`RolesGuard` + `@Roles('admin')`).
+- **Autenticación**: JWT válido requerido (`JwtAuthGuard`).
+- **Autorización**: Solo usuarios con rol `admin` (`RolesGuard` + `@Roles('admin')`).
 
-## Formato de Respuesta Uniforme
+## Formato de Respuesta
 
-Todas las respuestas siguen la estructura: `{ "statusCode": number, "message": string, "data": any | null }`. Incluso las operaciones `void` devuelven `data: null`.
-
-## Estándar de Tipado (Gold Standard)
-
-- **DTOs de Dominio**: Se utilizan los DTOs originales de cada contexto para garantizar la consistencia en la validación y documentación de Swagger.
-- **Strict Typing**: Uso de interfaces explícitas para todos los Ports y tipos de retorno definidos en lugar de `any`.
+Todas las respuestas siguen: `{ "statusCode": number, "message": string, "data": any | null }`.

@@ -11,9 +11,13 @@ import {
     AddAddressUseCase,
     UpdateAddressUseCase,
     DeleteAddressUseCase,
+    ListUsersUseCase,
+    ChangeUserStatusUseCase,
 } from '../../app/usecases';
 import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
 import type { AuthUserPayload } from '../../../shared/interfaces/auth-user-payload.interface';
+import { Roles } from '../../../auth/api/decorators/roles.decorator';
+import { ChangeStatusDto } from '../dtos';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -27,6 +31,8 @@ export class UserController {
         private readonly addAddress: AddAddressUseCase,
         private readonly updateAddress: UpdateAddressUseCase,
         private readonly deleteAddress: DeleteAddressUseCase,
+        private readonly listUsers: ListUsersUseCase,
+        private readonly changeStatus: ChangeUserStatusUseCase,
     ) { }
 
     @Get('me')
@@ -84,5 +90,40 @@ export class UserController {
     ): Promise<void> {
         const command = UserApiMapper.toDeleteAddressCommand(user.sub, id);
         await this.deleteAddress.execute(command);
+    }
+
+
+    @Get('admin/list')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('Users listed successfully')
+    @ApiOperation({ summary: 'Listar usuarios (admin)' })
+    @ApiResponse({ status: 200, type: [UserResponseDto] })
+    async list(): Promise<UserResponseDto[]> {
+        const users = await this.listUsers.execute();
+        return UserApiMapper.toUserResponseList(users);
+    }
+
+    @Get('admin/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('User profile retrieved successfully')
+    @ApiOperation({ summary: 'Obtener perfil de usuario (admin)' })
+    @ApiResponse({ status: 200, type: UserResponseDto })
+    async getById(@Param('id') id: string): Promise<UserResponseDto> {
+        const user = await this.getProfile.execute(id);
+        return UserApiMapper.toUserResponse(user);
+    }
+
+    @Patch('admin/:id/status')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('User status updated successfully')
+    @ApiOperation({ summary: 'Cambiar estado de usuario (admin)' })
+    @ApiResponse({ status: 200, type: UserResponseDto })
+    async changeUserStatus(@Param('id') id: string, @Body() dto: ChangeStatusDto): Promise<UserResponseDto> {
+        const command = UserApiMapper.toChangeStatusCommand(id, dto.status);
+        const user = await this.changeStatus.execute(command);
+        return UserApiMapper.toUserResponse(user);
     }
 }

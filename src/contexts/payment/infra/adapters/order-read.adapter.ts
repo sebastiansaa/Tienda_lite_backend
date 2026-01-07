@@ -1,19 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../prisma/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { ORDER_PAYMENT_READ_PORT } from '../../../orders/constants';
+import type OrderPaymentReadPort from '../../../shared/ports/order-payment-read.port';
 import OrderReadOnlyPort from '../../app/ports/order-read.port';
 
 @Injectable()
 export class PaymentOrderReadAdapter implements OrderReadOnlyPort {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        @Inject(ORDER_PAYMENT_READ_PORT)
+        private readonly delegate: OrderPaymentReadPort,
+    ) { }
 
     async findById(orderId: string): Promise<{ id: string; userId: string; totalAmount: number } | null> {
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-        if (!order) return null;
-        return {
-            id: order.id,
-            userId: order.userId,
-            totalAmount: order.totalAmount,
-        };
+        return this.delegate.findById(orderId);
     }
 }
 

@@ -4,6 +4,7 @@ import QuantityVO from '../v-o/quantity.vo';
 import CreatedAtVO from '../v-o/created-at.vo';
 import InventoryItemIdVO from '../v-o/inventory-item-id.vo';
 import ProductIdVO from '../v-o/product-id.vo';
+import StockMovementIdVO from '../v-o/stock-movement-id.vo';
 
 export interface StockMovementProps {
     id?: string;
@@ -18,7 +19,7 @@ export interface StockMovementProps {
 }
 
 export class StockMovementEntity {
-    private readonly idVO: InventoryItemIdVO;
+    private readonly idVO: StockMovementIdVO;
     private readonly inventoryItemIdVO: InventoryItemIdVO;
     private readonly productIdVO: ProductIdVO;
     private readonly typeVO: MovementTypeVO;
@@ -29,7 +30,7 @@ export class StockMovementEntity {
     private readonly reservedAfterInternal: number;
 
     constructor(props: StockMovementProps) {
-        this.idVO = new InventoryItemIdVO(props.id);
+        this.idVO = new StockMovementIdVO(props.id);
         this.inventoryItemIdVO = new InventoryItemIdVO(props.inventoryItemId);
         this.productIdVO = new ProductIdVO(props.productId);
         this.typeVO = new MovementTypeVO(props.type);

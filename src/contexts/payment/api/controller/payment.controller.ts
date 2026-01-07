@@ -1,6 +1,8 @@
 import { Body, Controller, Get, NotFoundException, Param, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
+import { Roles } from '../../../auth/api/decorators/roles.decorator';
 import CurrentUser from '../../../auth/api/decorators/current-user.decorator';
 import { ConfirmPaymentDto, InitiatePaymentDto, PaymentResponseDto } from '../dtos';
 import PaymentApiMapper from '../mappers/payment-api.mapper';
@@ -10,6 +12,8 @@ import {
     FailPaymentUsecase,
     GetPaymentByIdUsecase,
     ListPaymentsForUserUsecase,
+    ListAllPaymentsUsecase,
+    AdminGetPaymentByIdUsecase,
 } from '../../app/usecases';
 import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
 import type { AuthUserPayload } from '../../../shared/interfaces/auth-user-payload.interface';
@@ -26,6 +30,8 @@ export class PaymentController {
         private readonly failPayment: FailPaymentUsecase,
         private readonly getPaymentById: GetPaymentByIdUsecase,
         private readonly listPaymentsForUser: ListPaymentsForUserUsecase,
+        private readonly listAllPayments: ListAllPaymentsUsecase,
+        private readonly adminGetPaymentById: AdminGetPaymentByIdUsecase,
     ) { }
 
     @Post('initiate')
@@ -87,6 +93,30 @@ export class PaymentController {
     async getById(@CurrentUser() user: AuthUserPayload, @Param('id') id: string): Promise<PaymentResponseDto> {
         const query = PaymentApiMapper.toGetByIdQuery(id, user.sub);
         const payment = await this.getPaymentById.execute(query);
+        if (!payment) throw new NotFoundException('Payment not found');
+        return PaymentApiMapper.toResponseDto(payment);
+    }
+
+
+    @Get('admin/list')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('Payments listed successfully')
+    @ApiOperation({ summary: 'Listar todos los pagos (admin)' })
+    @ApiResponse({ status: 200, type: [PaymentResponseDto] })
+    async listAll(): Promise<PaymentResponseDto[]> {
+        const payments = await this.listAllPayments.execute();
+        return PaymentApiMapper.toResponseList(payments);
+    }
+
+    @Get('admin/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @ResponseMessage('Payment retrieved successfully')
+    @ApiOperation({ summary: 'Obtener detalle de pago (admin)' })
+    @ApiResponse({ status: 200, type: PaymentResponseDto })
+    async getByIdAdmin(@Param('id') id: string): Promise<PaymentResponseDto> {
+        const payment = await this.adminGetPaymentById.execute(id);
         if (!payment) throw new NotFoundException('Payment not found');
         return PaymentApiMapper.toResponseDto(payment);
     }

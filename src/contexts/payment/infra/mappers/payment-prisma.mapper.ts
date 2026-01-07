@@ -4,7 +4,7 @@ import { PaymentStatus } from '../../domain/v-o/payment-status.vo';
 
 export const prismaToPayment = (record: PaymentPrisma | null): PaymentEntity | null => {
     if (!record) return null;
-    return new PaymentEntity({
+    return PaymentEntity.rehydrate({
         id: record.id,
         orderId: record.orderId,
         userId: record.userId,

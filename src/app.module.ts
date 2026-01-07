@@ -15,6 +15,7 @@ import { InventoryModule } from './contexts/inventory/inventory.module';
 import { PaymentModule } from './contexts/payment/payment.module';
 import { UserModule } from './contexts/user/user.module';
 import { AdminModule } from './contexts/admin/admin.module';
+import { ReviewsModule } from './contexts/reviews/reviews.module';
 import { HealthModule } from './health/health.module';
 import { validateEnv } from './config/env.validation';
 
@@ -58,6 +59,7 @@ import { validateEnv } from './config/env.validation';
     PaymentModule,
     UserModule,
     AdminModule,
+    ReviewsModule,
     HealthModule,
   ],
   controllers: [AppController],

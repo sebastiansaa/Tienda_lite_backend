@@ -29,7 +29,7 @@ src/contexts/<context>/
   └── <context>.module.ts
 ```
 
-**Contextos activos:** Auth, User, Products, Categories, Cart, Orders, Payment, Inventory, Admin
+**Contextos activos:** Auth, User, Products, Categories, Cart, Orders, Payment, Inventory, Reviews, Admin
 
 ---
 
@@ -37,9 +37,13 @@ src/contexts/<context>/
 
 | Nivel           | Rutas                                                         | Acceso            |
 | --------------- | ------------------------------------------------------------- | ----------------- |
-| **Público**     | `/products`, `/categories`                                    | Sin autenticación |
-| **Usuario JWT** | `/cart`, `/orders`, `/payments`                               | Token JWT válido  |
-| **Admin**       | `/admin/*`, `/inventory/*`, mutaciones en Products/Categories | Rol `admin`       |
+| **Público**     | `/products`, `/categories`, `/reviews/product/:productId`     | Sin autenticación |
+| **Usuario JWT** | `/cart`, `/orders`, `/users`, `/reviews`                       | Token JWT válido  |
+| **Admin**       | Endpoints `/admin/*` en cada contexto (`/products/admin`, `/payments/admin`, etc.) | Rol `admin`       |
+
+**Arquitectura Descentralizada**: Cada contexto (Products, Categories, Users, Orders, Payments) expone sus propios endpoints administrativos protegidos con `@Roles('admin')`.
+
+**Inventory**: `GET /inventory/:productId` es público. Endpoints de mutación (`increase`, `decrease`, `reserve`, `release`, `movements`) requieren rol `admin`.
 
 **Guards**: `JwtAuthGuard` + `RolesGuard` con decorador `@Roles('admin')`
 

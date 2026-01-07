@@ -39,7 +39,7 @@ export class CartController {
     async getCart(@CurrentUser() user: AuthUserPayload): Promise<CartResponseDto> {
         const query = CartApiMapper.toGetQuery(user.sub);
         const cart = await this.getCartUseCase.execute(query);
-        const entity = cart ?? new CartEntity({ userId: user.sub, items: [] });
+        const entity = cart ?? CartEntity.create({ userId: user.sub, items: [] });
         return CartApiMapper.toResponse(entity);
     }
 

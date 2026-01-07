@@ -18,13 +18,22 @@ export class CartEntity {
     private createdAtInternal: Date;
     private updatedAtInternal: Date;
 
-    constructor(props: CartProps) {
+    private constructor(props: CartProps) {
         this.idVO = new CartIdVO(props.id);
         this.userIdVO = new UserIdVO(props.userId);
-        this.itemsInternal = (props.items ?? []).map((i) => new CartItemEntity(i));
+        this.itemsInternal = (props.items ?? []).map((i) => CartItemEntity.rehydrate(i));
         const now = new Date();
         this.createdAtInternal = props.createdAt ?? now;
         this.updatedAtInternal = props.updatedAt ?? now;
+    }
+
+    static create(props: Omit<CartProps, 'createdAt' | 'updatedAt'>): CartEntity {
+        const now = new Date();
+        return new CartEntity({ ...props, createdAt: now, updatedAt: now });
+    }
+
+    static rehydrate(props: CartProps): CartEntity {
+        return new CartEntity(props);
     }
 
     get id(): string {

@@ -3,13 +3,17 @@ import { CartController } from './api/controller/cart.controller';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { ProductsModule } from '../products/products.module';
-import { CART_PRICING_SERVICE, CART_READ_REPOSITORY, CART_WRITE_REPOSITORY } from './constants';
+import { InventoryModule } from '../inventory/inventory.module';
+import { CART_PRICING_SERVICE, CART_READ_REPOSITORY, CART_SNAPSHOT_PORT, CART_WRITE_REPOSITORY, CART_STOCK_SERVICE } from './constants';
 import { CartPrismaReadRepository } from './infra/persistence/cart-prisma-read.repository';
 import { CartPrismaWriteRepository } from './infra/persistence/cart-prisma-write.repository';
 import CartPricingService from './infra/services/cart-pricing.service';
+import CartStockService from './infra/services/cart-stock.service';
+import CartSnapshotService from './infra/services/cart-snapshot.service';
 import { ICartReadRepository } from './app/ports/cart-read.repository';
 import { ICartWriteRepository } from './app/ports/cart-write.repository';
 import PricingServicePort from './app/ports/pricing-service.port';
+import StockAvailabilityPort from './app/ports/stock-availability.port';
 import {
     AddItemToCartUseCase,
     UpdateItemQuantityUseCase,
@@ -19,7 +23,7 @@ import {
 } from './app/usecases';
 
 @Module({
-    imports: [AuthModule, ProductsModule],
+    imports: [AuthModule, ProductsModule, InventoryModule],
     controllers: [CartController],
     providers: [
         PrismaService,
@@ -36,10 +40,22 @@ import {
             useClass: CartPricingService,
         },
         {
+            provide: CART_STOCK_SERVICE,
+            useClass: CartStockService,
+        },
+        {
+            provide: CART_SNAPSHOT_PORT,
+            useClass: CartSnapshotService,
+        },
+        {
             provide: AddItemToCartUseCase,
-            useFactory: (readRepo: ICartReadRepository, writeRepo: ICartWriteRepository, pricing: PricingServicePort) =>
-                new AddItemToCartUseCase(readRepo, writeRepo, pricing),
-            inject: [CART_READ_REPOSITORY, CART_WRITE_REPOSITORY, CART_PRICING_SERVICE],
+            useFactory: (
+                readRepo: ICartReadRepository,
+                writeRepo: ICartWriteRepository,
+                pricing: PricingServicePort,
+                stock: StockAvailabilityPort,
+            ) => new AddItemToCartUseCase(readRepo, writeRepo, pricing, stock),
+            inject: [CART_READ_REPOSITORY, CART_WRITE_REPOSITORY, CART_PRICING_SERVICE, CART_STOCK_SERVICE],
         },
         {
             provide: UpdateItemQuantityUseCase,
@@ -64,5 +80,6 @@ import {
             inject: [CART_WRITE_REPOSITORY],
         },
     ],
+    exports: [CART_SNAPSHOT_PORT, CART_PRICING_SERVICE, CART_STOCK_SERVICE],
 })
 export class CartModule { }

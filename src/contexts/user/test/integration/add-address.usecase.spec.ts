@@ -9,13 +9,15 @@ describe('AddAddressUseCase Integration', () => {
     let readRepo: { findByIdWithAddresses: jest.Mock };
     let writeRepo: { addAddress: jest.Mock };
 
-    const mockUser = new UserEntity({
+    const buildUser = () => UserEntity.create({
         id: 'user-1',
         email: 'test@test.com',
         name: 'Test',
         status: 'ACTIVE',
+        phone: null,
+        preferences: null,
         addresses: [],
-    } as any);
+    });
 
     beforeEach(() => {
         readRepo = { findByIdWithAddresses: jest.fn() };
@@ -24,8 +26,9 @@ describe('AddAddressUseCase Integration', () => {
     });
 
     it('should add address successfully', async () => {
+        const mockUser = buildUser();
         readRepo.findByIdWithAddresses.mockResolvedValue(mockUser);
-        writeRepo.addAddress.mockResolvedValue(new AddressEntity({ street: 'St', city: 'Ct', country: 'Co', zipCode: '000' } as any));
+        writeRepo.addAddress.mockResolvedValue(AddressEntity.create({ street: 'St', city: 'Ct', country: 'Co', zipCode: '000' }));
 
         const command = new AddAddressCommand('user-1', 'St', 'Ct', 'Co', '000');
         const result = await usecase.execute(command);

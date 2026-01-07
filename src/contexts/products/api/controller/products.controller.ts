@@ -1,14 +1,24 @@
-import { Controller, Get, Param, Query, ParseIntPipe, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SearchProductsRequestDto, ListProductsRequestDto } from '../dtos/request';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { SearchProductsRequestDto, ListProductsRequestDto, SaveProductRequestDto } from '../dtos/request';
 import { ListResponseProductDto, ResponseProductDto } from '../dtos/response';
 import { ProductApiMapper } from '../mappers/product-api.mapper';
 import {
   FindProductByIdUsecase,
   ListProductsUsecase,
   SearchProductsUsecase,
+  SaveProductUsecase,
+  DeleteProductUsecase,
+  RestoreProductUsecase,
+  FindLowStockUsecase,
 } from '../../app/usecases';
 import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
+import { JwtAuthGuard } from '../../../auth/infra/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infra/guards/roles.guard';
+import { Roles } from '../../../auth/api/decorators/roles.decorator';
 
 /**
  * Controlador para la exposición pública del catálogo de productos.
@@ -22,6 +32,10 @@ export class ProductsController {
     private readonly findProductByIdUsecase: FindProductByIdUsecase,
     private readonly listProductsUsecase: ListProductsUsecase,
     private readonly searchProductsUsecase: SearchProductsUsecase,
+    private readonly saveProductUsecase: SaveProductUsecase,
+    private readonly deleteProductUsecase: DeleteProductUsecase,
+    private readonly restoreProductUsecase: RestoreProductUsecase,
+    private readonly findLowStockUsecase: FindLowStockUsecase,
   ) { }
 
   /**
@@ -74,5 +88,83 @@ export class ProductsController {
     const query = ProductApiMapper.toFindProductByIdQuery(id);
     const entity = await this.findProductByIdUsecase.execute(query);
     return entity ? ProductApiMapper.toResponseDto(entity) : null;
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ResponseMessage('Product saved successfully')
+  @ApiOperation({ summary: 'Crear o actualizar producto (admin)' })
+  @ApiResponse({ status: 201, type: ResponseProductDto })
+  async save(@Body() dto: SaveProductRequestDto): Promise<ResponseProductDto> {
+    const command = ProductApiMapper.toSaveProductCommand(dto);
+    const product = await this.saveProductUsecase.execute(command);
+    return ProductApiMapper.toResponseDto(product);
+  }
+
+  @Get('admin/low-stock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ResponseMessage('Low stock products retrieved successfully')
+  @ApiOperation({ summary: 'Productos con bajo stock (admin)' })
+  @ApiResponse({ status: 200, type: [ResponseProductDto] })
+  async findLowStock(@Query('threshold', ParseIntPipe) threshold: number = 5): Promise<ResponseProductDto[]> {
+    const query = ProductApiMapper.toFindLowStockQuery(threshold);
+    const products = await this.findLowStockUsecase.execute(query);
+    return ProductApiMapper.toResponseDtoList(products);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ResponseMessage('Product deleted successfully')
+  @ApiOperation({ summary: 'Eliminar producto (admin)' })
+  @ApiResponse({ status: 200, description: 'Producto eliminado' })
+  async deleteProduct(@Param('id', ParseIntPipe) id: number, @Query('hard') hard?: string): Promise<void> {
+    const command = ProductApiMapper.toDeleteProductCommand(id, hard !== 'true');
+    await this.deleteProductUsecase.execute(command);
+  }
+
+  @Post(':id/restore')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ResponseMessage('Product restored successfully')
+  @ApiOperation({ summary: 'Restaurar producto (admin)' })
+  @ApiResponse({ status: 200, type: ResponseProductDto })
+  async restore(@Param('id', ParseIntPipe) id: number): Promise<ResponseProductDto> {
+    const command = ProductApiMapper.toRestoreProductCommand(id);
+    const product = await this.restoreProductUsecase.execute(command);
+    return ProductApiMapper.toResponseDto(product);
+  }
+
+  @Post(':id/upload-image')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ResponseMessage('Product image uploaded successfully')
+  @ApiOperation({ summary: 'Subir imagen de producto (admin)' })
+  @ApiResponse({ status: 200, description: 'Imagen subida correctamente' })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './public/uploads',
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, uniqueSuffix + extname(file.originalname));
+      },
+    }),
+  }))
+  async uploadImage(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return {
+      productId: id,
+      filename: file.filename,
+      path: `/uploads/${file.filename}`,
+    };
   }
 }

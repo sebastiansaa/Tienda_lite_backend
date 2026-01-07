@@ -5,7 +5,7 @@ import { RefreshTokenEntity } from '../../domain/entity/refresh-token.entity';
 export class AuthPrismaMapper {
     static toUserEntity(row: Prisma.UserGetPayload<true> | null | undefined): UserEntity | null {
         if (!row) return null;
-        return new UserEntity({
+        return UserEntity.rehydrate({
             id: row.id,
             email: row.email,
             passwordHash: row.passwordHash,
@@ -28,7 +28,7 @@ export class AuthPrismaMapper {
 
     static toRefreshTokenEntity(row: Prisma.RefreshTokenGetPayload<true> | null | undefined): RefreshTokenEntity | null {
         if (!row) return null;
-        return new RefreshTokenEntity({
+        return RefreshTokenEntity.rehydrate({
             id: row.id,
             userId: row.userId,
             tokenHash: row.tokenHash,

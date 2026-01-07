@@ -31,7 +31,7 @@ export class RegisterUserUseCase {
         const passwordHash = await this.passwordHasher.hash(input.password);
 
         // 3. Creación y persistencia de la entidad de usuario (rol por defecto: 'user')
-        const user = new UserEntity({ email: input.email, passwordHash, roles: ['user'] });
+        const user = UserEntity.create({ email: input.email, passwordHash, roles: ['user'] });
         const saved = await this.userRepo.save(user);
 
         // 4. Emisión de identidad inmediata tras registro exitoso
@@ -52,7 +52,7 @@ export class RegisterUserUseCase {
         await this.refreshTokenRepo.revokeByUserId(userId);
         const tokenHash = await this.tokenService.hashToken(refreshToken);
         const expiresAt = this.tokenService.getRefreshExpirationDate();
-        const token = new RefreshTokenEntity({ userId, tokenHash, expiresAt });
+        const token = RefreshTokenEntity.create({ userId, tokenHash, expiresAt });
         await this.refreshTokenRepo.save(token);
     }
 }

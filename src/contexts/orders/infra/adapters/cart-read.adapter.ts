@@ -1,27 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../prisma/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { CART_SNAPSHOT_PORT } from '../../../cart/constants';
+import type CartSnapshotPort from '../../../shared/ports/cart-snapshot.port';
 import CartReadOnlyPort, { CartItemSnapshot } from '../../app/ports/cart-read.port';
 
 @Injectable()
 export class CartReadOnlyAdapter implements CartReadOnlyPort {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        @Inject(CART_SNAPSHOT_PORT)
+        private readonly cartSnapshot: CartSnapshotPort,
+    ) { }
 
     async getCartItems(userId: string): Promise<CartItemSnapshot[]> {
-        const cart = await this.prisma.cart.findUnique({ where: { userId } });
-        if (!cart) return [];
-        if (!Array.isArray(cart.items)) return [];
-
-        return cart.items.map((raw) => {
-            if (!raw || typeof raw !== 'object') {
-                return { productId: 0, quantity: 0, price: undefined };
-            }
-            const obj = raw as Record<string, unknown>;
-            return {
-                productId: Number(obj.productId),
-                quantity: Number(obj.quantity),
-                price: obj.price === undefined || obj.price === null ? undefined : Number(obj.price),
-            };
-        });
+        const items = await this.cartSnapshot.getCartItems(userId);
+        return items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price ?? undefined,
+        }));
     }
 }
 

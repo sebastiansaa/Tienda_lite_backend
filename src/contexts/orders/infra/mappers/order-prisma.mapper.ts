@@ -17,7 +17,7 @@ const mapItemsFromJson = (items: Prisma.JsonValue): OrderItemProps[] => {
 
 export const orderPrismaToDomain = (record: PrismaOrder | null): OrderEntity | null => {
     if (!record) return null;
-    return new OrderEntity({
+    return OrderEntity.rehydrate({
         id: record.id,
         userId: record.userId,
         status: record.status as OrderStatusType,

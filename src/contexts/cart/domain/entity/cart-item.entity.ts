@@ -13,10 +13,18 @@ export class CartItemEntity {
     private quantityVO: QuantityVO;
     private priceVO: PriceVO;
 
-    constructor(props: CartItemProps) {
+    private constructor(props: CartItemProps) {
         this.productIdVO = new ProductIdVO(props.productId);
         this.quantityVO = new QuantityVO(props.quantity);
         this.priceVO = new PriceVO(props.price);
+    }
+
+    static create(props: CartItemProps): CartItemEntity {
+        return new CartItemEntity(props);
+    }
+
+    static rehydrate(props: CartItemProps): CartItemEntity {
+        return new CartItemEntity(props);
     }
 
     get productId(): number {
@@ -40,7 +48,7 @@ export class CartItemEntity {
     }
 
     withPrice(price: number): CartItemEntity {
-        return new CartItemEntity({ productId: this.productId, quantity: this.quantity, price });
+        return CartItemEntity.create({ productId: this.productId, quantity: this.quantity, price });
     }
 }
 

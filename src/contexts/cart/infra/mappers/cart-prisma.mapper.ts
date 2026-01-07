@@ -19,7 +19,7 @@ const mapItemsFromJson = (items: Prisma.JsonValue): CartItemProps[] => {
 
 export const prismaToCartEntity = (record: Cart | null): CartEntity | null => {
     if (!record) return null;
-    return new CartEntity({
+    return CartEntity.rehydrate({
         id: record.id,
         userId: record.userId,
         items: mapItemsFromJson(record.items),

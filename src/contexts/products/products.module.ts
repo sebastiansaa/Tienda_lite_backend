@@ -5,12 +5,13 @@ import { CategoriesModule } from '../categories/categories.module';
 import { AuthModule } from '../auth/auth.module';
 
 import { IProductWriteRepository, IProductReadRepository } from './app/ports';
-import { PRODUCT_WRITE, PRODUCT_READONLY } from './constants';
+import { PRODUCT_WRITE, PRODUCT_READONLY, PRODUCT_VALIDATION_PORT } from './constants';
 
 import { ProductPrismaWriteRepository, ProductPrismaReadRepository } from './infra/persistence';
 
 import { ProductCategoryPolicy } from './app/policies/product-category.policy';
 import { CategoryReadOnlyPort } from 'src/contexts/shared/ports/category-readonly.port';
+import ProductValidationService from './infra/services/product-validation.service';
 
 // Usecases
 import {
@@ -38,6 +39,10 @@ import { DecreaseStockUsecase } from './app/usecases/decrease-stock.usecase';
     {
       provide: PRODUCT_READONLY,
       useClass: ProductPrismaReadRepository,
+    },
+    {
+      provide: PRODUCT_VALIDATION_PORT,
+      useClass: ProductValidationService,
     },
     // Policy: valida existencia de categoría usando puerto compartido
     {
@@ -94,6 +99,6 @@ import { DecreaseStockUsecase } from './app/usecases/decrease-stock.usecase';
       inject: [PRODUCT_WRITE],
     },
   ],
-  exports: [DecreaseStockUsecase, PRODUCT_READONLY, SaveProductUsecase, UpdateStockUsecase, DeleteProductUsecase, RestoreProductUsecase, FindLowStockUsecase],
+  exports: [DecreaseStockUsecase, PRODUCT_READONLY, PRODUCT_VALIDATION_PORT, SaveProductUsecase, UpdateStockUsecase, DeleteProductUsecase, RestoreProductUsecase, FindLowStockUsecase],
 })
 export class ProductsModule { }

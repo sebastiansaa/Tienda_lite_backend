@@ -17,7 +17,17 @@ export class InitiatePaymentUsecase {
     async execute(cmd: InitiatePaymentCommand): Promise<PaymentEntity> {
         let targetOrderId = cmd.orderId;
         if (!targetOrderId) {
-            const created = await this.orderWrite.createCheckoutOrder({ userId: cmd.userId, totalAmount: cmd.amount, items: cmd.items });
+            const items = Array.isArray(cmd.items) ? cmd.items.map((item: any) => ({
+                productId: Number(item?.productId),
+                quantity: Number(item?.quantity),
+                price: Number(item?.price),
+            })).filter((item) => Number.isFinite(item.productId) && Number.isFinite(item.quantity) && Number.isFinite(item.price)) : [];
+
+            if (items.length === 0) {
+                throw new InvalidPaymentStateError('Checkout order requires valid items');
+            }
+
+            const created = await this.orderWrite.createCheckoutOrder({ userId: cmd.userId, totalAmount: cmd.amount, items });
             targetOrderId = created.id;
         }
 
@@ -26,7 +36,7 @@ export class InitiatePaymentUsecase {
         if (order.userId !== cmd.userId) throw new Error('Order does not belong to user');
         if (order.totalAmount !== cmd.amount) throw new Error('Payment amount mismatch');
 
-        const payment = new PaymentEntity({
+        const payment = PaymentEntity.create({
             orderId: targetOrderId,
             userId: cmd.userId,
             amount: cmd.amount,

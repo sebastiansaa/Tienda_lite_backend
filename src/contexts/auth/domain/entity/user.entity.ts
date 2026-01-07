@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { EmailVO } from '../../../shared/v-o/email.vo';
 import { PasswordHashVO } from '../v-o/password-hash.vo';
 import { RoleVO } from '../v-o/role.vo';
+import TimestampVO from '../v-o/timestamp.vo';
 
 export interface UserProps {
     id?: string; // UUID
@@ -13,21 +14,33 @@ export interface UserProps {
 }
 
 export class UserEntity {
-    readonly id: string;
+    private readonly idInternal: string;
     private readonly emailVO: EmailVO;
     private passwordHashVO: PasswordHashVO;
     private rolesVO: RoleVO[];
-    createdAt: Date;
-    updatedAt: Date;
+    private createdAtVO: TimestampVO;
+    private updatedAtVO: TimestampVO;
 
-    constructor(props: UserProps) {
-        const now = new Date();
-        this.id = props.id ?? randomUUID();
+    private constructor(props: UserProps) {
+        this.idInternal = props.id ?? randomUUID();
         this.emailVO = new EmailVO(props.email);
         this.passwordHashVO = new PasswordHashVO(props.passwordHash);
-        this.rolesVO = (props.roles ?? ['user']).map((r) => new RoleVO(r));
-        this.createdAt = props.createdAt ?? now;
-        this.updatedAt = props.updatedAt ?? now;
+        this.rolesVO = this.buildRoles(props.roles ?? ['user']);
+        this.createdAtVO = TimestampVO.from(props.createdAt);
+        this.updatedAtVO = TimestampVO.from(props.updatedAt ?? props.createdAt);
+    }
+
+    static create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): UserEntity {
+        const now = TimestampVO.now().value;
+        return new UserEntity({ ...props, id: props.id ?? randomUUID(), createdAt: now, updatedAt: now });
+    }
+
+    static rehydrate(props: UserProps): UserEntity {
+        return new UserEntity(props);
+    }
+
+    get id(): string {
+        return this.idInternal;
     }
 
     get email(): string {
@@ -35,11 +48,24 @@ export class UserEntity {
     }
 
     get roles(): string[] {
-        return this.rolesVO.map((r) => r.value);
+        return this.rolesVO.map((role) => role.value);
     }
 
     get passwordHash(): string {
         return this.passwordHashVO.value;
+    }
+
+    get createdAt(): Date {
+        return this.createdAtVO.value;
+    }
+
+    get updatedAt(): Date {
+        return this.updatedAtVO.value;
+    }
+
+    changeRoles(roles: string[]): void {
+        this.rolesVO = this.buildRoles(roles);
+        this.touch();
     }
 
     setPasswordHash(hash: string): void {
@@ -47,7 +73,13 @@ export class UserEntity {
         this.touch();
     }
 
-    touch(): void {
-        this.updatedAt = new Date();
+    private buildRoles(roles: string[]): RoleVO[] {
+        const fallback = roles.length === 0 ? ['user'] : roles;
+        const unique = Array.from(new Set(fallback));
+        return unique.map((role) => new RoleVO(role));
+    }
+
+    private touch(): void {
+        this.updatedAtVO = TimestampVO.now();
     }
 }

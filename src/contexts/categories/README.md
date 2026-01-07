@@ -1,30 +1,32 @@
 # Categories Context
 
-Clasificación y agrupación lógica de productos en el catálogo para facilitar la navegación y el filtrado por el cliente.
+Clasificación y agrupación lógica de productos con endpoints públicos de consulta y administrativos de gestión.
 
 ## Estructura de Carpetas
 
-- `api/`: Controladores, DTOs y mappers para la consulta de categorías.
-- `app/`: Casos de uso para listar y obtener detalles de categorías.
+- `api/`: Controladores, DTOs y mappers para consulta y administración.
+- `app/`: Casos de uso para listar, obtener, crear, actualizar y eliminar categorías.
 - `domain/`: Entidad Category, Value Objects y errores de unicidad/formato.
-- `infra/`: Adaptadores Prisma para la persistencia y lectura de categorías.
+- `infra/`: Adaptadores Prisma para persistencia y lectura.
 
-## Casos de Uso y Endpoints
+## Endpoints
 
-- `GET /categories`: Recupera el listado completo de categorías activas.
-- `GET /categories/:id`: Obtiene el detalle de una categoría específica.
-- `Filtros`: Permite la clasificación de productos en otros contextos.
+### Públicos (Sin Autenticación)
 
-## Ejemplo de Uso
+- `GET /categories`: Listado completo de categorías activas.
+- `GET /categories/:id`: Detalle de categoría específica.
 
-```typescript
-// Listar todas las categorías
-const categories = await listUseCase.execute();
-console.log(`Disponibles: ${categories.length} categorías`);
-```
+### Administrativos (Requieren JWT + `@Roles('admin')`)
 
-## Notas de Integración
+- `POST /categories`: Crear nueva categoría.
+- `PATCH /categories/:id`: Actualizar metadatos de categoría.
+- `DELETE /categories/:id`: Eliminar categoría.
 
-- **Seguridad**: Endpoints de consulta son públicos.
-- **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
-- **Admin**: La gestión administrativa se centraliza en `AdminContext`.
+## Seguridad
+
+- **Públicos**: Acceso sin restricciones.
+- **Admin**: `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles('admin')`.
+
+## Formato de Respuesta
+
+`{ statusCode, message, data }`

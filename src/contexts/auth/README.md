@@ -6,7 +6,7 @@ Gestión de autenticación basada en JWT, proporcionando registro, login, rotaci
 
 - `api/`: Controladores, DTOs y decoradores para exponer autenticación.
 - `app/`: Casos de uso de autenticación, lógica de tokens y validaciones.
-- `domain/`: Entidades de usuario base, tokens y lógica de hashing.
+- `domain/`: Entidades User/RefreshToken con constructores privados, factories `create/rehydrate`, Value Objects (Email, PasswordHash, Role, Timestamp) y reglas de roles/timestamps.
 - `infra/`: Estrategias de Passport (JWT), guards y repositorios Prisma.
 
 ## Casos de Uso y Endpoints
@@ -19,13 +19,16 @@ Gestión de autenticación basada en JWT, proporcionando registro, login, rotaci
 
 ## Ejemplo de Uso
 
+- Los casos de uso (`register`, `login`, `refresh`) crean o rehidratan entidades exclusivamente mediante factories para garantizar consistencia en los VO y timestamps.
+
 ```typescript
 // Login de usuario
 const { accessToken, user } = await loginUseCase.execute({
   email: 'user@example.com',
   password: 'securePassword123',
 });
-console.log(`Bienvenido ${user.name}`);
+// RefreshTokenEntity se genera con `create` al rotar las sesiones.
+console.log(`Bienvenido ${user.email}`);
 ```
 
 ## Notas de Integración
@@ -33,3 +36,4 @@ console.log(`Bienvenido ${user.name}`);
 - **Seguridad**: Implementa `JwtAuthGuard` y `RolesGuard` para uso global.
 - **Validación**: Passwords hasheados con bcrypt.
 - **Respuesta API**: Todas las respuestas usan el formato `{ statusCode, message, data }`.
+- **Persistencia**: Prisma mapea filas a dominio mediante `UserEntity.rehydrate` y `RefreshTokenEntity.rehydrate`, evitando exponer constructores públicos.

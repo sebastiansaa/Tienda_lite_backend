@@ -32,3 +32,10 @@ export class InvalidProductError extends Error {
         this.name = 'InvalidProductError';
     }
 }
+
+export class InsufficientStockError extends Error {
+    constructor(message = 'Insufficient stock') {
+        super(message);
+        this.name = 'InsufficientStockError';
+    }
+}

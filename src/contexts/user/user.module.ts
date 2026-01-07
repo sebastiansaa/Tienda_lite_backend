@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { UserController } from './api/controller/user.controller';
-import { USER_READ_REPOSITORY, USER_WRITE_REPOSITORY, USER_READONLY } from './constants';
+import { USER_READ_REPOSITORY, USER_WRITE_REPOSITORY, USER_READONLY, USER_VERIFICATION_PORT } from './constants';
 import { UserPrismaReadRepository } from './infra/persistence/user-prisma-read.repository';
 import { UserPrismaWriteRepository } from './infra/persistence/user-prisma-write.repository';
 import { UserReadOnlyAdapter } from './infra/adapters/user-readonly.adapter';
+import UserVerificationService from './infra/services/user-verification.service';
 import {
     GetUserProfileUseCase,
     UpdateUserProfileUseCase,
@@ -25,6 +26,7 @@ import { IUserWriteRepository } from './app/ports/user-write.repository';
         { provide: USER_WRITE_REPOSITORY, useClass: UserPrismaWriteRepository },
         { provide: USER_READ_REPOSITORY, useClass: UserPrismaReadRepository },
         { provide: USER_READONLY, useClass: UserReadOnlyAdapter },
+        { provide: USER_VERIFICATION_PORT, useClass: UserVerificationService },
 
         {
             provide: GetUserProfileUseCase,
@@ -62,6 +64,6 @@ import { IUserWriteRepository } from './app/ports/user-write.repository';
             inject: [USER_READ_REPOSITORY]
         },
     ],
-    exports: [USER_READONLY, USER_READ_REPOSITORY, USER_WRITE_REPOSITORY, GetUserProfileUseCase, ListUsersUseCase, ChangeUserStatusUseCase],
+    exports: [USER_READONLY, USER_READ_REPOSITORY, USER_WRITE_REPOSITORY, USER_VERIFICATION_PORT, GetUserProfileUseCase, ListUsersUseCase, ChangeUserStatusUseCase],
 })
 export class UserModule { }

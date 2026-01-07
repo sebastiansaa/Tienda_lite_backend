@@ -3,10 +3,12 @@ import { AuthModule } from '../auth/auth.module';
 import { ProductsModule } from '../products/products.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { InventoryController } from './api/controller/inventory.controller';
-import { INVENTORY_PRODUCT_READONLY, INVENTORY_REPOSITORY, INVENTORY_READ_REPOSITORY, INVENTORY_WRITE_REPOSITORY } from './constants';
+import { INVENTORY_AVAILABILITY_PORT, INVENTORY_PRODUCT_READONLY, INVENTORY_REPOSITORY, INVENTORY_READ_REPOSITORY, INVENTORY_RESERVATION_PORT, INVENTORY_WRITE_REPOSITORY } from './constants';
 import { InventoryPrismaReadRepository } from './infra/persistence/inventory-prisma-read.repository';
 import { InventoryPrismaWriteRepository } from './infra/persistence/inventory-prisma-write.repository';
 import { ProductReadOnlyAdapter } from './infra/adapters/product-read.adapter';
+import InventoryAvailabilityService from './infra/services/inventory-availability.service';
+import InventoryReservationService from './infra/services/inventory-reservation.service';
 import {
     IncreaseStockUsecase,
     DecreaseStockUsecase,
@@ -40,6 +42,14 @@ import ProductReadOnlyPort from './app/ports/product-read.port';
             useClass: ProductReadOnlyAdapter,
         },
         {
+            provide: INVENTORY_AVAILABILITY_PORT,
+            useClass: InventoryAvailabilityService,
+        },
+        {
+            provide: INVENTORY_RESERVATION_PORT,
+            useClass: InventoryReservationService,
+        },
+        {
             provide: IncreaseStockUsecase,
             useFactory: (readRepo: IInventoryReadRepository, writeRepo: IInventoryWriteRepository, productRead: ProductReadOnlyPort) => new IncreaseStockUsecase(readRepo, writeRepo, productRead),
             inject: [INVENTORY_READ_REPOSITORY, INVENTORY_WRITE_REPOSITORY, INVENTORY_PRODUCT_READONLY],
@@ -70,6 +80,14 @@ import ProductReadOnlyPort from './app/ports/product-read.port';
             inject: [INVENTORY_READ_REPOSITORY],
         },
     ],
-    exports: [IncreaseStockUsecase, DecreaseStockUsecase, ReserveStockUsecase, ReleaseStockUsecase],
+    exports: [
+        INVENTORY_READ_REPOSITORY,
+        INVENTORY_AVAILABILITY_PORT,
+        INVENTORY_RESERVATION_PORT,
+        IncreaseStockUsecase,
+        DecreaseStockUsecase,
+        ReserveStockUsecase,
+        ReleaseStockUsecase,
+    ],
 })
 export class InventoryModule { }

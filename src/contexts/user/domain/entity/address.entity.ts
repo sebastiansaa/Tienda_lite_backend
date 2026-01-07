@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { NameVO, DateVO, Slug } from '../../../shared/v-o';
 
 export interface AddressProps {
@@ -19,7 +20,7 @@ export class AddressEntity {
     private createdAtVO: DateVO;
     private updatedAtVO: DateVO;
 
-    constructor(props: AddressProps) {
+    private constructor(props: AddressProps) {
         this.idVO = new Slug(props.id);
         this.streetVO = new NameVO(props.street);
         this.cityVO = new NameVO(props.city);
@@ -27,6 +28,15 @@ export class AddressEntity {
         this.zipVO = new NameVO(props.zipCode);
         this.createdAtVO = new DateVO(props.createdAt);
         this.updatedAtVO = DateVO.from(props.updatedAt);
+    }
+
+    static create(props: Omit<AddressProps, 'createdAt' | 'updatedAt'> & { id?: string }): AddressEntity {
+        const now = new Date();
+        return new AddressEntity({ ...props, id: props.id ?? randomUUID(), createdAt: now, updatedAt: now });
+    }
+
+    static rehydrate(props: AddressProps): AddressEntity {
+        return new AddressEntity(props);
     }
 
     get id(): string { return this.idVO.value; }

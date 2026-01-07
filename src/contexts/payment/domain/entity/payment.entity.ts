@@ -34,7 +34,7 @@ export class PaymentEntity {
     private createdAtVO: CreatedAtVO;
     private updatedAtVO: UpdatedAtVO;
 
-    constructor(props: PaymentProps) {
+    private constructor(props: PaymentProps) {
         this.idVO = new PaymentIdVO(props.id);
         this.orderIdVO = new OrderIdVO(props.orderId);
         this.userIdVO = new UserIdVO(props.userId);
@@ -49,6 +49,15 @@ export class PaymentEntity {
         this.providerValue = props.provider ?? 'FAKE';
         this.createdAtVO = new CreatedAtVO(props.createdAt);
         this.updatedAtVO = UpdatedAtVO.from(props.updatedAt);
+    }
+
+    static create(props: Omit<PaymentProps, 'createdAt' | 'updatedAt'>): PaymentEntity {
+        const now = new Date();
+        return new PaymentEntity({ ...props, createdAt: now, updatedAt: now });
+    }
+
+    static rehydrate(props: PaymentProps): PaymentEntity {
+        return new PaymentEntity(props);
     }
 
     get id(): string {

@@ -14,10 +14,18 @@ export class OrderItemEntity {
     private quantityVO: QuantityVO;
     private priceVO: PriceVO;
 
-    constructor(props: OrderItemProps) {
+    private constructor(props: OrderItemProps) {
         this.productIdVO = new ProductIdVO(props.productId);
         this.quantityVO = new QuantityVO(props.quantity);
         this.priceVO = new PriceVO(props.price);
+    }
+
+    static create(props: OrderItemProps): OrderItemEntity {
+        return new OrderItemEntity(props);
+    }
+
+    static rehydrate(props: OrderItemProps): OrderItemEntity {
+        return new OrderItemEntity(props);
     }
 
     get productId(): number {

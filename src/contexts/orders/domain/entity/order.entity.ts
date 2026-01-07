@@ -25,7 +25,7 @@ export class OrderEntity {
     private updatedAtVO: UpdatedAtVO;
     private totalVO: TotalAmountVO;
 
-    constructor(props: OrderProps) {
+    private constructor(props: OrderProps) {
         this.idVO = new OrderIdVO(props.id);
         this.userIdVO = new UserIdVO(props.userId);
         this.itemsInternal = this.buildItems(props.items);
@@ -35,6 +35,15 @@ export class OrderEntity {
         this.createdAtVO = new CreatedAtVO(props.createdAt);
         this.updatedAtVO = new UpdatedAtVO(props.updatedAt);
         this.totalVO = new TotalAmountVO(this.calculateTotal());
+    }
+
+    static create(props: Omit<OrderProps, 'createdAt' | 'updatedAt'>): OrderEntity {
+        const now = new Date();
+        return new OrderEntity({ ...props, createdAt: now, updatedAt: now });
+    }
+
+    static rehydrate(props: OrderProps): OrderEntity {
+        return new OrderEntity(props);
     }
 
     get id(): string {
@@ -106,7 +115,7 @@ export class OrderEntity {
                 throw new Error('Duplicate product in order items');
             }
             seen.add(item.productId);
-            entities.push(new OrderItemEntity(item));
+            entities.push(OrderItemEntity.create(item));
         }
         return entities;
     }
