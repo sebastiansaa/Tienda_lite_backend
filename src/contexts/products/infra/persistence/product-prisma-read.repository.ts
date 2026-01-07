@@ -7,12 +7,18 @@ import { buildFindManyArgs } from '../filter/product.filter';
 import { IProductReadRepository } from '../../app/ports/product-read.repository';
 import { ProductEntity } from '../../domain/entity';
 
+/**
+ * Adaptador de persistencia para lecturas de productos utilizando Prisma.
+ * Este repositorio tiene una doble responsabilidad:
+ * 1. Servir entidades de dominio (ProductEntity) para la lógica interna del contexto.
+ * 2. Proveer DTOs simplificados (ProductReadDto) para el consumo desde otros contextos (puertos compartidos).
+ */
 @Injectable()
-// Repositorio de lectura: devuelve entidades de dominio y DTOs para otros contextos
 export class ProductPrismaReadRepository implements ProductReadOnlyPort, IProductReadRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    // Domain reads (CQRS read side)
+    // --- Lógica orientada a Dominio (Domain Reads) ---
+
     async findById(id: number): Promise<ProductEntity | null> {
         const row = await this.prisma.product.findUnique({ where: { id } });
         return ProductPrismaMapper.toDomain(row);
@@ -43,7 +49,8 @@ export class ProductPrismaReadRepository implements ProductReadOnlyPort, IProduc
         return { products, total };
     }
 
-    // DTO reads for cross-context ports
+    // --- Lógica orientada a Comunicación entre Contextos (DTO Reads) ---
+
     async findDtoById(id: number): Promise<ProductReadDto | null> {
         const row = await this.prisma.product.findUnique({ where: { id } });
         return ProductPrismaMapper.toReadDto(row);

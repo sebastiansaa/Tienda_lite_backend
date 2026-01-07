@@ -21,10 +21,10 @@ Backend modular con arquitectura hexagonal estricta y domain-driven design. Cada
 
 ```
 src/contexts/<context>/
-  ├── domain/       # Entidades, VOs, errores, invariantes
+  ├── domain/       # Rich entities, VOs, errores, invariantes
   ├── app/          # UseCases, Commands/Queries, Puertos (read + write)
   ├── infra/        # Adaptadores (Prisma, servicios externos), Mappers
-  ├── api/          # Controllers, DTOs, Mappers HTTP, Guards
+  ├── api/          # Controllers (Validacion de entradas y consistencia en respuestas), DTOs, Mappers HTTP, Guards
   ├── constants.ts  # Tokens DI
   └── <context>.module.ts
 ```

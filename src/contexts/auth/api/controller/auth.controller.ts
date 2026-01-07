@@ -9,6 +9,10 @@ import { JwtAuthGuard } from '../../infra/guards/jwt-auth.guard';
 import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
 import CurrentUser from '../decorators/current-user.decorator';
 
+/**
+ * Controlador encargado de la gestión de identidad y seguridad.
+ * Implementa flujos de registro, autenticación mediante JWT, rotación de tokens y cierre de sesión.
+ */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -20,6 +24,10 @@ export class AuthController {
         private readonly getAuthenticatedUserUseCase: GetAuthenticatedUserUseCase,
     ) { }
 
+    /**
+     * Registra un nuevo cliente en el sistema.
+     * Realiza validaciones de duplicidad de email y hashea la contraseña antes de persistir.
+     */
     @Post('register')
     @ResponseMessage('User registered successfully')
     @ApiOperation({ summary: 'Registrar un nuevo usuario con email y contraseña' })
@@ -32,6 +40,10 @@ export class AuthController {
         return AuthApiMapper.toResponse(result.user, result.tokens);
     }
 
+    /**
+     * Autentica al usuario y emite un par de tokens (Access y Refresh).
+     * El Access Token es de corta duración para seguridad, mientras el Refresh Token permite renovar la sesión.
+     */
     @Post('login')
     @HttpCode(HttpStatus.OK)
     @ResponseMessage('Login successful')
@@ -44,6 +56,10 @@ export class AuthController {
         return AuthApiMapper.toResponse(result.user, result.tokens);
     }
 
+    /**
+     * Renueva el Access Token utilizando un Refresh Token válido.
+     * Implementa 'Token Rotation' para invalidar el token anterior y mitigar riesgos de robo de sesión.
+     */
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
     @ResponseMessage('Tokens rotated successfully')
@@ -56,19 +72,27 @@ export class AuthController {
         return AuthApiMapper.toResponse(result.user, result.tokens);
     }
 
+    /**
+     * Invalida las sesiones activas del usuario.
+     * Requiere que el usuario esté autenticado para procesar la revocación de sus propios tokens.
+     */
     @Post('logout')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    @HttpCode(HttpStatus.NO_CONTENT)
+    @HttpCode(HttpStatus.OK)
     @ResponseMessage('Tokens revoked successfully')
     @ApiOperation({ summary: 'Revocar tokens del usuario autenticado' })
-    @ApiResponse({ status: 204, description: 'Tokens revocados correctamente' })
+    @ApiResponse({ status: 200, description: 'Tokens revocados correctamente' })
     @ApiResponse({ status: 401, description: 'No autorizado' })
     async logout(@CurrentUser() user: { sub: string }): Promise<void> {
         const input = new RevokeRefreshTokenInput(user.sub);
         await this.revokeRefreshTokenUseCase.execute(input);
     }
 
+    /**
+     * Obtiene los datos básicos del perfil del usuario extraídos del token JWT.
+     * Útil para sincronizar el estado del frontend tras recargas de página.
+     */
     @Get('me')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()

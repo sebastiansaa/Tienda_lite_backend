@@ -2,6 +2,10 @@ import { InvalidEmailError } from "../errors/shared.errors";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Value Object para la validación y normalización de correos electrónicos.
+ * Garantiza que cualquier email en el sistema tenga el formato correcto y esté en minúsculas.
+ */
 export class EmailVO {
     private readonly _value: string;
 

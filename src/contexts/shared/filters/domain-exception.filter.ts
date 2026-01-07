@@ -1,5 +1,3 @@
-//Exception Filter y su propósito es centralizar el manejo de errores.
-
 import {
     ExceptionFilter,
     Catch,
@@ -10,6 +8,10 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
+/**
+ * Filtro global para capturar y estandarizar todas las excepciones de la aplicación.
+ * Mapea errores de dominio, lógica de negocio y excepciones HTTP a un formato JSON uniforme.
+ */
 @Catch()
 export class DomainExceptionFilter implements ExceptionFilter {
     private readonly logger = new Logger(DomainExceptionFilter.name);
@@ -32,7 +34,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
             errorName = exception.name;
             message = exception.message;
 
-            // Mapping domain errors to HTTP statuses
+            // Mapeo dinámico de errores de dominio a estados HTTP basado en el nombre de la clase
             const name = exception.constructor.name;
 
             if (name.includes('NotFound') || name.includes('OwnershipError')) {
@@ -48,15 +50,16 @@ export class DomainExceptionFilter implements ExceptionFilter {
             }
         }
 
+        // Registro de errores inesperados para monitoreo
         if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
             this.logger.error(`${request.method} ${request.url}`, exception.stack);
         }
 
+        // Estructura de respuesta de error unificada
         response.status(status).json({
             statusCode: status,
             message: message,
             data: null,
-            // Keep these for debugging but they are secondary
             error: errorName,
             timestamp: new Date().toISOString(),
             path: request.url,

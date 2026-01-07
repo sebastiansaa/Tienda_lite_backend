@@ -7,6 +7,11 @@ import { ProductProps } from './productPropInterface';
 import { Slug, SoftDeleteVO } from '../../../shared/v-o';
 import { Price, Title, ImagesVO, Description, CategoryId, StockVO } from '../v-o';
 
+/**
+ * Entidad de Dominio Product.
+ * Representa un producto del catálogo y encapsula todas las reglas de negocio, 
+ * asegurando la integridad de los datos mediante el uso de Value Objects.
+ */
 export class ProductEntity {
     private readonly idValue?: number;
     private titleVO: Title;
@@ -27,6 +32,7 @@ export class ProductEntity {
         this.priceVO = new Price(props.price);
         this.descriptionVO = new Description(props.description ?? '');
         this.stockVO = StockVO.from(props.stock);
+        // Maneja el estado de borrado lógico (active/inactive)
         this.deletedAtVO = new SoftDeleteVO(props.deletedAt ?? (props.active === false ? new Date() : undefined));
         this.imagesVO = new ImagesVO(props.images);
         this.categoryIdVO = new CategoryId(props.categoryId);
@@ -34,9 +40,13 @@ export class ProductEntity {
         this.createdAtValue = props.createdAt ?? now;
         this.updatedAtValue = props.updatedAt ?? now;
 
+        // Regla de negocio: si no hay stock, el producto se marca como inactivo automáticamente
         if (this.stockVO.isEmpty()) this.markAsInactive();
     }
 
+    /**
+     * Crea una nueva instancia de producto con fechas inicializadas.
+     */
     static create(props: Omit<ProductProps, 'createdAt' | 'updatedAt' | 'deletedAt'> & { deletedAt?: Date | null }): ProductEntity {
         const now = new Date();
         return new ProductEntity({
@@ -46,10 +56,17 @@ export class ProductEntity {
         });
     }
 
+    /**
+     * Reconstituye una entidad desde datos persistidos (mantenimiento de estado).
+     */
     static rehydrate(props: ProductProps): ProductEntity {
         return new ProductEntity(props);
     }
 
+    /**
+     * Realiza un borrado lógico del producto. 
+     * Valida que no tenga stock para evitar inconsistencias en el catálogo.
+     */
     remove(): void {
         if (!this.active) throw new DesactiveProductError();
         if (!this.stockVO.isEmpty()) throw new ProductHasStockError('No puedes eliminar un producto con stock');
@@ -57,15 +74,23 @@ export class ProductEntity {
         this.touch();
     }
 
+    /**
+     * Restaura un producto inactivo.
+     */
     restore(): void {
         if (this.active) throw new ActiveProductError();
         this.deletedAtVO = this.deletedAtVO.restore();
         this.touch();
     }
 
+    /**
+     * Verifica si el producto es apto para la venta (activo y con existencias).
+     */
     canBePurchased(): boolean {
         return this.active && !this.stockVO.isEmpty();
     }
+
+    // Métodos de mutación controlada que garantizan que el estado interno sea siempre válido
 
     changePrice(newPrice: number | string): void {
         this.priceVO = new Price(newPrice);
@@ -111,10 +136,14 @@ export class ProductEntity {
         this.deletedAtVO = this.deletedAtVO.delete();
     }
 
+    /**
+     * Actualiza la fecha de modificación de la entidad.
+     */
     private touch(): void {
         this.updatedAtValue = new Date();
     }
 
+    // Getters públicos que devuelven tipos primitivos para facilitar su uso fuera del dominio
     get id(): number | undefined { return this.idValue; }
     get title(): string { return this.titleVO.value; }
     get slug(): string { return this.slugVO.value; }

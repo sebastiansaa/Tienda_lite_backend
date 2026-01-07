@@ -10,6 +10,10 @@ import {
 } from '../../app/usecases';
 import { ResponseMessage } from '../../../shared/decorators/response-message.decorator';
 
+/**
+ * Controlador para la exposición pública del catálogo de productos.
+ * Permite la búsqueda, filtrado y visualización detallada de productos para los clientes.
+ */
 @ApiTags('products')
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @Controller('products')
@@ -20,6 +24,10 @@ export class ProductsController {
     private readonly searchProductsUsecase: SearchProductsUsecase,
   ) { }
 
+  /**
+   * Obtiene una lista paginada de productos activos.
+   * Soporta filtrado opcional por categoría mediante IDs válidos.
+   */
   @Get()
   @ResponseMessage('Products retrieved successfully')
   @ApiOperation({ summary: 'Listar productos con paginación y filtros' })
@@ -34,6 +42,10 @@ export class ProductsController {
     };
   }
 
+  /**
+   * Busca productos utilizando un término de búsqueda global.
+   * La búsqueda se realiza de forma optimizada sobre títulos y descripciones.
+   */
   @Get('search')
   @ResponseMessage('Products search results retrieved successfully')
   @ApiOperation({ summary: 'Buscar productos por nombre o descripción' })
@@ -48,6 +60,10 @@ export class ProductsController {
     };
   }
 
+  /**
+   * Obtiene el detalle extendido de un producto específico.
+   * Retorna null o lanza un error 404 si el producto no existe en el catálogo.
+   */
   @Get(':id')
   @ResponseMessage('Product details retrieved successfully')
   @ApiOperation({ summary: 'Obtener un producto por su ID' })
