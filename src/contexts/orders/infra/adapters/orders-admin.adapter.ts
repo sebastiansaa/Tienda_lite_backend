@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrdersAdminPort } from '../../../admin/app/ports/orders-admin.port';
+import { OrdersAdminPort } from '../../../shared/ports/admin/orders-admin.port';
 import {
     ListAllOrdersUsecase,
     AdminGetOrderByIdUsecase,

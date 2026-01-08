@@ -1,5 +1,5 @@
 import { InitiatePaymentDto, PaymentResponseDto } from '../dtos';
-import InitiatePaymentCommand from '../../app/commands/initiate-payment.command';
+import InitiatePaymentCommand, { InitiatePaymentItemPayload } from '../../app/commands/initiate-payment.command';
 import ConfirmPaymentCommand from '../../app/commands/confirm-payment.command';
 import FailPaymentCommand from '../../app/commands/fail-payment.command';
 import GetPaymentByIdQuery from '../../app/queries/get-payment-by-id.query';
@@ -8,11 +8,17 @@ import { PaymentEntity } from '../../domain/entity/payment.entity';
 
 export class PaymentApiMapper {
     static toInitiateCommand(dto: InitiatePaymentDto, userId: string): InitiatePaymentCommand {
+        const items: InitiatePaymentItemPayload[] | undefined = dto.items?.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+        }));
+
         return new InitiatePaymentCommand(
             dto.orderId ?? null,
             dto.amount,
             userId,
-            dto.items,
+            items,
             dto.paymentMethodToken,
             dto.currency,
         );

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeUserStatusUseCase, GetUserProfileUseCase, ListUsersUseCase } from '../../app/usecases/index';
 import { UserStatus } from '../../domain/v-o/user-status.vo';
-import { UserAdminPort } from '../../../admin/app/ports/user-admin.port';
+import { UserAdminPort } from '../../../shared/ports/admin/user-admin.port';
 import type { UserResponseDto } from '../../api/dtos/response/user.response.dto';
 import { UserApiMapper } from '../../api/mappers/user-api.mapper';
 

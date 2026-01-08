@@ -24,7 +24,7 @@ suite('OrderPrismaWriteRepository integration (Prisma)', () => {
     });
 
     it('saves order and persists items json', async () => {
-        const order = new OrderEntity({ userId: 'u-test', items: [{ productId: 1, quantity: 2, price: 5 }] });
+        const order = OrderEntity.create({ userId: 'u-test', items: [{ productId: 1, quantity: 2, price: 5 }] });
         const saved = await repo.save(order);
 
         expect(saved).toBeInstanceOf(OrderEntity);

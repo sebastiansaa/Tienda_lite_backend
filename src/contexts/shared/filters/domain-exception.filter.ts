@@ -16,7 +16,7 @@ import { Response } from 'express';
 export class DomainExceptionFilter implements ExceptionFilter {
     private readonly logger = new Logger(DomainExceptionFilter.name);
 
-    catch(exception: any, host: ArgumentsHost) {
+    catch(exception: unknown, host: ArgumentsHost) {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse<Response>();
         const request = ctx.getRequest<Request>();
@@ -27,8 +27,15 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
         if (exception instanceof HttpException) {
             status = exception.getStatus();
-            const res = exception.getResponse() as any;
-            message = res.message || exception.message;
+            const res = exception.getResponse();
+            if (typeof res === 'string') {
+                message = res;
+            } else if (res && typeof res === 'object' && 'message' in res) {
+                const payload = res as { message?: string | string[] };
+                message = Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? exception.message;
+            } else {
+                message = exception.message;
+            }
             errorName = exception.name;
         } else if (exception instanceof Error) {
             errorName = exception.name;
@@ -52,7 +59,8 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
         // Registro de errores inesperados para monitoreo
         if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
-            this.logger.error(`${request.method} ${request.url}`, exception.stack);
+            const stack = exception instanceof Error ? exception.stack : undefined;
+            this.logger.error(`${request.method} ${request.url}`, stack);
         }
 
         // Estructura de respuesta de error unificada

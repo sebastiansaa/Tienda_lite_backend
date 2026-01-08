@@ -5,7 +5,7 @@ import { PaymentEntity } from '../../domain/entity/payment.entity';
 
 describe('IPaymentReadRepository — Unit (puerto)', () => {
     it('provides findById and listByUser contract for usecases', async () => {
-        const payment = new PaymentEntity({ orderId: 'o-r', userId: 'u-r', amount: 9, status: 'PENDING', externalPaymentId: 'er' });
+        const payment = PaymentEntity.rehydrate({ orderId: 'o-r', userId: 'u-r', amount: 9, status: 'PENDING', externalPaymentId: 'er' });
         const readRepo = {
             findById: jest.fn().mockResolvedValue(payment),
             listByUser: jest.fn().mockResolvedValue([payment]),

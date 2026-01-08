@@ -1,4 +1,3 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserController } from 'src/contexts/user/api/controller/user.controller';
 import {
     AddAddressUseCase,
@@ -10,8 +9,9 @@ import {
     UpdateUserProfileUseCase,
 } from 'src/contexts/user/app/usecases';
 import { AddressNotFoundError, InvalidAddressError, UserNotFoundError } from 'src/contexts/user/domain/errors/user.errors';
+import type { AuthUserPayload } from 'src/contexts/shared/interfaces/auth-user-payload.interface';
 
-const user = { sub: 'user-1' } as const;
+const user: AuthUserPayload = { sub: 'user-1', roles: ['user'] };
 
 type UsecaseMock<TArgs extends any[] = any[], TResult = any> = { execute: jest.Mock<TResult, TArgs> };
 
@@ -41,32 +41,32 @@ const buildController = (deps: ControllerDeps) => new UserController(
     deps.addAddress as unknown as AddAddressUseCase,
     deps.updateAddress as unknown as UpdateAddressUseCase,
     deps.deleteAddress as unknown as DeleteAddressUseCase,
-    deps.changeStatus as unknown as ChangeUserStatusUseCase,
     deps.listUsers as unknown as ListUsersUseCase,
+    deps.changeStatus as unknown as ChangeUserStatusUseCase,
 );
 
-describe('UserController error mapping', () => {
-    it('maps UserNotFoundError to NotFoundException', async () => {
+describe('UserController error propagation', () => {
+    it('propagates UserNotFoundError from usecase', async () => {
         const deps = makeDeps();
         deps.getProfile.execute.mockRejectedValue(new UserNotFoundError());
         const controller = buildController(deps);
 
-        await expect(controller.getById('user-123')).rejects.toBeInstanceOf(NotFoundException);
+        await expect(controller.getById('user-123')).rejects.toBeInstanceOf(UserNotFoundError);
     });
 
-    it('maps AddressNotFoundError to NotFoundException', async () => {
+    it('propagates AddressNotFoundError from delete address usecase', async () => {
         const deps = makeDeps();
         deps.deleteAddress.execute.mockRejectedValue(new AddressNotFoundError());
         const controller = buildController(deps);
 
-        await expect(controller.deleteAddr(user, 'address-1')).rejects.toBeInstanceOf(NotFoundException);
+        await expect(controller.deleteAddr(user, 'address-1')).rejects.toBeInstanceOf(AddressNotFoundError);
     });
 
-    it('maps InvalidAddressError to BadRequestException', async () => {
+    it('propagates InvalidAddressError from add address usecase', async () => {
         const deps = makeDeps();
         deps.addAddress.execute.mockRejectedValue(new InvalidAddressError());
         const controller = buildController(deps);
 
-        await expect(controller.addAddr(user, { street: 's', city: 'c', country: 'co', zipCode: 'z' })).rejects.toBeInstanceOf(BadRequestException);
+        await expect(controller.addAddr(user, { street: 's', city: 'c', country: 'co', zipCode: 'z' })).rejects.toBeInstanceOf(InvalidAddressError);
     });
 });

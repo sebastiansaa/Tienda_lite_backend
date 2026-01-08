@@ -13,9 +13,10 @@ describe('CreateOrderFromItemsUsecase (unit) — puerto', () => {
         } as any;
         const pricing = { getPrice: jest.fn().mockImplementation(async (id: number) => (id === 10 ? 6 : null)) } as any;
         const stock = { isAvailable: jest.fn().mockResolvedValue(true) } as any;
+        const reserve = { reserve: jest.fn().mockResolvedValue(undefined) } as any;
         const orderWriteRepo = { save: jest.fn().mockImplementation(async (o: OrderEntity) => o) } as any;
 
-        const uc = new CreateOrderFromItemsUsecase(orderWriteRepo, productRead, pricing, stock);
+        const uc = new CreateOrderFromItemsUsecase(orderWriteRepo, productRead, pricing, stock, reserve);
 
         const saved = await uc.execute({ userId, items } as any);
 
@@ -23,6 +24,11 @@ describe('CreateOrderFromItemsUsecase (unit) — puerto', () => {
         expect(stock.isAvailable).toHaveBeenCalledTimes(2);
         expect(pricing.getPrice).toHaveBeenCalledTimes(2);
         expect(orderWriteRepo.save).toHaveBeenCalledWith(expect.any(OrderEntity));
+        expect(reserve.reserve).toHaveBeenCalledTimes(2);
+        const reserveCall = reserve.reserve.mock.calls[0];
+        expect(reserveCall[0]).toBe(10);
+        expect(reserveCall[1]).toBe(2);
+        expect(reserveCall[2]).toContain(saved.id);
 
         expect(saved).toBeInstanceOf(OrderEntity);
         expect(saved.userId).toBe(userId);
@@ -35,7 +41,7 @@ describe('CreateOrderFromItemsUsecase (unit) — puerto', () => {
     });
 
     it('throws EmptyOrderError when items empty', async () => {
-        const uc = new CreateOrderFromItemsUsecase({} as any, {} as any, {} as any, {} as any);
+        const uc = new CreateOrderFromItemsUsecase({} as any, {} as any, {} as any, {} as any, { reserve: jest.fn() } as any);
         await expect(uc.execute({ userId: 'u', items: [] } as any)).rejects.toBeInstanceOf(EmptyOrderError);
     });
 
@@ -43,9 +49,10 @@ describe('CreateOrderFromItemsUsecase (unit) — puerto', () => {
         const productRead = { findById: jest.fn().mockResolvedValue(null) } as any;
         const pricing = { getPrice: jest.fn() } as any;
         const stock = { isAvailable: jest.fn() } as any;
+        const reserve = { reserve: jest.fn() } as any;
         const orderWriteRepo = { save: jest.fn() } as any;
 
-        const uc = new CreateOrderFromItemsUsecase(orderWriteRepo, productRead, pricing, stock);
+        const uc = new CreateOrderFromItemsUsecase(orderWriteRepo, productRead, pricing, stock, reserve);
 
         await expect(uc.execute({ userId: 'u', items: [{ productId: 99, quantity: 1 }] } as any)).rejects.toBeInstanceOf(ProductUnavailableError);
         expect(productRead.findById).toHaveBeenCalledWith(99);
@@ -56,9 +63,10 @@ describe('CreateOrderFromItemsUsecase (unit) — puerto', () => {
         const productRead = { findById: jest.fn().mockResolvedValue({ id: 5, price: 10 }) } as any;
         const pricing = { getPrice: jest.fn().mockResolvedValue(null) } as any;
         const stock = { isAvailable: jest.fn().mockResolvedValue(false) } as any;
+        const reserve = { reserve: jest.fn() } as any;
         const orderWriteRepo = { save: jest.fn() } as any;
 
-        const uc = new CreateOrderFromItemsUsecase(orderWriteRepo, productRead, pricing, stock);
+        const uc = new CreateOrderFromItemsUsecase(orderWriteRepo, productRead, pricing, stock, reserve);
 
         await expect(uc.execute({ userId: 'u', items: [{ productId: 5, quantity: 2 }] } as any)).rejects.toBeInstanceOf(ProductUnavailableError);
         expect(stock.isAvailable).toHaveBeenCalledWith(5, 2);

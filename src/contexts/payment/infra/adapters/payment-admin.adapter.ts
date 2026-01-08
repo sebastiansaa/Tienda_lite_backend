@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PaymentAdminPort } from '../../../admin/app/ports/payment-admin.port';
+import { PaymentAdminPort } from '../../../shared/ports/admin/payment-admin.port';
 import {
     ListAllPaymentsUsecase,
     AdminGetPaymentByIdUsecase,

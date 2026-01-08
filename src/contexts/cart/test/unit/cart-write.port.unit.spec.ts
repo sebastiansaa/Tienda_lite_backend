@@ -13,8 +13,9 @@ describe('ICartWriteRepository (unit) - Clear & Save contract', () => {
         const readRepo = { findByUserId: jest.fn().mockResolvedValue(null) } as any;
         const writeRepo = { save: jest.fn().mockResolvedValue({ id: 'c1' }) } as any;
         const pricing = { getPrice: jest.fn().mockResolvedValue(10) } as any;
+        const stock = { isAvailable: jest.fn().mockResolvedValue(true) } as any;
 
-        const uc = new AddItemToCartUseCase(readRepo, writeRepo, pricing);
+        const uc = new AddItemToCartUseCase(readRepo, writeRepo, pricing, stock);
         await uc.execute({ userId: 'u1', productId: 1, quantity: 2 });
 
         expect(pricing.getPrice).toHaveBeenCalledWith(1);

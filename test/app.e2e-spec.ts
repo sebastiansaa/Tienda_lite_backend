@@ -10,12 +10,12 @@ import type { PrismaService as PrismaServiceType } from '../src/prisma/prisma.se
 const envPath = path.resolve('.env.test');
 if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
 
-// Provide default env values for e2e if .env.test is missing entries
+
 process.env.AUTH_JWT_SECRET = process.env.AUTH_JWT_SECRET ?? 'test-secret-1234567890';
 process.env.AUTH_ACCESS_TOKEN_TTL = process.env.AUTH_ACCESS_TOKEN_TTL ?? '15m';
 process.env.AUTH_REFRESH_TOKEN_TTL = process.env.AUTH_REFRESH_TOKEN_TTL ?? '7d';
 
-// Lazy requires so env defaults apply before Nest modules load
+
 let PrismaService: typeof import('../src/prisma/prisma.service').PrismaService;
 let AppModule: typeof import('../src/app.module').AppModule;
 
@@ -24,10 +24,9 @@ describe('App e2e happy path', () => {
   let prisma: PrismaServiceType;
 
   beforeAll(async () => {
-    // use require to avoid ESM dynamic import flags in Jest
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     PrismaService = require('../src/prisma/prisma.service').PrismaService;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     AppModule = require('../src/app.module').AppModule;
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -63,7 +62,7 @@ describe('App e2e happy path', () => {
     const accessToken = loginRes.body.tokens.accessToken;
     const authHeader = { Authorization: `Bearer ${accessToken}` };
 
-    // Seed category and product directly via Prisma to avoid admin-only endpoints
+
     const category = await prisma.category.create({ data: { title: 'E2E Cat', slug: `e2e-cat-${Date.now()}`, image: 'img' } });
     const product = await prisma.product.create({
       data: {
@@ -77,7 +76,7 @@ describe('App e2e happy path', () => {
       },
     });
 
-    // Create order from items
+    // Create order
     const orderRes = await request(app.getHttpServer())
       .post('/orders')
       .set(authHeader)
@@ -91,7 +90,7 @@ describe('App e2e happy path', () => {
       .send({ orderId: orderRes.body.id, amount: orderRes.body.totalAmount })
       .expect(201);
 
-    // Confirm payment (provider is fake; status may vary but should not error)
+    // Confirm payment 
     await request(app.getHttpServer())
       .post(`/payments/${payRes.body.paymentId}/confirm`)
       .set(authHeader)

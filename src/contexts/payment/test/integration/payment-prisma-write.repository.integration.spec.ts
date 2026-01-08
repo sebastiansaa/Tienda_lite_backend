@@ -29,7 +29,7 @@ suite('PaymentPrismaWriteRepository — Integration (adapter)', () => {
 
     it('save persists PaymentEntity and maps back correctly', async () => {
         const order = await prisma.order.create({ data: { id: `w-${Date.now()}`, userId: 'wu', items: [{ productId: 33, quantity: 2, price: 3 }], totalAmount: 6 } });
-        const payment = new PaymentEntity({ orderId: order.id, userId: 'wu', amount: 6, status: 'PENDING', provider: 'FAKE' });
+        const payment = PaymentEntity.create({ orderId: order.id, userId: 'wu', amount: 6, status: 'PENDING', provider: 'FAKE' });
 
         const saved = await writeRepo.save(payment);
         expect(saved).toBeDefined();

@@ -3,8 +3,8 @@ import { OrderEntity } from '../../domain/entity/order.entity';
 
 describe('ListOrdersForUserUsecase (unit) — puerto', () => {
     it('returns list of orders from repo', async () => {
-        const o1 = new OrderEntity({ userId: 'u1', items: [{ productId: 1, quantity: 1, price: 1 }] });
-        const o2 = new OrderEntity({ userId: 'u1', items: [{ productId: 2, quantity: 2, price: 2 }] });
+        const o1 = OrderEntity.create({ userId: 'u1', items: [{ productId: 1, quantity: 1, price: 1 }] });
+        const o2 = OrderEntity.create({ userId: 'u1', items: [{ productId: 2, quantity: 2, price: 2 }] });
         const readRepo = { listByUser: jest.fn().mockResolvedValue([o2, o1]) } as any;
         const uc = new ListOrdersForUserUsecase(readRepo);
 

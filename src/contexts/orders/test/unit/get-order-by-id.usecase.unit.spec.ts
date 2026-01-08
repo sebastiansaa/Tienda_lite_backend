@@ -4,7 +4,7 @@ import { OrderOwnershipError } from '../../domain/errors/order.errors';
 
 describe('GetOrderByIdUsecase (unit) — puerto', () => {
     it('returns order when found and owned by user', async () => {
-        const mockOrder = new OrderEntity({ userId: 'u1', items: [{ productId: 1, quantity: 1, price: 5 }] });
+        const mockOrder = OrderEntity.create({ userId: 'u1', items: [{ productId: 1, quantity: 1, price: 5 }] });
         const readRepo = { findById: jest.fn().mockResolvedValue(mockOrder) } as any;
 
         const uc = new GetOrderByIdUsecase(readRepo);
@@ -23,7 +23,7 @@ describe('GetOrderByIdUsecase (unit) — puerto', () => {
     });
 
     it('throws OrderOwnershipError when user mismatch', async () => {
-        const mockOrder = new OrderEntity({ userId: 'owner', items: [{ productId: 2, quantity: 1, price: 3 }] });
+        const mockOrder = OrderEntity.create({ userId: 'owner', items: [{ productId: 2, quantity: 1, price: 3 }] });
         const readRepo = { findById: jest.fn().mockResolvedValue(mockOrder) } as any;
         const uc = new GetOrderByIdUsecase(readRepo);
         await expect(uc.execute({ orderId: mockOrder.id, userId: 'intruder' } as any)).rejects.toBeInstanceOf(OrderOwnershipError);

@@ -14,9 +14,34 @@ export interface ListParams {
     readonly sort?: string;
 }
 
+interface StringSearchFilter {
+    contains: string;
+    mode: 'insensitive';
+}
+
+interface NumericRangeFilter {
+    gt?: number;
+    gte?: number;
+    lt?: number;
+    lte?: number;
+    equals?: number;
+}
+
+interface ProductWhere {
+    OR?: Array<{
+        title?: StringSearchFilter;
+        description?: StringSearchFilter;
+        slug?: StringSearchFilter;
+    }>;
+    categoryId?: number;
+    active?: boolean;
+    stock?: Pick<NumericRangeFilter, 'gt' | 'equals'>;
+    price?: Pick<NumericRangeFilter, 'gte' | 'lte'>;
+}
+
 // Tipo local devuelto por el filter — no exponemos tipos de Prisma fuera de infra
 export interface FindManyArgs {
-    where: any; // usamos `any` dentro de infra: esta forma coincide con Prisma where
+    where: ProductWhere;
     skip: number;
     take: number;
     orderBy: Record<string, 'asc' | 'desc'>;
@@ -32,7 +57,7 @@ export function buildFindManyArgs(params?: ListParams): FindManyArgs {
     const { skip, take } = normalizePagination(params?.page, params?.limit);
     const orderBy = sanitizeSort(params?.sort, LOCAL_ALLOWED_SORT);
 
-    const where: any = {};
+    const where: ProductWhere = {};
 
     if (params?.search) {
         where.OR = [
@@ -49,9 +74,10 @@ export function buildFindManyArgs(params?: ListParams): FindManyArgs {
     }
 
     if (typeof params?.priceMin === 'number' || typeof params?.priceMax === 'number') {
-        where.price = {};
-        if (params.priceMin !== undefined) where.price.gte = params.priceMin;
-        if (params.priceMax !== undefined) where.price.lte = params.priceMax;
+        const priceFilter: NonNullable<ProductWhere['price']> = {};
+        if (params.priceMin !== undefined) priceFilter.gte = params.priceMin;
+        if (params.priceMax !== undefined) priceFilter.lte = params.priceMax;
+        where.price = priceFilter;
     }
 
     return {

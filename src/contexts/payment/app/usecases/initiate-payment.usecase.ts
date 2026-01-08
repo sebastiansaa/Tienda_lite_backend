@@ -17,11 +17,13 @@ export class InitiatePaymentUsecase {
     async execute(cmd: InitiatePaymentCommand): Promise<PaymentEntity> {
         let targetOrderId = cmd.orderId;
         if (!targetOrderId) {
-            const items = Array.isArray(cmd.items) ? cmd.items.map((item: any) => ({
-                productId: Number(item?.productId),
-                quantity: Number(item?.quantity),
-                price: Number(item?.price),
-            })).filter((item) => Number.isFinite(item.productId) && Number.isFinite(item.quantity) && Number.isFinite(item.price)) : [];
+            const items = (cmd.items ?? [])
+                .map((item) => ({
+                    productId: Number(item.productId),
+                    quantity: Number(item.quantity),
+                    price: Number(item.price),
+                }))
+                .filter((item) => Number.isFinite(item.productId) && Number.isFinite(item.quantity) && Number.isFinite(item.price));
 
             if (items.length === 0) {
                 throw new InvalidPaymentStateError('Checkout order requires valid items');

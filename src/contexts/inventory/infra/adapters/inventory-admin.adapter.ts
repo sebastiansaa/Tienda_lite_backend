@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InventoryAdminPort } from '../../../admin/app/ports/inventory-admin.port';
+import { InventoryAdminPort } from '../../../shared/ports/admin/inventory-admin.port';
 import {
     IncreaseStockUsecase,
     DecreaseStockUsecase,

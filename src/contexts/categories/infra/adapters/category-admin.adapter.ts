@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryAdminPort } from '../../../admin/app/ports/category-admin.port';
+import { CategoryAdminPort } from '../../../shared/ports/admin/category-admin.port';
 import {
     CreateCategoryUseCase,
     UpdateCategoryUseCase,

@@ -10,14 +10,16 @@ describe('IPaymentWriteRepository — Unit (puerto)', () => {
 
         const providerInit = { initiatePayment: jest.fn().mockResolvedValue({ externalPaymentId: 'ei', clientSecret: 'cs', status: 'PENDING' }) } as any;
         const writeRepo = { save: jest.fn().mockImplementation(async (p: PaymentEntity) => p) } as any;
+        const orderWrite = { createCheckoutOrder: jest.fn() } as any;
 
-        const initUc = new InitiatePaymentUsecase(writeRepo, providerInit, orderRead);
+        const initUc = new InitiatePaymentUsecase(writeRepo, providerInit, orderRead, orderWrite);
         const saved = await initUc.execute({ orderId: order.id, userId: order.userId, amount: 12 } as any);
         expect(writeRepo.save).toHaveBeenCalled();
         expect(saved).toBeInstanceOf(PaymentEntity);
+        expect(orderWrite.createCheckoutOrder).not.toHaveBeenCalled();
 
         // confirm path
-        const payment = new PaymentEntity({ orderId: 'oc', userId: 'uc', amount: 3, status: 'PENDING', externalPaymentId: 'exc' });
+        const payment = PaymentEntity.rehydrate({ orderId: 'oc', userId: 'uc', amount: 3, status: 'PENDING', externalPaymentId: 'exc' });
         const readRepo = { findById: jest.fn().mockResolvedValue(payment) } as any;
         const providerConfirm = { confirmPayment: jest.fn().mockResolvedValue({ externalPaymentId: 'exc', clientSecret: 'c', status: 'PAID' }) } as any;
         const confirmUc = new ConfirmPaymentUsecase(readRepo, writeRepo, providerConfirm);
@@ -25,7 +27,7 @@ describe('IPaymentWriteRepository — Unit (puerto)', () => {
         expect(writeRepo.save).toHaveBeenCalled();
 
         // fail path (use fresh pending)
-        const paymentF = new PaymentEntity({ orderId: 'of', userId: 'uf', amount: 4, status: 'PENDING', externalPaymentId: 'exf' });
+        const paymentF = PaymentEntity.rehydrate({ orderId: 'of', userId: 'uf', amount: 4, status: 'PENDING', externalPaymentId: 'exf' });
         const readRepoF = { findById: jest.fn().mockResolvedValue(paymentF) } as any;
         const providerFail = { failPayment: jest.fn().mockResolvedValue({ externalPaymentId: 'exf', clientSecret: 'c', status: 'FAILED' }) } as any;
         const failUc = new FailPaymentUsecase(readRepoF, writeRepo, providerFail);

@@ -1,8 +1,11 @@
 import ProductPrismaWriteRepository from 'src/contexts/products/infra/persistence/product-prisma-write.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProductEntity } from 'src/contexts/products/domain/entity/product.entity';
+import { ensureTestEnv } from 'src/test-utils/prisma-test-helpers';
 
-describe('ProductPrismaWriteRepository - integration', () => {
+const suite = ensureTestEnv() ? describe : describe.skip;
+
+suite('ProductPrismaWriteRepository - integration', () => {
     let prisma: PrismaService;
     let repo: ProductPrismaWriteRepository;
     let categoryId: number;

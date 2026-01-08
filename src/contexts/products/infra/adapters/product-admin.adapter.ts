@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ProductAdminPort } from '../../../admin/app/ports/product-admin.port';
+import { ProductAdminPort } from '../../../shared/ports/admin/product-admin.port';
 import {
     DeleteProductUsecase,
     FindLowStockUsecase,

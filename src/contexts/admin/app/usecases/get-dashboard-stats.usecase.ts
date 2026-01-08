@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { OrderStatsPort } from '../ports/order-stats.port';
-import type { ProductAdminPort } from '../ports/product-admin.port';
-import type { UserAdminPort } from '../ports/user-admin.port';
+import type { OrderStatsPort, ProductAdminPort, UserAdminPort } from '../../../shared/ports/admin';
 
 export interface DashboardStatsResult {
     totalUsers: number;
