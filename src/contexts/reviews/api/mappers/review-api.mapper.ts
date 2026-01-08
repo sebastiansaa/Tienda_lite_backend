@@ -5,10 +5,12 @@ import { ReviewPublicResponseDto } from '../dtos/response/review-public.response
 import { ReviewPublicListResponseDto } from '../dtos/response/review-public-list.response.dto';
 import { ReviewPrivateResponseDto } from '../dtos/response/review-private.response.dto';
 import { ReviewPrivateListResponseDto } from '../dtos/response/review-private-list.response.dto';
-import { CreateReviewCommand } from '../../app/commands';
-import { GetProductReviewsQuery, GetUserReviewsQuery } from '../../app/queries';
+import { ReviewProductSummaryResponseDto } from '../dtos/response/review-product-summary.response.dto';
+import { CreateReviewCommand, UpdateReviewCommand } from '../../app/commands';
+import { GetProductRatingSummaryQuery, GetProductReviewsQuery, GetReviewByIdQuery, GetUserReviewsQuery } from '../../app/queries';
 import ReviewEntity from '../../domain/entity/review.entity';
-import { ReviewPagination } from '../../app/ports/review-read.repository';
+import { ReviewPagination, ReviewRatingSummary } from '../../app/ports/review-read.repository';
+import { UpdateReviewRequestDto } from '../dtos/request/update-review.request.dto';
 
 export class ReviewApiMapper {
     static toCreateReviewCommand(dto: CreateReviewRequestDto, userId: string): CreateReviewCommand {
@@ -21,6 +23,18 @@ export class ReviewApiMapper {
 
     static toUserReviewsQuery(userId: string, dto: ListUserReviewsRequestDto): GetUserReviewsQuery {
         return new GetUserReviewsQuery(userId, { page: dto.page, limit: dto.limit });
+    }
+
+    static toReviewByIdQuery(reviewId: string, userId: string): GetReviewByIdQuery {
+        return new GetReviewByIdQuery(reviewId, userId);
+    }
+
+    static toUpdateReviewCommand(reviewId: string, userId: string, dto: UpdateReviewRequestDto): UpdateReviewCommand {
+        return new UpdateReviewCommand(reviewId, userId, dto.rating, dto.comment);
+    }
+
+    static toProductRatingSummaryQuery(productId: number): GetProductRatingSummaryQuery {
+        return new GetProductRatingSummaryQuery(productId);
     }
 
     static toPublicDto(review: ReviewEntity): ReviewPublicResponseDto {
@@ -53,6 +67,13 @@ export class ReviewApiMapper {
         return {
             reviews: response.reviews.map((review) => this.toPrivateDto(review)),
             total: response.total,
+        };
+    }
+
+    static toSummaryDto(summary: ReviewRatingSummary): ReviewProductSummaryResponseDto {
+        return {
+            averageRating: summary.averageRating,
+            totalReviews: summary.totalReviews,
         };
     }
 }

@@ -5,7 +5,7 @@ import { UserModule } from '../user/user.module';
 import { ProductsModule } from '../products/products.module';
 import { OrdersModule } from '../orders/order.module';
 import { ReviewsController } from './api/controller/reviews.controller';
-import { CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, GetUserReviewsUseCase } from './app/usecases';
+import { CreateReviewUseCase, DeleteReviewUseCase, GetProductRatingSummaryUseCase, GetProductReviewsUseCase, GetReviewByIdUseCase, GetUserReviewsUseCase, UpdateReviewUseCase } from './app/usecases';
 import { ReviewPrismaReadRepository } from './infra/persistence/review-prisma-read.repository';
 import { ReviewPrismaWriteRepository } from './infra/persistence/review-prisma-write.repository';
 import { ReviewsAuthAdapter } from './infra/adapters/auth.adapter';
@@ -64,6 +64,31 @@ import { AuthPort, ProductsPort, OrdersPort, UserPort } from './app/ports';
                 user: UserPort,
             ) => new GetUserReviewsUseCase(readRepo, auth, user),
             inject: [REVIEW_READ_PORT, AUTH_PORT, USER_PORT],
+        },
+        {
+            provide: GetReviewByIdUseCase,
+            useFactory: (
+                readRepo: IReviewReadRepository,
+                auth: AuthPort,
+            ) => new GetReviewByIdUseCase(readRepo, auth),
+            inject: [REVIEW_READ_PORT, AUTH_PORT],
+        },
+        {
+            provide: UpdateReviewUseCase,
+            useFactory: (
+                readRepo: IReviewReadRepository,
+                writeRepo: IReviewWriteRepository,
+                auth: AuthPort,
+            ) => new UpdateReviewUseCase(readRepo, writeRepo, auth),
+            inject: [REVIEW_READ_PORT, REVIEW_WRITE_PORT, AUTH_PORT],
+        },
+        {
+            provide: GetProductRatingSummaryUseCase,
+            useFactory: (
+                readRepo: IReviewReadRepository,
+                products: ProductsPort,
+            ) => new GetProductRatingSummaryUseCase(readRepo, products),
+            inject: [REVIEW_READ_PORT, PRODUCTS_PORT],
         },
     ],
 })

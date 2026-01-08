@@ -1,7 +1,7 @@
 import { CreateReviewCommand } from '../commands';
 import { IReviewReadRepository, IReviewWriteRepository, AuthPort, ProductsPort, OrdersPort, UserPort } from '../ports';
 import { ReviewEntity } from '../../domain/entity/review.entity';
-import { ReviewDuplicateError, ReviewPurchaseRequiredError } from '../../domain/errors/review.errors';
+import { ReviewPurchaseRequiredError } from '../../domain/errors/review.errors';
 
 export class CreateReviewUseCase {
     constructor(
@@ -21,8 +21,12 @@ export class CreateReviewUseCase {
         const hasPurchased = await this.ordersPort.hasUserPurchasedProduct(command.userId, command.productId);
         if (!hasPurchased) throw new ReviewPurchaseRequiredError();
 
-        const alreadyReviewed = await this.readRepo.existsByUserAndProduct(command.userId, command.productId);
-        if (alreadyReviewed) throw new ReviewDuplicateError();
+        const currentReview = await this.readRepo.findByUserAndProduct(command.userId, command.productId);
+        if (currentReview) {
+            currentReview.updateRating(command.rating);
+            currentReview.updateComment(command.comment);
+            return this.writeRepo.save(currentReview);
+        }
 
         const entity = ReviewEntity.create({
             userId: command.userId,

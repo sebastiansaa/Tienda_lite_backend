@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { IReviewReadRepository, ReviewPagination } from '../../app/ports/review-read.repository';
+import { IReviewReadRepository, ReviewPagination, ReviewRatingSummary } from '../../app/ports/review-read.repository';
 import ReviewEntity from '../../domain/entity/review.entity';
 import { ReviewPrismaMapper } from '../mappers/review-prisma.mapper';
 
@@ -43,12 +43,32 @@ export class ReviewPrismaReadRepository implements IReviewReadRepository {
         return { reviews: rows.map((row) => ReviewPrismaMapper.toDomain(row)), total };
     }
 
+    async findByUserAndProduct(userId: string, productId: number): Promise<ReviewEntity | null> {
+        const row = await this.prisma.review.findFirst({
+            where: { userId, productId },
+        });
+        return row ? ReviewPrismaMapper.toDomain(row) : null;
+    }
+
     async existsByUserAndProduct(userId: string, productId: number): Promise<boolean> {
         const review = await this.prisma.review.findFirst({
             where: { userId, productId },
             select: { id: true },
         });
         return Boolean(review);
+    }
+
+    async getProductRatingSummary(productId: number): Promise<ReviewRatingSummary> {
+        const aggregate = await this.prisma.review.aggregate({
+            where: { productId },
+            _avg: { rating: true },
+            _count: { _all: true },
+        });
+
+        return {
+            averageRating: Number(aggregate._avg.rating ?? 0),
+            totalReviews: aggregate._count._all ?? 0,
+        };
     }
 }
 
