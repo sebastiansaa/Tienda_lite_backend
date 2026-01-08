@@ -34,6 +34,7 @@ suite('StockServiceAdapter integration (Orders module)', () => {
     it('returns true when stock >= quantity', async () => {
         const cat = await prisma.category.create({ data: { title: 'StCat', slug: `stcat-${Date.now()}`, image: 'http://example.com/img.jpg' } });
         const prod = await prisma.product.create({ data: { title: 'StP', slug: `stp-${Date.now()}`, price: new (require('@prisma/client').Prisma).Decimal(3), description: '', categoryId: cat.id, stock: 5, images: [] } });
+        await prisma.inventoryItem.create({ data: { productId: prod.id, onHand: 5, reserved: 0 } });
 
         const ok = await stock.isAvailable(prod.id, 4);
         expect(ok).toBe(true);
